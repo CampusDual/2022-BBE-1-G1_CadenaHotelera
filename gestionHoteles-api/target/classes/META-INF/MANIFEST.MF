@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Build-Jdk-Spec: 17
+Implementation-Title: gestionHoteles-api
+Implementation-Version: 1.0
+Implementation-Vendor: Imatia Innovation
+Created-By: Maven Integration for Eclipse
+
