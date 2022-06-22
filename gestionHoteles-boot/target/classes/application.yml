@@ -65,7 +65,7 @@ spring:
       driver-class-name: org.postgresql.Driver
       jdbc-url: jdbc:postgresql://localhost:5432/hoteles
       username: postgres
-      password: admin
+      password: 1234
       initial-size: 10
       test-on-borrow: true
    main:
