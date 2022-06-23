@@ -19,5 +19,4 @@ public class HotelDao extends OntimizeJdbcDaoSupport {
  public static final String ATTR_EMAIL = "HTL_EMAIL";
 
 
-
 }

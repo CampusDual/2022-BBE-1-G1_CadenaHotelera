@@ -63,9 +63,9 @@ server:
 spring:
    datasource:
       driver-class-name: org.postgresql.Driver
-      jdbc-url: jdbc:postgresql://localhost:5432/hoteles
-      username: postgres
-      password: 1234
+      jdbc-url: jdbc:postgresql://45.84.210.174:65432/Backend_2022_G1
+      username: Backend_2022_G1
+      password: iexaicaef1iaQuotea
       initial-size: 10
       test-on-borrow: true
    main:

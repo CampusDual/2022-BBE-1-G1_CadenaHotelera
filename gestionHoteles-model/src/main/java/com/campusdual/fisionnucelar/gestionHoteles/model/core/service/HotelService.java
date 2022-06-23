@@ -28,7 +28,11 @@ public class HotelService implements IHotelService{
 
  @Override
  public EntityResult hotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
-  return this.daoHelper.insert(this.hotelDao, attrMap);
+ // return this.daoHelper.insert(this.hotelDao, attrMap);
+//	 attrMap.clear();
+//	 //attrMap.put("id_hotel", 5);
+//	 attrMap.put("htl_nombre","Hotel");
+	 return this.daoHelper.insert(this.hotelDao, attrMap);
  }
 
  @Override
