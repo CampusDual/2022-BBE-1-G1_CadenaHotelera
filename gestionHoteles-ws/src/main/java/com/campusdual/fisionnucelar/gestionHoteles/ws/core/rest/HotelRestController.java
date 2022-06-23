@@ -9,7 +9,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelServic
 import com.ontimize.jee.server.rest.ORestController;
 
 @RestController
-@RequestMapping("/hoteles")
+@RequestMapping("/hotels")
 public class HotelRestController extends ORestController<IHotelService> {
 
  @Autowired

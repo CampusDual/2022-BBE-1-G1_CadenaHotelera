@@ -13,9 +13,9 @@ import com.ontimize.jee.server.dao.jdbc.OntimizeJdbcDaoSupport;
 public class HotelDao extends OntimizeJdbcDaoSupport {
 
  public static final String ATTR_ID = "ID_HOTEL";
- public static final String ATTR_NOMBRE = "HTL_NOMBRE"; 
- public static final String ATTR_DIRECCION = "HTL_DIRECCION";
- public static final String ATTR_TELEFONO = "HTL_TELEFONO";
+ public static final String ATTR_NAME = "HTL_NAME"; 
+ public static final String ATTR_ADDRESS = "HTL_ADDRESS";
+ public static final String ATTR_PHONE = "HTL_PHONE";
  public static final String ATTR_EMAIL = "HTL_EMAIL";
 
 
