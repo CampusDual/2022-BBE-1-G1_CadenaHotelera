@@ -1,13 +1,13 @@
 {
 	"info": {
-		"_postman_id": "5ad04d51-80b6-412b-855b-b2f78bff8dc7",
-		"name": "Hotel management",
+		"_postman_id": "f18a3a30-dce1-4eaa-938c-f3698bd3da1a",
+		"name": "Client management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "20964318"
 	},
 	"item": [
 		{
-			"name": "get hotel",
+			"name": "get client",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -27,19 +27,19 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:33333/hotels/hotel?columns=id_hotel,htl_name,htl_address,htl_email,htl_phone",
+					"raw": "localhost:33333/clients/client?columns=id_client,cl_nif,cl_name,cl_email,cl_phone",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"hotels",
-						"hotel"
+						"clients",
+						"client"
 					],
 					"query": [
 						{
 							"key": "columns",
-							"value": "id_hotel,htl_name,htl_address,htl_email,htl_phone"
+							"value": "id_client,cl_nif,cl_name,cl_email,cl_phone"
 						}
 					]
 				}
@@ -47,7 +47,7 @@
 			"response": []
 		},
 		{
-			"name": "search hotel",
+			"name": "search client",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -68,7 +68,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n     \"id_hotel\": 2\r\n    },\r\n    \"columns\": [\"id_hotel\",\"htl_name\",\"htl_phone\",\"htl_email\"]\r\n}",
+					"raw": "{\r\n    \"filter\": {\r\n     \"id_client\": 2\r\n    },\r\n    \"columns\": [\"id_client\",\"cl_nif\",\"cl_name\",\"cl_phone\",\"cl_email\"]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -76,14 +76,14 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/hotels/hotel/search",
+					"raw": "localhost:33333/clients/client/search",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"hotels",
-						"hotel",
+						"clients",
+						"client",
 						"search"
 					]
 				}
@@ -91,7 +91,7 @@
 			"response": []
 		},
 		{
-			"name": "insert hotel",
+			"name": "insert client",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -112,7 +112,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n   \"data\": {\r\n        \"htl_name\": \"FN Burela\",\r\n        \"htl_phone\": \"982652299\",\r\n        \"htl_address\": \"Rúa Carlos V 22\",\r\n        \"htl_email\": \"fnviveiro@fnhotels.com\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_hotel\": 4,\r\n        \"htl_name\": 12,\r\n        \"htl_phone\": 12,\r\n        \"htl_address\": 12,\r\n        \"htl_email\": 12\r\n    }\r\n}",
+					"raw": "{\r\n   \"data\": {\r\n        \"cl_nif\": \"44444444N\",\r\n        \"cl_name\": \"Ignacio Pérez\",\r\n        \"htl_phone\": \"988656565\",\r\n        \"htl_email\": \"ignacioperez@gmail.com\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"cl_email\": 12,\r\n        \"cl_name\": 12,\r\n        \"cl_phone\": 12,\r\n        \"id_client\": 4,\r\n        \"cl_nif\": 12\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -120,21 +120,21 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/hotels/hotel",
+					"raw": "localhost:33333/clients/client",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"hotels",
-						"hotel"
+						"clients",
+						"client"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "update hotel",
+			"name": "update client",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -155,7 +155,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"id_hotel\" : 2\r\n },\r\n    \"data\": {\r\n        \"htl_email\": \"emailcambiado@fnhotels.com\"\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_hotel\": 4,\r\n        \"htl_name\": 12,\r\n        \"htl_address\": 12,\r\n        \"htl_phone\": 12,\r\n        \"htl_email\": 12\r\n    }\r\n}",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_client\" : 3\r\n },\r\n    \"data\": {\r\n        \"cl_email\": \"emailcambiado@gmail.com\",\r\n        \"cl_phone\": \"765229933\"\r\n    },\r\n     \"sqltypes\": {\r\n       \"cl_email\": 12,\r\n        \"cl_name\": 12,\r\n        \"cl_phone\": 12,\r\n        \"id_client\": 4,\r\n        \"cl_nif\": 12\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -163,21 +163,21 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/hoteles/hotel",
+					"raw": "localhost:33333/clients/client",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"hoteles",
-						"hotel"
+						"clients",
+						"client"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "delete hotel",
+			"name": "delete client",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -198,7 +198,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n        \"id_hotel\": 5\r\n    }\r\n}",
+					"raw": "{\r\n    \"filter\": {\r\n        \"id_client\": 3\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -206,14 +206,14 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/hotels/hotel",
+					"raw": "localhost:33333/clients/client",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"hotels",
-						"hotel"
+						"clients",
+						"client"
 					]
 				}
 			},
