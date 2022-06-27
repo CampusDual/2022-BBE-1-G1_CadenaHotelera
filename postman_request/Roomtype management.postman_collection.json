@@ -1,0 +1,223 @@
+{
+	"info": {
+		"_postman_id": "4858a2c3-d955-4224-b429-673ffa028ebe",
+		"name": "Roomtype management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "get roomtype",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/roomtypes/roomtype?columns=id_room_type,rmt_name,rmt_capacity,rmt_price",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"roomtypes",
+						"roomtype"
+					],
+					"query": [
+						{
+							"key": "columns",
+							"value": "id_room_type,rmt_name,rmt_capacity,rmt_price"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search roomtype",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"id_room_type\": 1\r\n    },\r\n    \"columns\": [\"id_room_type\",\"rmt_name\",\"rmt_capacity\",\"rmt_price\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/roomtypes/roomtype/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"roomtypes",
+						"roomtype",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert roomtype",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {\r\n        \"rmt_name\": \"Triple\",\r\n        \"rmt_capacity\": 3,\r\n        \"rmt_price\": 65\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_room_type\": 4,\r\n        \"rmt_name\": 12,\r\n        \"rmt_capacity\": 4,\r\n        \"rmt_price\": 3\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/roomtypes/roomtype",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"roomtypes",
+						"roomtype"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update roomtype",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_room_type\" : 3\r\n },\r\n    \"data\": {\r\n        \"rmt_price\": 68\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_room_type\": 4,\r\n        \"rmt_name\": 12,\r\n        \"rmt_capacity\": 4,\r\n        \"rmt_price\": 3\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/roomtypes/roomtype",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"roomtypes",
+						"roomtype"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete roomtype",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n        \"id_room_type\": 3\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/roomtypes/roomtype",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"roomtypes",
+						"roomtype"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

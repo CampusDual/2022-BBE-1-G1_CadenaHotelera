@@ -1,0 +1,223 @@
+{
+	"info": {
+		"_postman_id": "5ad04d51-80b6-412b-855b-b2f78bff8dc7",
+		"name": "Hotel management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "get hotel",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/hoteles/hotel?columns=id_hotel,htl_nombre,htl_direccion,htl_email,htl_telefono",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hoteles",
+						"hotel"
+					],
+					"query": [
+						{
+							"key": "columns",
+							"value": "id_hotel,htl_nombre,htl_direccion,htl_email,htl_telefono"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search hotel",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"id_hotel\": 2\r\n    },\r\n    \"columns\": [\"id_hotel\",\"htl_name\",\"htl_phone\",\"htl_email\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hotels/hotel/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"hotel",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert hotel",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {\r\n        \"htl_name\": \"FN Burela\",\r\n        \"htl_phone\": \"982652299\",\r\n        \"htl_address\": \"Rúa Carlos V 22\",\r\n        \"htl_email\": \"fnviveiro@fnhotels.com\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_hotel\": 4,\r\n        \"htl_name\": 12,\r\n        \"htl_phone\": 12,\r\n        \"htl_address\": 12,\r\n        \"htl_email\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hotels/hotel",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"hotel"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update hotel",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_hotel\" : 2\r\n },\r\n    \"data\": {\r\n        \"htl_email\": \"emailcambiado@fnhotels.com\"\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_hotel\": 4,\r\n        \"htl_name\": 12,\r\n        \"htl_address\": 12,\r\n        \"htl_phone\": 12,\r\n        \"htl_email\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hoteles/hotel",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hoteles",
+						"hotel"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete hotel",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n        \"id_hotel\": 5\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hotels/hotel",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"hotel"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
