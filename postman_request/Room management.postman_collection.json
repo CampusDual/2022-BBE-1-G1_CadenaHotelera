@@ -1,0 +1,223 @@
+{
+	"info": {
+		"_postman_id": "f70a4708-8bad-41b5-9a55-d04cb3be833d",
+		"name": "Room management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "get rooms",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/rooms/room?columns=id_room,rm_room_type,rm_hotel,rm_number",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"rooms",
+						"room"
+					],
+					"query": [
+						{
+							"key": "columns",
+							"value": "id_room,rm_room_type,rm_hotel,rm_number"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search room",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"id_room\": 2\r\n    },\r\n    \"columns\": [\"id_room\",\"rm_room_type\",\"rm_hotel\",\"rm_number\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/rooms/room/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"rooms",
+						"room",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert room",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {\r\n        \"rm_room_type\": 2,\r\n        \"rm_hotel\": 2,\r\n        \"rm_number\": 303\r\n    },\r\n    \"sqltypes\": {\r\n        \"rm_hotel\": 4,\r\n        \"id_room\": 4,\r\n        \"rm_room_type\": 4,\r\n        \"rm_number\": 4\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/rooms/room",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"rooms",
+						"room"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update room",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_room\" : 2\r\n },\r\n    \"data\": {\r\n        \"rm_number\": 401\r\n    },\r\n     \"sqltypes\": {\r\n        \"rm_hotel\": 4,\r\n        \"id_room\": 4,\r\n        \"rm_room_type\": 4,\r\n        \"rm_number\": 4\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/rooms/room",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"rooms",
+						"room"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete room",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n        \"id_room\": 3\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/rooms/room",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"rooms",
+						"room"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
