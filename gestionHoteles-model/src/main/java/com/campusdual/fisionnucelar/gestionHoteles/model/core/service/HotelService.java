@@ -29,10 +29,12 @@ public class HotelService implements IHotelService {
 		if (searchResult!=null && searchResult.getCode()==EntityResult.OPERATION_WRONG) {
 			searchResult.setMessage("ERROR_WHILE_SEARCHING");
 		}
+		
+		System.out.println(keyMap);
 		return searchResult;
 	}
 	
-
+ 
 	@Override
 	public EntityResult hotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = this.daoHelper.insert(this.hotelDao, attrMap);
@@ -40,6 +42,7 @@ public class HotelService implements IHotelService {
 			insertResult.setMessage("ERROR_WHILE_INSERTING");
 		}else {
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
+			
 		}
 		return insertResult;
 	}
