@@ -27,54 +27,56 @@ import com.ontimize.jee.server.rest.ORestController;
 @RequestMapping("/bookings")
 public class BookingRestController extends ORestController<IBookingService> {
 
- @Autowired
- private IBookingService bookingService;
+	@Autowired
+	private IBookingService bookingService;
 
- @Override
- public IBookingService getService() {
-  return this.bookingService;
- }
- 
- 
- 
- @RequestMapping(value = "room/search", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
- public EntityResult roomAvaliableSearch(@RequestBody Map<String, Object> req) {
-  try {
-   System.out.println(req.isEmpty());
-   List<String> columns = (List<String>) req.get("columns");
-   Map<String, Object> filter = (Map<String, Object>) req.get("filter");
-   SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM"); 
-   String checkIn = (String) filter.get("bk_check_in");
-   String checkOut = (String) filter.get("bk_check_out");
-   Date startDate = formatter.parse(checkIn);
-   Date endDate = formatter.parse(checkOut);
-   Map<String, Object> key = new HashMap<String, Object>();
-   key.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
-     searchIfAvailable(BookingDao.ATTR_CHECK_IN,BookingDao.ATTR_CHECK_OUT, startDate,endDate));
-   return bookingService.bookingQuery(key, columns);
-  } catch (Exception e) {
-   e.printStackTrace();
-   EntityResult res = new EntityResultMapImpl();
-   res.setCode(EntityResult.OPERATION_WRONG);
-   return res;
+	@Override
+	public IBookingService getService() {
+		return this.bookingService;
+	}
 
-  }
- }
+	@RequestMapping(value = "room/search", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	public EntityResult roomAvaliableSearch(@RequestBody Map<String, Object> req) {
+		try {
+			System.out.println(req.isEmpty());
+			List<String> columns = (List<String>) req.get("columns");
+			Map<String, Object> filter = (Map<String, Object>) req.get("filter");
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
+			EntityResult result;
+			if (filter.get("bk_check_in") != null && filter.get("bk_check_out") != null) {
+				String checkIn = (String) filter.get("bk_check_in");
+				String checkOut = (String) filter.get("bk_check_out");
+				filter.remove("bk_check_in");
+				filter.remove("bk_check_out");
+				Date startDate = formatter.parse(checkIn);
+				Date endDate = formatter.parse(checkOut);
+				filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+						searchIfAvailable(BookingDao.ATTR_CHECK_IN, BookingDao.ATTR_CHECK_OUT, startDate, endDate));
+				result = bookingService.avroomsQuery(filter, columns);
+			} else {		
+				result = bookingService.avroomsQuery(filter, columns);
+				result.setCode(EntityResult.OPERATION_WRONG);
+				result.setMessage("CHECK IN AND CHECK OUT FIELDS NEEDED");
+			}
+			return result;
+		} catch (Exception e) {
+			e.printStackTrace();
+			EntityResult res = new EntityResultMapImpl();
+			res.setCode(EntityResult.OPERATION_WRONG);
+			return res;
 
- private BasicExpression searchIfAvailable(String checkIn,String checkOut, Date startDate,
-     Date endDate) {
-  
-   BasicField in = new BasicField(checkIn);
-   BasicField out = new BasicField(checkOut);
-   BasicExpression bexp1 = new BasicExpression(in, BasicOperator.LESS_OP, startDate);
-   BasicExpression bexp2 = new BasicExpression(out, BasicOperator.MORE_EQUAL_OP, endDate);
-   return new BasicExpression(bexp1, BasicOperator.AND_OP, bexp2);
-  }
- protected void processBasicExpression(String key, Map<Object, Object> keysValues, Object basicExpression) {
-     this.processBasicExpression(key, keysValues, basicExpression, new HashMap<>());
- }
- 
- 
- 
- 
+		}
+	}
+
+	private BasicExpression searchIfAvailable(String checkIn, String checkOut, Date startDate, Date endDate) {
+		BasicField in = new BasicField(checkIn);
+		BasicField out = new BasicField(checkOut);
+		BasicExpression bexp1 = new BasicExpression(in, BasicOperator.LESS_EQUAL_OP, startDate);
+		BasicExpression bexp2 = new BasicExpression(out, BasicOperator.LESS_EQUAL_OP, endDate);
+		return new BasicExpression(bexp1, BasicOperator.OR_OP, bexp2);
+	}
+
+	protected void processBasicExpression(String key, Map<Object, Object> keysValues, Object basicExpression) {
+		this.processBasicExpression(key, keysValues, basicExpression, new HashMap<>());
+	}
 }
