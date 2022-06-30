@@ -23,12 +23,25 @@ public class BookingService implements IBookingService {
   private DefaultOntimizeDaoHelper daoHelper;
 
   @Override
+  public EntityResult clientbookingsQuery(Map<String, Object> keyMap, List<String> attrList)
+	      throws OntimizeJEERuntimeException {
+	    EntityResult searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList,"CLIENT_BOOKINGS");
+	    if (searchResult!=null && searchResult.getCode()==EntityResult.OPERATION_WRONG) {
+	      searchResult.setMessage("ERROR_WHILE_SEARCHING");
+	    }
+	    if (searchResult.isEmpty()) searchResult.setMessage("THERE ARE NOT BOOKINGS ASSOCIATED WITH THAT CLIENT");   
+	    return searchResult;
+	  }
+  
+  
+  @Override
   public EntityResult bookingQuery(Map<String, Object> keyMap, List<String> attrList)
       throws OntimizeJEERuntimeException {
     EntityResult searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList);
     if (searchResult!=null && searchResult.getCode()==EntityResult.OPERATION_WRONG) {
       searchResult.setMessage("ERROR_WHILE_SEARCHING");
     }
+    if (searchResult.isEmpty()) searchResult.setMessage("THERE ARE NOT RESULTS");   
     return searchResult;
   }
   

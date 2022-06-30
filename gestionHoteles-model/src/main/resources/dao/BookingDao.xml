@@ -19,13 +19,31 @@
      SELECT
       DISTINCT #COLUMNS#
      FROM
-      ROOMS R
-     LEFT JOIN BOOKINGS B ON
+      ROOMS R LEFT JOIN BOOKINGS B ON
       B.BK_ROOM = R.ID_ROOM
       INNER JOIN HOTELS H ON R.RM_HOTEL=H.ID_HOTEL
+      INNER JOIN ROOM_TYPES RT ON
+      RT.ID_ROOM_TYPE=R.RM_ROOM_TYPE 
       WHERE B.BK_ROOM NOT IN
       (SELECT b.bk_room from bookings b
      #WHERE#)
+   ]]>
+   </Sentence>
+  </Query>
+  
+  
+  <Query id="CLIENT_BOOKINGS">
+   <Sentence>
+   <![CDATA[
+     SELECT
+      DISTINCT #COLUMNS#
+     FROM
+      ROOMS R LEFT JOIN BOOKINGS B ON
+      B.BK_ROOM = R.ID_ROOM
+      INNER JOIN HOTELS H ON R.RM_HOTEL=H.ID_HOTEL
+      INNER JOIN ROOM_TYPES RT ON
+      RT.ID_ROOM_TYPE=R.RM_ROOM_TYPE 
+     #WHERE#
    ]]>
    </Sentence>
   </Query>
