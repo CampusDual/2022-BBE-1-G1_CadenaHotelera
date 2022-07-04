@@ -13,7 +13,7 @@
  </UpdateKeys>
  <GeneratedKey>id_booking</GeneratedKey>
   <Queries>
- <Query id="AV_ROOMS">
+ <Query id="AVAILABLE_ROOMS">
    <Sentence>
    <![CDATA[
      SELECT
