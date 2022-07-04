@@ -14,6 +14,9 @@
  <GeneratedKey>id_booking</GeneratedKey>
   <Queries>
  <Query id="AVAILABLE_ROOMS">
+ <FunctionColumns>
+                <FunctionColumn name="bk_price" value="((BK_CHECK_OUT-BK_CHECK_IN)*RT.RMT_PRICE)"/>
+            </FunctionColumns>
    <Sentence>
    <![CDATA[
      SELECT

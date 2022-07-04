@@ -3,7 +3,6 @@ package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -150,34 +149,11 @@ public class BookingService implements IBookingService {
 
 		Date startDate = formatter.parse(requestCheckIn);
 		Date endDate = formatter.parse(requestCheckOut);	
-		
-	
-		
+				
 		keyMap.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
 				buildExpressionToSearchRooms(startDate, endDate));
 		result = this.daoHelper.query(this.bookingDao, keyMap, attrList, "AVAILABLE_ROOMS");
 
-		int days = (int) (((endDate.getTime()-startDate.getTime()) / (1000*60*60*24)));
-		
-		BigDecimal dayPrice;
-		double totalPrice;
-		
-		ArrayList<Double> x=new ArrayList<>();
-		Map<String, Object> prices = new HashMap<>();
-		
-		
-		for(int i=0;i<9;i++) {
-			if(result.getRecordValues(i).get("rmt_price")!=null) {
-			dayPrice= (BigDecimal) result.getRecordValues(i).get("rmt_price");
-			totalPrice=dayPrice.doubleValue()*days;
-			x.add(totalPrice);
-			}
-//			prices.put(String.valueOf(i),totalPrice);		
-		}
-		prices.put("bk_price", x);
-		result.addRecord(prices);
-//		result.put(6, prices);
-		
 		Map<String, Object> hotelFilter = new HashMap<>();
 		hotelFilter.put(hotelId, keyMap.get(hotelId));
 		return EntityResultTools.dofilter(result, hotelFilter);
