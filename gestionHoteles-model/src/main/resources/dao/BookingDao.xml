@@ -50,5 +50,28 @@
    ]]>
    </Sentence>
   </Query>
+  
+   <Query id="CLIENT_ACTIVE_BOOKINGS">
+   <Sentence>
+   <![CDATA[
+     SELECT
+      DISTINCT #COLUMNS#
+     FROM
+      ROOMS R LEFT JOIN BOOKINGS B ON
+      B.BK_ROOM = R.ID_ROOM
+      INNER JOIN HOTELS H ON R.RM_HOTEL=H.ID_HOTEL
+      INNER JOIN ROOM_TYPES RT ON
+      RT.ID_ROOM_TYPE=R.RM_ROOM_TYPE
+      INNER JOIN CLIENTS C ON C.ID_CLIENT=B.BK_CLIENT
+      WHERE B.BK_CHECK_IN>=CURRENT_DATE AND B.BK_LEAVING_DATE IS NULL
+     #WHERE_CONCAT#
+   ]]>
+   </Sentence>
+  </Query>
+  
+  
+  
+  
+  
  </Queries>
 </JdbcEntitySetup>

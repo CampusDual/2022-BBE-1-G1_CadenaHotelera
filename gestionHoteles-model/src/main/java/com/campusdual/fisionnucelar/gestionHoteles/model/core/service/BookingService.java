@@ -58,10 +58,24 @@ public class BookingService implements IBookingService {
 			searchResult.setMessage("ERROR_WHILE_SEARCHING");
 		}
 		if (searchResult.isEmpty())
-			searchResult.setMessage("THERE ARE NOT BOOKINGS ASSOCIATED WITH THAT CLIENT");
+			searchResult.setMessage("THERE ARE NOT ACTIVE BOOKINGS ASSOCIATED WITH THAT CLIENT");
 		return searchResult;
 	}
 
+	
+
+	@Override
+	public EntityResult clientactivebookingsQuery(Map<String, Object> keyMap, List<String> attrList) {
+		EntityResult searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_ACTIVE_BOOKINGS");
+		if (searchResult.getCode() == EntityResult.OPERATION_WRONG) {
+			searchResult.setMessage("ERROR_WHILE_SEARCHING");
+		}
+		if (searchResult.isEmpty())
+			searchResult.setMessage("THERE ARE NOT BOOKINGS ASSOCIATED WITH THAT CLIENT");
+		return searchResult;
+	}
+	
+	
 	
 	/**
 	 * 
@@ -159,6 +173,11 @@ public class BookingService implements IBookingService {
 		return EntityResultTools.dofilter(result, hotelFilter);
 	}
 
+	
+
+	
+	
+	
 	
 	/**
 	 * 
@@ -258,5 +277,7 @@ public class BookingService implements IBookingService {
 		}
 		return deleteResult;
 	}
+
+
 
 }
