@@ -6,7 +6,7 @@ import java.util.Map;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 /**
- * This class defines the queries over the booking table
+ * This interface defines the queries over the booking table
  *@since 27/06/2022
  *@version 1.0 
  *

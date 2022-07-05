@@ -16,7 +16,13 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.UserDao;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 
-
+/**
+ * This class builds the operations over the user table
+ * 
+ * @since 27/06/2022
+ * @version 1.0
+ *
+ */
 @Lazy
 @Service("UserService")
 public class UserService implements IUserService {

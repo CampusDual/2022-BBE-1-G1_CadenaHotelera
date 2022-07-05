@@ -1,8 +1,8 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
-import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +25,7 @@ import com.ontimize.jee.common.tools.EntityResultTools;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 
 /**
- * This class builds the queries over the bookings table
+ * This class builds the operations over the bookings table
  * 
  * @since 27/06/2022
  * @version 1.0
@@ -54,7 +54,7 @@ public class BookingService implements IBookingService {
 	public EntityResult clientbookingsQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_BOOKINGS");
-		if (searchResult != null && searchResult.getCode() == EntityResult.OPERATION_WRONG) {
+		if (searchResult.getCode() == EntityResult.OPERATION_WRONG) {
 			searchResult.setMessage("ERROR_WHILE_SEARCHING");
 		}
 		if (searchResult.isEmpty())
@@ -76,7 +76,7 @@ public class BookingService implements IBookingService {
 	public EntityResult bookingQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList);
-		if (searchResult != null && searchResult.getCode() == EntityResult.OPERATION_WRONG) {
+		if (searchResult.getCode() == EntityResult.OPERATION_WRONG) {
 			searchResult.setMessage("ERROR_WHILE_SEARCHING");
 		}
 		if (searchResult.isEmpty())
@@ -90,10 +90,10 @@ public class BookingService implements IBookingService {
 	 * a concrete hotel in a date range. We assume that we are receiving the correct
 	 * fields and the dates range has been previously checked.
 	 * 
-	 * 
 	 * @since 30/06/2022
 	 * @param The id of the hotel, the check-in and the check-out
-	 * @return The available rooms filtered by hotel
+	 * @return The available rooms filtered by hotel, with a calculated price
+	 * for the selected dates
 	 */
 	@Override
 	public EntityResult availableroomsQuery(Map<String, Object> keyMap, List<String> attrList)
@@ -206,7 +206,7 @@ public class BookingService implements IBookingService {
 	@Override
 	public EntityResult bookingInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
-		if (insertResult != null && insertResult.getCode() == EntityResult.OPERATION_WRONG) {
+		if (insertResult.getCode() !=EntityResult.OPERATION_SUCCESSFUL) {
 			insertResult.setMessage("ERROR_WHILE_INSERTING");
 		} else {
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
@@ -227,7 +227,7 @@ public class BookingService implements IBookingService {
 	public EntityResult bookingUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
-		if (updateResult != null && updateResult.getCode() == EntityResult.OPERATION_WRONG) {
+		if (updateResult.getCode() !=EntityResult.OPERATION_SUCCESSFUL) {
 			updateResult.setMessage("ERROR_WHILE_UPDATING");
 		} else {
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
@@ -245,9 +245,14 @@ public class BookingService implements IBookingService {
 	 */
 	@Override
 	public EntityResult bookingDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
+		List<String> fields = new ArrayList<>();
+		fields.add("id_booking");
+		EntityResult checkIfExists = daoHelper.query(bookingDao, keyMap, fields);
+		
 		EntityResult deleteResult = this.daoHelper.delete(this.bookingDao, keyMap);
-		if (deleteResult != null && deleteResult.getCode() == EntityResult.OPERATION_WRONG) {
-			deleteResult.setMessage("ERROR_WHILE_DELETING");
+		if (checkIfExists.isEmpty()) {
+			deleteResult.setMessage("ERROR_BOOKING_NOT_FOUND");
+			deleteResult.setCode(1);
 		} else {
 			deleteResult.setMessage("SUCCESSFUL_DELETE");
 		}

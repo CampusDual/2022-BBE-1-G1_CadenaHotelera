@@ -6,6 +6,12 @@ import java.util.Map;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 
+/**
+ * This interface defines the queries over the rooms table
+ *@since 27/06/2022
+ *@version 1.0 
+ *
+ */
 public interface IRoomService {
 
 	 // ROOM

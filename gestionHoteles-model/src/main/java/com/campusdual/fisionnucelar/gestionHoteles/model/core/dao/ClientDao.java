@@ -5,7 +5,12 @@ import org.springframework.stereotype.Repository;
 
 import com.ontimize.jee.server.dao.common.ConfigurationFile;
 import com.ontimize.jee.server.dao.jdbc.OntimizeJdbcDaoSupport;
-
+/**
+ * This class represents the clients
+ *@since 27/06/2022
+ *@version 1.0 
+ *
+ */
 @Repository("ClientDao")
 @Lazy
 @ConfigurationFile(configurationFile = "dao/ClientDao.xml", configurationFilePlaceholder = "dao/placeholders.properties")

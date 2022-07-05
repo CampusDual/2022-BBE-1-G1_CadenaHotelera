@@ -13,7 +13,12 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IUserService
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.server.rest.ORestController;
 
-
+/**
+ * This class listens the incoming requests related with the users table
+ *@since 30/06/2022
+ *@version 1.0 
+ *
+ */
 @RestController
 @RequestMapping("/users")
 public class UserRestController extends ORestController<IUserService> {

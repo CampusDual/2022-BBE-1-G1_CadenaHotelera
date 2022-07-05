@@ -6,6 +6,12 @@ import org.springframework.stereotype.Repository;
 import com.ontimize.jee.server.dao.common.ConfigurationFile;
 import com.ontimize.jee.server.dao.jdbc.OntimizeJdbcDaoSupport;
 
+/**
+ * This class represents the rooms
+ *@since 27/06/2022
+ *@version 1.0 
+ *
+ */
 @Repository("RoomDao")
 @Lazy
 @ConfigurationFile(configurationFile = "dao/RoomDao.xml", configurationFilePlaceholder = "dao/placeholders.properties")

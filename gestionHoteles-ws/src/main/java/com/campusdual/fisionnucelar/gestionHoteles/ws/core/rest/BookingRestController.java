@@ -10,7 +10,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingServ
 import com.ontimize.jee.server.rest.ORestController;
 
 /**
- * This class listens the incoming requests 
+ * This class listens the incoming requests related with the bookings table
  *@since 30/06/2022
  *@version 1.0 
  *
@@ -18,7 +18,6 @@ import com.ontimize.jee.server.rest.ORestController;
 @RestController
 @RequestMapping("/bookings")
 public class BookingRestController extends ORestController<IBookingService> {
-
 	@Autowired
 	private IBookingService bookingService;
 
@@ -26,5 +25,4 @@ public class BookingRestController extends ORestController<IBookingService> {
 	public IBookingService getService() {
 		return this.bookingService;
 	}
-
 }
