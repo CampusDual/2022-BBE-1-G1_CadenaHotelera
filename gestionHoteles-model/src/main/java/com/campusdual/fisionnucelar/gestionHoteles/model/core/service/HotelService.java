@@ -93,27 +93,4 @@ public class HotelService implements IHotelService {
 		return updateResult;
 	}
 
-	
-	/**
-	 * 
-	 * Deletes a existing register on the hotels table
-	 * 
-	 * @since 27/06/2022
-	 * @param The id of the hotel
-	 * @return A message with the operation result
-	 */
-	@Override
-	public EntityResult hotelDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
-		List<String> fields = new ArrayList<>();
-		fields.add("id_hotel");
-		EntityResult checkIfExists = daoHelper.query(hotelDao, keyMap, fields);
-		
-		EntityResult deleteResult = this.daoHelper.delete(this.hotelDao, keyMap);
-		if (checkIfExists.isEmpty()) {
-			deleteResult.setMessage("ERROR_HOTEL_NOT_FOUND");
-			deleteResult.setCode(1);
-		} else {
-			deleteResult.setMessage("SUCCESSFUL_DELETE");
-		}
-		return deleteResult;
-	}}
+	}

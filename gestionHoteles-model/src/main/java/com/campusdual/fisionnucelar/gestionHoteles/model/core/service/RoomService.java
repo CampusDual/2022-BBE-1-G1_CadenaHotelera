@@ -97,27 +97,5 @@ public class RoomService implements IRoomService {
 		return updateResult;
 	}
 
-	/**
-	 * 
-	 * Deletes a existing register on the rooms table
-	 * 
-	 * @since 27/06/2022
-	 * @param The id of the room
-	 * @return A message with the operation result
-	 */
-	@Override
-	public EntityResult roomDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
-		List<String> fields = new ArrayList<>();
-		fields.add("id_room");
-		EntityResult checkIfExists = daoHelper.query(roomDao, keyMap, fields);
 
-		EntityResult deleteResult = this.daoHelper.delete(this.roomDao, keyMap);
-		if (checkIfExists.isEmpty()) {
-			deleteResult.setMessage("ERROR_ROOM_NOT_FOUND");
-			deleteResult.setCode(1);
-		} else {
-			deleteResult.setMessage("SUCCESSFUL_DELETE");
-		}
-		return deleteResult;
-	}
 }

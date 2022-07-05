@@ -29,7 +29,8 @@
       RT.ID_ROOM_TYPE=R.RM_ROOM_TYPE 
       WHERE B.BK_ROOM NOT IN
       (SELECT b.bk_room from bookings b
-     #WHERE#)
+      WHERE B.BK_LEAVING_DATE IS NULL
+     #WHERE_CONCAT#)
    ]]>
    </Sentence>
   </Query>
@@ -46,7 +47,8 @@
       INNER JOIN HOTELS H ON R.RM_HOTEL=H.ID_HOTEL
       INNER JOIN ROOM_TYPES RT ON
       RT.ID_ROOM_TYPE=R.RM_ROOM_TYPE 
-     #WHERE#
+      WHERE B.BK_LEAVING_DATE IS NULL
+     #WHERE_CONCAT#
    ]]>
    </Sentence>
   </Query>
@@ -68,10 +70,6 @@
    ]]>
    </Sentence>
   </Query>
-  
-  
-  
-  
   
  </Queries>
 </JdbcEntitySetup>

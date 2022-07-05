@@ -1,8 +1,10 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -63,7 +65,16 @@ public class BookingService implements IBookingService {
 	}
 
 	
-
+	/**
+	 * 
+	 * Executes a query over the bookings table filtered by client and showings only
+	 * the active bookings
+	 * 
+	 * @since 27/06/2022
+	 * @param The filters and the fields of the query
+	 * @return The columns from the bookings table especified in the params and a
+	 *         message with the operation result
+	 */
 	@Override
 	public EntityResult clientactivebookingsQuery(Map<String, Object> keyMap, List<String> attrList) {
 		EntityResult searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_ACTIVE_BOOKINGS");
@@ -79,7 +90,8 @@ public class BookingService implements IBookingService {
 	
 	/**
 	 * 
-	 * Executes a generic query over the bookings table
+	 * Executes a generic query over the bookings table. It shows all the historic
+	 * bookings, even the discharged ones
 	 * 
 	 * @since 27/06/2022
 	 * @param The filters and the fields of the query
@@ -123,10 +135,6 @@ public class BookingService implements IBookingService {
 				resultsByHotel.setCode(EntityResult.OPERATION_WRONG);
 				resultsByHotel.setMessage("ID_HOTEL, CHECK IN AND CHECK OUT FIELDS NEEDED");
 			}
-
-//Faltaría devolver un mensaje si no encuentra habitaciones      
-//      if (resultsByHotel.get("id_room")=="")
-//        resultsByHotel.setMessage("THERE ARE NOT ROOMS AVAILABLE");
 		} catch (ParseException e) {
 			e.printStackTrace();
 			EntityResult res = new EntityResultMapImpl();
@@ -173,12 +181,7 @@ public class BookingService implements IBookingService {
 		return EntityResultTools.dofilter(result, hotelFilter);
 	}
 
-	
 
-	
-	
-	
-	
 	/**
 	 * 
 	 * Builds a Basic expression to search the occupied rooms on a date range
@@ -223,7 +226,9 @@ public class BookingService implements IBookingService {
 	 * @return The id of the new register and a message with the operation result
 	 */
 	@Override
-	public EntityResult bookingInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
+	public EntityResult bookingInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {	
+		attrMap.put("bk_entry_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
+		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));		
 		EntityResult insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
 		if (insertResult.getCode() !=EntityResult.OPERATION_SUCCESSFUL) {
 			insertResult.setMessage("ERROR_WHILE_INSERTING");
@@ -245,6 +250,8 @@ public class BookingService implements IBookingService {
 	@Override
 	public EntityResult bookingUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
+		
+		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));		
 		EntityResult updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
 		if (updateResult.getCode() !=EntityResult.OPERATION_SUCCESSFUL) {
 			updateResult.setMessage("ERROR_WHILE_UPDATING");
@@ -264,19 +271,40 @@ public class BookingService implements IBookingService {
 	 */
 	@Override
 	public EntityResult bookingDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
-		List<String> fields = new ArrayList<>();
-		fields.add("id_booking");
-		EntityResult checkIfExists = daoHelper.query(bookingDao, keyMap, fields);
-		
-		EntityResult deleteResult = this.daoHelper.delete(this.bookingDao, keyMap);
-		if (checkIfExists.isEmpty()) {
+		Map<Object, Object> attrMap = new HashMap<>();
+		attrMap.put("bk_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));	
+		EntityResult deleteResult = new EntityResultMapImpl();		
+		if (checkIfBookingExists(keyMap)) {
 			deleteResult.setMessage("ERROR_BOOKING_NOT_FOUND");
 			deleteResult.setCode(1);
-		} else {
+		}
+		else {				
+			deleteResult=this.daoHelper.update(this.bookingDao, attrMap, keyMap);
 			deleteResult.setMessage("SUCCESSFUL_DELETE");
 		}
 		return deleteResult;
 	}
+	
+
+	/**
+	   * 
+	   * Puts a leaving date on a client. If the client doesn't exists
+	   * or has active reservations returns an error message
+	   * 
+	   * @since 05/07/2022
+	   * @param The id of the client
+	   * @return True if the client exists, false if it does't exists
+	   */
+	private boolean checkIfBookingExists(Map<String, Object> keyMap) {
+		List<String> fields = new ArrayList<>();
+		fields.add("id_booking");
+		EntityResult existingBookings = daoHelper.query(bookingDao, keyMap, fields);	
+		return existingBookings.isEmpty();
+		
+	}
+	
+	
+	
 
 
 
