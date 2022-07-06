@@ -175,49 +175,6 @@
 				}
 			},
 			"response": []
-		},
-		{
-			"name": "delete room",
-			"request": {
-				"auth": {
-					"type": "basic",
-					"basic": [
-						{
-							"key": "username",
-							"value": "demo",
-							"type": "string"
-						},
-						{
-							"key": "password",
-							"value": "demouser",
-							"type": "string"
-						}
-					]
-				},
-				"method": "DELETE",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n        \"id_room\": 3\r\n    }\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:33333/rooms/room",
-					"host": [
-						"localhost"
-					],
-					"port": "33333",
-					"path": [
-						"rooms",
-						"room"
-					]
-				}
-			},
-			"response": []
 		}
 	]
 }

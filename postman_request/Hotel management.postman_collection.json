@@ -163,49 +163,6 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/hoteles/hotel",
-					"host": [
-						"localhost"
-					],
-					"port": "33333",
-					"path": [
-						"hoteles",
-						"hotel"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "delete hotel",
-			"request": {
-				"auth": {
-					"type": "basic",
-					"basic": [
-						{
-							"key": "username",
-							"value": "demo",
-							"type": "string"
-						},
-						{
-							"key": "password",
-							"value": "demouser",
-							"type": "string"
-						}
-					]
-				},
-				"method": "DELETE",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n        \"id_hotel\": 5\r\n    }\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
 					"raw": "localhost:33333/hotels/hotel",
 					"host": [
 						"localhost"

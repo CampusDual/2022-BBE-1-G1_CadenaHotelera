@@ -1,13 +1,13 @@
 {
 	"info": {
-		"_postman_id": "f18a3a30-dce1-4eaa-938c-f3698bd3da1a",
-		"name": "Client management",
+		"_postman_id": "ecbea4a8-9a99-454b-9b19-18e0779ecf14",
+		"name": "Booking management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "20964318"
 	},
 	"item": [
 		{
-			"name": "get client",
+			"name": "get bookings",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -27,19 +27,19 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:33333/clients/client?columns=id_client,cl_nif,cl_name,cl_email,cl_phone",
+					"raw": "localhost:33333/bookings/booking?columns=id_booking,bk_check_in,bk_check_out,bk_room,bk_client",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"clients",
-						"client"
+						"bookings",
+						"booking"
 					],
 					"query": [
 						{
 							"key": "columns",
-							"value": "id_client,cl_nif,cl_name,cl_email,cl_phone"
+							"value": "id_booking,bk_check_in,bk_check_out,bk_room,bk_client"
 						}
 					]
 				}
@@ -47,7 +47,7 @@
 			"response": []
 		},
 		{
-			"name": "search client",
+			"name": "search available rooms",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -68,7 +68,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n     \"id_client\": 2\r\n    },\r\n    \"columns\": [\"id_client\",\"cl_nif\",\"cl_name\",\"cl_phone\",\"cl_email\"]\r\n}",
+					"raw": "{\r\n    \"filter\": {\r\n    \"id_hotel\":1,\r\n    \"bk_check_in\": \"2021-04-04\",\r\n     \"bk_check_out\": \"2021-06-04\"\r\n    },\r\n    \"columns\": [\"id_hotel,id_room\",\"rm_number\",\"rmt_name\",\"htl_name\",\"bk_price\"]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -76,14 +76,14 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/clients/client/search",
+					"raw": "localhost:33333/bookings/availablerooms/search",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"clients",
-						"client",
+						"bookings",
+						"availablerooms",
 						"search"
 					]
 				}
@@ -91,7 +91,7 @@
 			"response": []
 		},
 		{
-			"name": "insert client",
+			"name": "search bookings by client",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -112,7 +112,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n   \"data\": {\r\n        \"cl_nif\": \"44444444N\",\r\n        \"cl_name\": \"Ignacio Pérez\",\r\n        \"cl_phone\": \"988656565\",\r\n        \"cl_email\": \"ignacioperez@gmail.com\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"cl_email\": 12,\r\n        \"cl_name\": 12,\r\n        \"cl_phone\": 12,\r\n        \"id_client\": 4,\r\n        \"cl_nif\": 12\r\n    }\r\n}",
+					"raw": "{\r\n    \"filter\": {\r\n     \"bk_client\": 1\r\n    },\r\n    \"columns\": [\"id_booking\",\"bk_check_in\",\"bk_check_out\",\"bk_room\",\"htl_name\",\"htl_address\",\"htl_phone\",\"htl_email\"]\r\n}\r\n",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -120,21 +120,51 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/clients/client",
+					"raw": "localhost:33333/bookings/clientbookings/search",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"clients",
-						"client"
+						"bookings",
+						"clientbookings",
+						"search"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "update client",
+			"name": "search active bookings by client",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"bk_client\": 1\r\n    },\r\n    \"columns\": [\"id_booking\",\"bk_check_in\",\"bk_check_out\",\"bk_room\",\"htl_name\",\"htl_address\",\"htl_phone\",\"htl_email\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/clientactivebookings/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"clientactivebookings",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert booking",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -151,11 +181,11 @@
 						}
 					]
 				},
-				"method": "PUT",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"id_client\" : 3\r\n },\r\n    \"data\": {\r\n        \"cl_email\": \"emailcambiado@gmail.com\",\r\n        \"cl_phone\": \"765229933\"\r\n    },\r\n     \"sqltypes\": {\r\n       \"cl_email\": 12,\r\n        \"cl_name\": 12,\r\n        \"cl_phone\": 12,\r\n        \"id_client\": 4,\r\n        \"cl_nif\": 12\r\n    }\r\n}",
+					"raw": "{\r\n   \"data\": {   \r\n        \"bk_room\": 5,\r\n        \"bk_client\": 1,\r\n        \"bk_check_in\": \"2025-11-11\",\r\n        \"bk_check_out\": \"2025-12-12\",\r\n        \"bk_price\":100\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_booking\": 4,\r\n        \"bk_client\": 4,\r\n        \"bk_room\": 4,\r\n        \"bk_check_in\": 91,\r\n        \"bk_check_out\": 91,\r\n        \"bk_price\":4\r\n    }\r\n}\r\n",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -163,21 +193,21 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/clients/client",
+					"raw": "localhost:33333/bookings/booking",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"clients",
-						"client"
+						"bookings",
+						"booking"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "delete client",
+			"name": "delete booking",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -198,7 +228,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n        \"id_client\": 11\r\n    }\r\n}",
+					"raw": "{\r\n    \"filter\": {\r\n        \"id_booking\": 45\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -206,14 +236,14 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/clients/client",
+					"raw": "localhost:33333/bookings/booking",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"clients",
-						"client"
+						"bookings",
+						"booking"
 					]
 				}
 			},
