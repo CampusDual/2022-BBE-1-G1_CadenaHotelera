@@ -152,7 +152,6 @@ public class ClientService implements IClientService {
 		fields.add("id_client");
 		EntityResult existingClients = daoHelper.query(clientDao, keyMap, fields);	
 		return existingClients.isEmpty();
-		
 	}
 	
 	
