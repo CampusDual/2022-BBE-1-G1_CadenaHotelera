@@ -6,14 +6,18 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 
+import utilities.Control;
 
 /**
  * This class builds the operations over the hotels table
@@ -26,12 +30,18 @@ import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 @Lazy
 public class HotelService implements IHotelService {
 
- @Autowired
- private HotelDao hotelDao;
- @Autowired
- private DefaultOntimizeDaoHelper daoHelper;
+	@Autowired
+	private HotelDao hotelDao;
+	@Autowired
+	private DefaultOntimizeDaoHelper daoHelper;
 
- 
+	private Control control;
+
+	public HotelService() {
+		super();
+		this.control = new Control();
+	}
+
 	/**
 	 * 
 	 * Executes a generic query over the hotels table
@@ -41,20 +51,20 @@ public class HotelService implements IHotelService {
 	 * @return The columns from the hotels table especified in the params and a
 	 *         message with the operation result
 	 */
- @Override
+	@Override
 	public EntityResult hotelQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = this.daoHelper.query(this.hotelDao, keyMap, attrList);
-		if (searchResult!=null && searchResult.getCode()!=EntityResult.OPERATION_SUCCESSFUL) {
+		if (searchResult != null && searchResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
 			searchResult.setMessage("ERROR_WHILE_SEARCHING");
 		}
 		return searchResult;
 	}
-	
- /**
+
+	/**
 	 * 
-	 * Adds a new register on the hotels table. We assume that we are receiving
-	 * the correct fields
+	 * Adds a new register on the hotels table. We assume that we are receiving the
+	 * correct fields
 	 * 
 	 * @since 27/06/2022
 	 * @param The fields of the new register
@@ -62,20 +72,22 @@ public class HotelService implements IHotelService {
 	 */
 	@Override
 	public EntityResult hotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
-		EntityResult insertResult = this.daoHelper.insert(this.hotelDao, attrMap);
-		if (insertResult!=null && insertResult.getCode()!=EntityResult.OPERATION_SUCCESSFUL) {
-			insertResult.setMessage("ERROR_WHILE_INSERTING");
-		}else {
-			insertResult.setMessage("SUCCESSFUL_INSERTION");
-			
+		EntityResult insertResult = new EntityResultMapImpl();
+		try {
+			insertResult = this.daoHelper.insert(this.hotelDao, attrMap);
+			insertResult.setMessage("SUCESSFUL_INSERTION");
+		} catch (DuplicateKeyException e) {
+			control.setErrorMessage(insertResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
+		}catch (DataIntegrityViolationException e) {
+			control.setErrorMessage(insertResult, "HOTEL_NAME_AND_EMAIL_REQUIRED");
 		}
 		return insertResult;
 	}
-	
+
 	/**
 	 * 
 	 * Updates a existing register on the hotels table. We assume that we are
-	 * receiving the correct fields 
+	 * receiving the correct fields
 	 * 
 	 * @since 27/06/2022
 	 * @param The fields to be updated
@@ -84,13 +96,25 @@ public class HotelService implements IHotelService {
 	@Override
 	public EntityResult hotelUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
-		EntityResult updateResult = this.daoHelper.update(this.hotelDao, attrMap, keyMap);
-		if (updateResult!=null && updateResult.getCode()!=EntityResult.OPERATION_SUCCESSFUL) {
-			updateResult.setMessage("ERROR_WHILE_UPDATING");
-		}else {
-			updateResult.setMessage("SUCCESSFUL_UPDATE");
+		EntityResult updateResult = new EntityResultMapImpl();
+		try {
+			if (checkIfHotelExists(attrMap)) {
+				control.setErrorMessage(updateResult, "HOTEL_DOESN'T_EXISTS");
+			} else {
+				updateResult = this.daoHelper.update(this.hotelDao, attrMap, keyMap);
+				updateResult.setMessage("SUCESSFUL_UPDATE");
+			}
+		} catch (DuplicateKeyException e) {
+			control.setErrorMessage(updateResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
 		}
 		return updateResult;
 	}
 
+	private boolean checkIfHotelExists(Map<String, Object> attrMap) {
+		List<String> attrList = new ArrayList<>();
+		attrList.add("id_hotel");
+		EntityResult existingHotel = hotelQuery(attrMap, attrList);
+		return !(existingHotel.isEmpty());
 	}
+
+}

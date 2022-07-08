@@ -26,6 +26,8 @@ import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.common.tools.EntityResultTools;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 
+import utilities.Control;
+
 /**
  * This class builds the operations over the bookings table
  * 
@@ -42,6 +44,13 @@ public class BookingService implements IBookingService {
 	private BookingDao bookingDao;
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
+
+	private Control control;
+
+	public BookingService() {
+		super();
+		this.control = new Control();
+	}
 
 	/**
 	 * 
@@ -64,7 +73,6 @@ public class BookingService implements IBookingService {
 		return searchResult;
 	}
 
-	
 	/**
 	 * 
 	 * Executes a query over the bookings table filtered by client and showings only
@@ -85,9 +93,7 @@ public class BookingService implements IBookingService {
 			searchResult.setMessage("THERE ARE NOT BOOKINGS ASSOCIATED WITH THAT CLIENT");
 		return searchResult;
 	}
-	
-	
-	
+
 	/**
 	 * 
 	 * Executes a generic query over the bookings table. It shows all the historic
@@ -118,8 +124,8 @@ public class BookingService implements IBookingService {
 	 * 
 	 * @since 30/06/2022
 	 * @param The id of the hotel, the check-in and the check-out
-	 * @return The available rooms filtered by hotel, with a calculated price
-	 * for the selected dates
+	 * @return The available rooms filtered by hotel, with a calculated price for
+	 *         the selected dates
 	 */
 	@Override
 	public EntityResult availableroomsQuery(Map<String, Object> keyMap, List<String> attrList)
@@ -170,8 +176,8 @@ public class BookingService implements IBookingService {
 		keyMap.remove(checkOut);
 
 		Date startDate = formatter.parse(requestCheckIn);
-		Date endDate = formatter.parse(requestCheckOut);	
-				
+		Date endDate = formatter.parse(requestCheckOut);
+
 		keyMap.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
 				buildExpressionToSearchRooms(startDate, endDate));
 		result = this.daoHelper.query(this.bookingDao, keyMap, attrList, "AVAILABLE_ROOMS");
@@ -180,7 +186,6 @@ public class BookingService implements IBookingService {
 		hotelFilter.put(hotelId, keyMap.get(hotelId));
 		return EntityResultTools.dofilter(result, hotelFilter);
 	}
-
 
 	/**
 	 * 
@@ -226,11 +231,11 @@ public class BookingService implements IBookingService {
 	 * @return The id of the new register and a message with the operation result
 	 */
 	@Override
-	public EntityResult bookingInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {	
+	public EntityResult bookingInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		attrMap.put("bk_entry_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
-		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));		
+		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		EntityResult insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
-		if (insertResult.getCode() !=EntityResult.OPERATION_SUCCESSFUL) {
+		if (insertResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
 			insertResult.setMessage("ERROR_WHILE_INSERTING");
 		} else {
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
@@ -250,10 +255,10 @@ public class BookingService implements IBookingService {
 	@Override
 	public EntityResult bookingUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
-		
-		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));		
+
+		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		EntityResult updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
-		if (updateResult.getCode() !=EntityResult.OPERATION_SUCCESSFUL) {
+		if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
 			updateResult.setMessage("ERROR_WHILE_UPDATING");
 		} else {
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
@@ -272,40 +277,33 @@ public class BookingService implements IBookingService {
 	@Override
 	public EntityResult bookingDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
 		Map<Object, Object> attrMap = new HashMap<>();
-		attrMap.put("bk_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));	
-		EntityResult deleteResult = new EntityResultMapImpl();		
+		attrMap.put("bk_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
+		EntityResult deleteResult = new EntityResultMapImpl();
 		if (checkIfBookingExists(keyMap)) {
 			deleteResult.setMessage("ERROR_BOOKING_NOT_FOUND");
 			deleteResult.setCode(1);
-		}
-		else {				
-			deleteResult=this.daoHelper.update(this.bookingDao, attrMap, keyMap);
+		} else {
+			deleteResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
 			deleteResult.setMessage("SUCCESSFUL_DELETE");
 		}
 		return deleteResult;
 	}
-	
 
 	/**
-	   * 
-	   * Puts a leaving date on a client. If the client doesn't exists
-	   * or has active reservations returns an error message
-	   * 
-	   * @since 05/07/2022
-	   * @param The id of the client
-	   * @return True if the client exists, false if it does't exists
-	   */
+	 * 
+	 * Puts a leaving date on a client. If the client doesn't exists or has active
+	 * reservations returns an error message
+	 * 
+	 * @since 05/07/2022
+	 * @param The id of the client
+	 * @return True if the client exists, false if it does't exists
+	 */
 	private boolean checkIfBookingExists(Map<String, Object> keyMap) {
 		List<String> fields = new ArrayList<>();
 		fields.add("id_booking");
-		EntityResult existingBookings = daoHelper.query(bookingDao, keyMap, fields);	
+		EntityResult existingBookings = daoHelper.query(bookingDao, keyMap, fields);
 		return existingBookings.isEmpty();
-		
+
 	}
-	
-	
-	
-
-
 
 }

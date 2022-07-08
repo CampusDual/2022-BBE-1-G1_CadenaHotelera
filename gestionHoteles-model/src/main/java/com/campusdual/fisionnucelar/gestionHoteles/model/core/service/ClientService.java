@@ -19,6 +19,8 @@ import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
+
+import utilities.Control;
 /**
  * This class listens the incoming requests related with the clients table
  *@since 30/06/2022
@@ -41,6 +43,12 @@ public class ClientService implements IClientService {
 	@Autowired
 	private IBookingService bookingService;
 	
+	private Control control;
+
+	public ClientService() {
+		super();
+		this.control = new Control();
+	}
 
 	/**
 	   * 
