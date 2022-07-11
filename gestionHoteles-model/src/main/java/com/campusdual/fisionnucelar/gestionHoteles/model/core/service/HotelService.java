@@ -98,7 +98,7 @@ public class HotelService implements IHotelService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfHotelExists(attrMap);
+			checkIfHotelExists(keyMap);
 			updateResult = this.daoHelper.update(this.hotelDao, attrMap, keyMap);
 			updateResult.setMessage("SUCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {

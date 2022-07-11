@@ -102,7 +102,7 @@ public class RoomTypeService implements IRoomTypeService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfRoomTypeExists(attrMap);
+			checkIfRoomTypeExists(keyMap);
 			updateResult = this.daoHelper.update(this.roomTypeDao, attrMap, keyMap);
 			updateResult.setMessage("SUCESSFUL_UPDATE");
 		} catch (BadSqlGrammarException e) {

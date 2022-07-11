@@ -12,10 +12,15 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingService;
+import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IClientService;
+import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.db.SQLStatementBuilder;
 import com.ontimize.jee.common.db.SQLStatementBuilder.BasicExpression;
@@ -45,6 +50,12 @@ public class BookingService implements IBookingService {
 	private DefaultOntimizeDaoHelper daoHelper;
 
 	private Control control;
+
+	@Autowired
+	private IRoomService roomService;
+
+	@Autowired
+	private IClientService clientService;
 
 	public BookingService() {
 		super();
@@ -233,19 +244,26 @@ public class BookingService implements IBookingService {
 	public EntityResult bookingInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		attrMap.put("bk_entry_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
-		EntityResult insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
-		if (insertResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
-			insertResult.setMessage("ERROR_WHILE_INSERTING");
-		} else {
-			insertResult.setMessage("SUCCESSFUL_INSERTION");
+		EntityResult insertResult = new EntityResultMapImpl();
+		try {
+			if (attrMap.containsKey("bk_client"))
+				checkIfClientExists(attrMap);
+			if (attrMap.containsKey("bk_room"))
+				checkIfRoomExists(attrMap);
+			insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
+		} catch (DuplicateKeyException e) {
+			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
+		} catch (RecordNotFoundException e) {
+			control.setErrorMessage(insertResult, e.getMessage());
+		} catch (DataIntegrityViolationException e) {
+			control.setErrorMessage(insertResult, "ROOM_CLIENT_CHECK_IN_AND_CHECK_OUT_REQUIRED");
 		}
 		return insertResult;
 	}
 
 	/**
 	 * 
-	 * Updates a existing register on the bookings table. We assume that we are
-	 * receiving the correct fields and the dates range has been previously checked
+	 * TO DO, NOT FUNCIONAL
 	 * 
 	 * @since 27/06/2022
 	 * @param The fields to be updated
@@ -303,6 +321,28 @@ public class BookingService implements IBookingService {
 		EntityResult existingBookings = daoHelper.query(bookingDao, keyMap, fields);
 		return existingBookings.isEmpty();
 
+	}
+
+	private boolean checkIfClientExists(Map<String, Object> attrMap) {
+		List<String> attrList = new ArrayList<>();
+		attrList.add("id_client");
+		Map<String, Object> keyMap = new HashMap<>();
+		keyMap.put("id_client", attrMap.get("bk_client"));
+		EntityResult existingClient = clientService.clientQuery(keyMap, attrList);
+		if (existingClient.isEmpty())
+			throw new RecordNotFoundException("CLIENT_DOESN'T_EXISTS");
+		return existingClient.isEmpty();
+	}
+
+	private boolean checkIfRoomExists(Map<String, Object> attrMap) {
+		List<String> attrList = new ArrayList<>();
+		attrList.add("id_room");
+		Map<String, Object> keyMap = new HashMap<>();
+		keyMap.put("id_room", attrMap.get("bk_room"));
+		EntityResult existingRoom = roomService.roomQuery(keyMap, attrList);
+		if (existingRoom.isEmpty())
+			throw new RecordNotFoundException("ROOM_DOESN'T_EXISTS");
+		return existingRoom.isEmpty();
 	}
 
 }

@@ -85,20 +85,19 @@ public class RoomService implements IRoomService {
 	public EntityResult roomInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
-			if (!checkIfHotelExists(attrMap)) {
-				control.setErrorMessage(insertResult, "HOTEL_DOESNT_EXISTS");
-			} else if (!checkIfRoomTypeExists(attrMap)) {
-				control.setErrorMessage(insertResult, "ROOM_TYPE_DOESNT_EXISTS");
-			} else {
-				insertResult = this.daoHelper.insert(this.roomDao, attrMap);
+			if (attrMap.containsKey("rm_hotel")) {
+				checkIfHotelExists(attrMap);
 			}
+			if (attrMap.containsKey("rm_room_type")) {
+				checkIfRoomTypeExists(attrMap);
+			}
+			insertResult = this.daoHelper.insert(this.roomDao, attrMap);
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
-			
-			// a esta no llega
-		}catch (DataIntegrityViolationException e) {
-			control.setErrorMessage(insertResult, "ALL_FIELDS_REQUIRED");
+		}catch (RecordNotFoundException e) {
+			control.setErrorMessage(insertResult, e.getMessage());
 		}
+
 		return insertResult;
 	}
 
@@ -118,9 +117,13 @@ public class RoomService implements IRoomService {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
 			checkIfRoomExists(keyMap);
-			checkIfHotelExists(attrMap);
-			checkIfRoomTypeExists(attrMap);
-			updateResult = this.daoHelper.insert(this.roomDao, attrMap);
+			if (attrMap.containsKey("rm_hotel")) {
+				checkIfHotelExists(attrMap);
+			}
+			if (attrMap.containsKey("rm_room_type")) {
+				checkIfRoomTypeExists(attrMap);
+			}
+			updateResult = this.daoHelper.update(this.roomDao, attrMap, keyMap);
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "ROOM_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
@@ -133,7 +136,8 @@ public class RoomService implements IRoomService {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_room");
 		EntityResult existingRoom = roomQuery(attrMap, attrList);
-		if(existingRoom.isEmpty()) throw new RecordNotFoundException("ROOM_DOESN'T_EXISTS");
+		if (existingRoom.isEmpty())
+			throw new RecordNotFoundException("ROOM_DOESN'T_EXISTS");
 		return existingRoom.isEmpty();
 	}
 
@@ -143,7 +147,8 @@ public class RoomService implements IRoomService {
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_hotel", attrMap.get("rm_hotel"));
 		EntityResult existingHotel = hotelService.hotelQuery(keyMap, attrList);
-		if(existingHotel.isEmpty()) throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
+		if (existingHotel.isEmpty())
+			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
 		return existingHotel.isEmpty();
 	}
 
@@ -153,7 +158,8 @@ public class RoomService implements IRoomService {
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_room_type", attrMap.get("rm_room_type"));
 		EntityResult existingRoomType = roomTypeService.roomtypeQuery(keyMap, attrList);
-		if(existingRoomType.isEmpty()) throw new RecordNotFoundException("ROOMTYPE_DOESN'T_EXISTS");
+		if (existingRoomType.isEmpty())
+			throw new RecordNotFoundException("ROOMTYPE_DOESN'T_EXISTS");
 		return existingRoomType.isEmpty();
 	}
 
