@@ -15,6 +15,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelServic
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomService;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomTypeService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -116,17 +117,14 @@ public class RoomService implements IRoomService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			if (!checkIfRoomExists(keyMap)) {
-				control.setErrorMessage(updateResult, "ROOM_DOESNT_EXISTS");
-			} else if (!checkIfHotelExists(attrMap)) {
-				control.setErrorMessage(updateResult, "HOTEL_DOESNT_EXISTS");
-			} else if (!checkIfRoomTypeExists(attrMap)) {
-				control.setErrorMessage(updateResult, "ROOM_TYPE_DOESNT_EXISTS");
-			} else {
-				updateResult = this.daoHelper.insert(this.roomDao, attrMap);
-			}
+			checkIfRoomExists(keyMap);
+			checkIfHotelExists(attrMap);
+			checkIfRoomTypeExists(attrMap);
+			updateResult = this.daoHelper.insert(this.roomDao, attrMap);
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "ROOM_ALREADY_EXISTS");
+		} catch (RecordNotFoundException e) {
+			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
@@ -135,7 +133,8 @@ public class RoomService implements IRoomService {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_room");
 		EntityResult existingRoom = roomQuery(attrMap, attrList);
-		return !(existingRoom.isEmpty());
+		if(existingRoom.isEmpty()) throw new RecordNotFoundException("ROOM_DOESN'T_EXISTS");
+		return existingRoom.isEmpty();
 	}
 
 	private boolean checkIfHotelExists(Map<String, Object> attrMap) {
@@ -144,7 +143,8 @@ public class RoomService implements IRoomService {
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_hotel", attrMap.get("rm_hotel"));
 		EntityResult existingHotel = hotelService.hotelQuery(keyMap, attrList);
-		return !(existingHotel.isEmpty());
+		if(existingHotel.isEmpty()) throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
+		return existingHotel.isEmpty();
 	}
 
 	private boolean checkIfRoomTypeExists(Map<String, Object> attrMap) {
@@ -152,9 +152,9 @@ public class RoomService implements IRoomService {
 		attrList.add("id_room_type");
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_room_type", attrMap.get("rm_room_type"));
-
 		EntityResult existingRoomType = roomTypeService.roomtypeQuery(keyMap, attrList);
-		return !(existingRoomType.isEmpty());
+		if(existingRoomType.isEmpty()) throw new RecordNotFoundException("ROOMTYPE_DOESN'T_EXISTS");
+		return existingRoomType.isEmpty();
 	}
 
 }

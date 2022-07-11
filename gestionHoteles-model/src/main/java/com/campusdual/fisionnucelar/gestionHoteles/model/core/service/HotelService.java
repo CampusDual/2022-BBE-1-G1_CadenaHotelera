@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -97,14 +98,13 @@ public class HotelService implements IHotelService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			if (checkIfHotelExists(attrMap)) {
-				control.setErrorMessage(updateResult, "HOTEL_DOESN'T_EXISTS");
-			} else {
-				updateResult = this.daoHelper.update(this.hotelDao, attrMap, keyMap);
-				updateResult.setMessage("SUCESSFUL_UPDATE");
-			}
+			checkIfHotelExists(attrMap);
+			updateResult = this.daoHelper.update(this.hotelDao, attrMap, keyMap);
+			updateResult.setMessage("SUCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
+		}catch (RecordNotFoundException e) {
+			control.setErrorMessage(updateResult, "HOTEL_DOESN'T_EXISTS");	
 		}
 		return updateResult;
 	}
@@ -113,7 +113,9 @@ public class HotelService implements IHotelService {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_hotel");
 		EntityResult existingHotel = hotelQuery(attrMap, attrList);
+		if(existingHotel.isEmpty()) throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
 		return existingHotel.isEmpty();
+			
 	}
 
 }

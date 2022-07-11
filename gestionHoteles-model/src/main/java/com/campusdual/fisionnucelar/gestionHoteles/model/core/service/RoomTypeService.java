@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomTypeService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomTypeDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -101,16 +102,15 @@ public class RoomTypeService implements IRoomTypeService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			if (checkIfRoomTypeExists(attrMap)) {
-				control.setErrorMessage(updateResult, "ROOM_TYPE_DOESN'T_EXISTS");
-			}else {
-				updateResult = this.daoHelper.update(this.roomTypeDao, attrMap, keyMap);
-				updateResult.setMessage("SUCESSFUL_UPDATE");
-			}	
+			checkIfRoomTypeExists(attrMap);
+			updateResult = this.daoHelper.update(this.roomTypeDao, attrMap, keyMap);
+			updateResult.setMessage("SUCESSFUL_UPDATE");
 		} catch (BadSqlGrammarException e) {
 			control.setErrorMessage(updateResult, "PRICE_MUST_BE_NUMERIC");
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "ROOM_TYPE_ALREADY_EXISTS");
+		}catch (RecordNotFoundException e) {
+			control.setErrorMessage(updateResult, "ROOM_TYPE_DOESN'T_EXISTS");
 		}
 		return updateResult;
 	}
@@ -119,6 +119,7 @@ public class RoomTypeService implements IRoomTypeService {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_room_type");
 		EntityResult existingRoomType = roomtypeQuery(attrMap, attrList);
+		if(existingRoomType.isEmpty()) throw new RecordNotFoundException("ROOM_TYPE_DOESN'T_EXISTS");
 		return !(existingRoomType.isEmpty());
 	}
 	

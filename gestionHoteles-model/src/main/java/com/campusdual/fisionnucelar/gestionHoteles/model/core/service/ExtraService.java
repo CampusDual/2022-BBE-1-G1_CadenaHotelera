@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Map;
 
@@ -11,15 +12,14 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IExtraService;
-import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IServiceService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraDao;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ServiceDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 
-import utilities.Control;
 /**
  * This class listens the incoming requests related with the clients table
  *@since 08/07/2022
@@ -96,18 +96,17 @@ public class ExtraService implements IExtraService{
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			if(checkIfExtraExists(keyMap)) {
-				control.setErrorMessage(updateResult, "ERROR_EXTRA_NOT_FOUND");
-			}else {
-				updateResult = this.daoHelper.update(this.extraDao, attrMap, keyMap);
-				if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
+			checkIfExtraExists(keyMap);
+			updateResult = this.daoHelper.update(this.extraDao, attrMap, keyMap);
+			if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
 					updateResult.setMessage("ERROR_WHILE_UPDATING");
 				} else {
 					updateResult.setMessage("SUCCESSFUL_UPDATE");
 				}
-			}
 		}catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "EXTRA_NAME_ALREADY_EXISTS");
+		}catch (RecordNotFoundException e) {
+			control.setErrorMessage(updateResult, "ERROR_EXTRA_NOT_FOUND");
 		}
 		return updateResult;
 	}
@@ -115,7 +114,8 @@ public class ExtraService implements IExtraService{
 	private boolean checkIfExtraExists(Map<String, Object> keyMap) {
 		List<String> fields = new ArrayList<>();
 		fields.add("id_extra");
-		EntityResult existingExtras = daoHelper.query(extraDao, keyMap, fields);	
+		EntityResult existingExtras = daoHelper.query(extraDao, keyMap, fields);
+		if(existingExtras.isEmpty()) throw new RecordNotFoundException("ERROR_EXTRA_NOT_FOUND");
 		return existingExtras.isEmpty();
 	}
 }

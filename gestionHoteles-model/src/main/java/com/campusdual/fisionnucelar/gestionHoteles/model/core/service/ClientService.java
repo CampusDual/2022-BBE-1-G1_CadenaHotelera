@@ -15,6 +15,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingServ
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IClientService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ClientDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -104,11 +105,17 @@ public class ClientService implements IClientService {
 	public EntityResult clientUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
-		EntityResult updateResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
+		EntityResult updateResult = new EntityResultMapImpl();
+		try {
+		checkIfClientExists(attrMap); 
+		updateResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
 		if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
 			updateResult.setMessage("ERROR_WHILE_UPDATING");
 		} else {
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
+		}
+		}catch (RecordNotFoundException e) {
+		control.setErrorMessage(updateResult, "HOTEL_DOESN'T_EXISTS");	
 		}
 		return updateResult;
 	}
@@ -157,7 +164,8 @@ public class ClientService implements IClientService {
 	private boolean checkIfClientExists(Map<String, Object> keyMap) {
 		List<String> fields = new ArrayList<>();
 		fields.add("id_client");
-		EntityResult existingClients = daoHelper.query(clientDao, keyMap, fields);	
+		EntityResult existingClients = daoHelper.query(clientDao, keyMap, fields);
+		if(existingClients.isEmpty()) throw new RecordNotFoundException("ERROR_CLIENT_NOT_FOUND");
 		return existingClients.isEmpty();
 	}
 	
