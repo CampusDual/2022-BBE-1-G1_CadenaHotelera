@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -75,11 +76,15 @@ public class HotelService implements IHotelService {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
 			insertResult = this.daoHelper.insert(this.hotelDao, attrMap);
+			if (insertResult.isEmpty())
+				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
-		}catch (DataIntegrityViolationException e) {
+		} catch (DataIntegrityViolationException e) {
 			control.setErrorMessage(insertResult, "HOTEL_NAME_AND_EMAIL_REQUIRED");
+		} catch (AllFieldsRequiredException e) {
+			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
 	}
@@ -100,11 +105,11 @@ public class HotelService implements IHotelService {
 		try {
 			checkIfHotelExists(keyMap);
 			updateResult = this.daoHelper.update(this.hotelDao, attrMap, keyMap);
-			updateResult.setMessage("SUCESSFUL_UPDATE");
+
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
-		}catch (RecordNotFoundException e) {
-			control.setErrorMessage(updateResult, "HOTEL_DOESN'T_EXISTS");	
+		} catch (RecordNotFoundException e) {
+			control.setErrorMessage(updateResult, "HOTEL_DOESN'T_EXISTS");
 		}
 		return updateResult;
 	}
@@ -113,9 +118,10 @@ public class HotelService implements IHotelService {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_hotel");
 		EntityResult existingHotel = hotelQuery(attrMap, attrList);
-		if(existingHotel.isEmpty()) throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
+		if (existingHotel.isEmpty())
+			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
 		return existingHotel.isEmpty();
-			
+
 	}
 
 }

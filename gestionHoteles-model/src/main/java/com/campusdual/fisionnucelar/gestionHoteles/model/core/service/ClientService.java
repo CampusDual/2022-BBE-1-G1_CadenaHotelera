@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.aspectj.lang.reflect.CatchClauseSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -112,8 +113,7 @@ public class ClientService implements IClientService {
 			throws OntimizeJEERuntimeException {
 		attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		EntityResult updateResult = new EntityResultMapImpl();
-		try {
-			
+		try {		
 			checkIfClientExists(keyMap);
 			updateResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
 			if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
@@ -142,16 +142,13 @@ public class ClientService implements IClientService {
 		attrMap.put("cl_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 
 		EntityResult deleteResult = new EntityResultMapImpl();
-
-		if (checkIfClientExists(keyMap)) {
-			deleteResult.setMessage("ERROR_CLIENT_NOT_FOUND");
-			deleteResult.setCode(1);
-		} else if (!checkActiveReservations(keyMap)) {
-			deleteResult.setMessage("ERROR_THERE_IS_ACTIVE_RESERVATIONS");
-			deleteResult.setCode(1);
-		} else {
+		try{
+			checkIfClientExists(keyMap);
+			checkActiveReservations(keyMap);
 			deleteResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
 			deleteResult.setMessage("SUCCESSFUL_DELETE");
+		}catch (RecordNotFoundException e) {
+			control.setErrorMessage(deleteResult, e.getMessage());
 		}
 		return deleteResult;
 	}
@@ -187,6 +184,8 @@ public class ClientService implements IClientService {
 		List<String> fields = new ArrayList<>();
 		fields.add("id_booking");
 		EntityResult activeBookings = bookingService.clientactivebookingsQuery(keyMap, fields);
+		if (!activeBookings.isEmpty())
+			throw new RecordNotFoundException("ERROR_ACTIVE_BOOKINGS_FOUND");	
 		return activeBookings.isEmpty();
 	}
 }

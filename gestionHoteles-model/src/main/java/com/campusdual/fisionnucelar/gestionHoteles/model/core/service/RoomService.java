@@ -15,6 +15,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelServic
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomService;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomTypeService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -91,10 +92,14 @@ public class RoomService implements IRoomService {
 			if (attrMap.containsKey("rm_room_type")) {
 				checkIfRoomTypeExists(attrMap);
 			}
+			if (insertResult.isEmpty())
+				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 			insertResult = this.daoHelper.insert(this.roomDao, attrMap);
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
 		}catch (RecordNotFoundException e) {
+			control.setErrorMessage(insertResult, e.getMessage());
+		}catch (AllFieldsRequiredException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 

@@ -20,6 +20,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingServ
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IClientService;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.db.SQLStatementBuilder;
@@ -246,22 +247,31 @@ public class BookingService implements IBookingService {
 		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
-			if (attrMap.containsKey("bk_client"))
+			if (attrMap.containsKey("bk_client")) {
 				checkIfClientExists(attrMap);
+				checkIfClientIsActive(attrMap);
+			}
 			if (attrMap.containsKey("bk_room"))
 				checkIfRoomExists(attrMap);
 			insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
+			if (insertResult.isEmpty()) {
+				throw new AllFieldsRequiredException(null);
+			}
+
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DataIntegrityViolationException e) {
 			control.setErrorMessage(insertResult, "ROOM_CLIENT_CHECK_IN_AND_CHECK_OUT_REQUIRED");
+		} catch (AllFieldsRequiredException e) {
+			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
 	}
 
 	/**
+	 * 
 	 * 
 	 * TO DO, NOT FUNCIONAL
 	 * 
@@ -320,7 +330,6 @@ public class BookingService implements IBookingService {
 		fields.add("id_booking");
 		EntityResult existingBookings = daoHelper.query(bookingDao, keyMap, fields);
 		return existingBookings.isEmpty();
-
 	}
 
 	private boolean checkIfClientExists(Map<String, Object> attrMap) {
@@ -332,6 +341,20 @@ public class BookingService implements IBookingService {
 		if (existingClient.isEmpty())
 			throw new RecordNotFoundException("CLIENT_DOESN'T_EXISTS");
 		return existingClient.isEmpty();
+	}
+
+	private boolean checkIfClientIsActive(Map<String, Object> keyMap) {
+		List<String> attrList = new ArrayList<>();
+		attrList.add("id_client");
+		attrList.add("cl_leaving_date");
+		Map<String, Object> attrMap = new HashMap<>();
+		attrMap.put("id_client", keyMap.get("bk_client"));
+		EntityResult activeClient = clientService.clientQuery(attrMap, attrList);
+
+		if (activeClient.getRecordValues(0).get("cl_leaving_date")!=null) {
+			throw new RecordNotFoundException("CLIENT_IS_NOT_ACTIVE");
+		}
+		return true;
 	}
 
 	private boolean checkIfRoomExists(Map<String, Object> attrMap) {

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomTypeService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomTypeDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -77,6 +78,8 @@ public class RoomTypeService implements IRoomTypeService {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
 			insertResult = this.daoHelper.insert(this.roomTypeDao, attrMap);
+			if (insertResult.isEmpty())
+				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCESSFUL_INSERTION");
 		} catch (BadSqlGrammarException e) {
 			control.setErrorMessage(insertResult, "PRICE_MUST_BE_NUMERIC");
@@ -84,6 +87,8 @@ public class RoomTypeService implements IRoomTypeService {
 			control.setErrorMessage(insertResult, "ROOM_TYPE_ALREADY_EXISTS");
 		}catch (DataIntegrityViolationException e) {
 			control.setErrorMessage(insertResult, "ALL_FIELDS_REQUIRED");
+		}catch (AllFieldsRequiredException e) {
+			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
 	}
@@ -104,6 +109,7 @@ public class RoomTypeService implements IRoomTypeService {
 		try {
 			checkIfRoomTypeExists(keyMap);
 			updateResult = this.daoHelper.update(this.roomTypeDao, attrMap, keyMap);
+			
 			updateResult.setMessage("SUCESSFUL_UPDATE");
 		} catch (BadSqlGrammarException e) {
 			control.setErrorMessage(updateResult, "PRICE_MUST_BE_NUMERIC");
