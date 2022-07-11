@@ -15,12 +15,11 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelServic
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomService;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomTypeService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
-
-import utilities.Control;
 
 /**
  * This class builds the operations over the rooms table

@@ -15,12 +15,11 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingServ
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IClientService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ClientDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
-
-import utilities.Control;
 /**
  * This class listens the incoming requests related with the clients table
  *@since 30/06/2022

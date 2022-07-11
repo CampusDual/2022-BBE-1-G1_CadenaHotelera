@@ -12,12 +12,11 @@ import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
-
-import utilities.Control;
 
 /**
  * This class builds the operations over the hotels table
@@ -114,7 +113,7 @@ public class HotelService implements IHotelService {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_hotel");
 		EntityResult existingHotel = hotelQuery(attrMap, attrList);
-		return !(existingHotel.isEmpty());
+		return existingHotel.isEmpty();
 	}
 
 }
