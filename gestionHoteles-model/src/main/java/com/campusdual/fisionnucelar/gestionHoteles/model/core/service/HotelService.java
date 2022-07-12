@@ -84,7 +84,9 @@ public class HotelService implements IHotelService {
 	public EntityResult hotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
-			control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
+			if (attrMap.get("htl_email") != null) {
+				control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
+			}
 			insertResult = this.daoHelper.insert(this.hotelDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
@@ -127,20 +129,20 @@ public class HotelService implements IHotelService {
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
-			control.setErrorMessage(updateResult, "HOTEL_DOESN'T_EXISTS");
+			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
 
-	private boolean checkIfHotelExists(Map<String, Object> attrMap) {
-		if (attrMap.get("id_hotel") == null) {
+	private boolean checkIfHotelExists(Map<String, Object> keyMap) {
+		if (keyMap.isEmpty()) {
 			throw new RecordNotFoundException("ID_HOTEL_REQUIRED");
 		}
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_hotel");
-		EntityResult existingHotel = hotelQuery(attrMap, attrList);
+		EntityResult existingHotel = this.daoHelper.query(hotelDao, keyMap, attrList);
 		if (existingHotel.isEmpty())
 			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
 		return existingHotel.isEmpty();
