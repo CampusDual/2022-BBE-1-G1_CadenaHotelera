@@ -4,8 +4,6 @@ public class AllFieldsRequiredException extends RuntimeException {
 	public AllFieldsRequiredException(String errorMessage) {
 		super(errorMessage);
 		
-		
-		
-		
+
 	}
 }

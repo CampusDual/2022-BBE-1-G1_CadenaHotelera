@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -103,18 +104,25 @@ public class HotelService implements IHotelService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
+			checkIfDataIsEmpty(attrMap);
 			checkIfHotelExists(keyMap);
 			updateResult = this.daoHelper.update(this.hotelDao, attrMap, keyMap);
-
+			updateResult.setMessage("SUCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
 			control.setErrorMessage(updateResult, "HOTEL_DOESN'T_EXISTS");
+		} catch (EmptyRequestException e) {
+			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
 
 	private boolean checkIfHotelExists(Map<String, Object> attrMap) {
+		if (attrMap.get("id_hotel") == null) {
+			throw new RecordNotFoundException("ID_HOTEL_REQUIRED");
+		}
+
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_hotel");
 		EntityResult existingHotel = hotelQuery(attrMap, attrList);
@@ -122,6 +130,13 @@ public class HotelService implements IHotelService {
 			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
 		return existingHotel.isEmpty();
 
+	}
+
+	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
+		if (attrMap.get("htl_address") == null && attrMap.get("htl_name") == null && attrMap.get("htl_email") == null
+				&& attrMap.get("htl_phone") == null) {
+			throw new EmptyRequestException("EMPTY_REQUEST");
+		}
 	}
 
 }
