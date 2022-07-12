@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 
@@ -31,7 +32,7 @@ public class HotelServiceTest {
 
     @InjectMocks
     HotelService hotelService;
-    
+    @Autowired
     HotelDao hotelDao;
     
     @BeforeEach
@@ -117,34 +118,60 @@ public class HotelServiceTest {
         @Test
         @DisplayName("Insert a hotel successfully")
         void hotel_insert_success() {
+        	Map<String,Object> attrMap = new HashMap<>();
+        	Map<String, Object> dataToInsert = new HashMap<>();
+        	dataToInsert.put("htl_name", "FN Oviedo");
+        	dataToInsert.put("htl_email", "fnoviedo@fnhotels.com");
+        	dataToInsert.put("htl_address", "Calle Uria, 98");
+        	dataToInsert.put("htl_phone", "985446789");
         	EntityResult er = new EntityResultMapImpl(Arrays.asList("ID_HOTEL"));
             er.addRecord(new HashMap<String, Object>() {{put("ID_HOTEL", 2);}});
             er.setCode(EntityResult.OPERATION_SUCCESSFUL);
             HashMap<String, Object> keyMap = new HashMap<>();
             keyMap.put("ID_HOTEL", 2);
-            when(daoHelper.insert(any(), anyMap())).thenReturn(er);
-            EntityResult entityResult = hotelService.hotelInsert(new HashMap<>());
+            when(daoHelper.insert(hotelDao, attrMap)).thenReturn(er);
+            EntityResult entityResult = hotelService.hotelInsert(attrMap);
             assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
             int recordIndex = entityResult.getRecordIndex(keyMap);
             assertEquals(2, entityResult.getRecordValues(recordIndex).get("ID_HOTEL"));
-            verify(daoHelper).insert(any(), anyMap());
+            verify(daoHelper).insert(hotelDao, attrMap);
             
             }
        
         @Test
         @DisplayName("Fail trying to insert duplicated email")
         void hotel_insert_duplicated_mail() {
-        	when(daoHelper.insert(any(), anyMap())).thenThrow(DuplicateKeyException.class);
-        	EntityResult entityResult = hotelService.hotelInsert(new HashMap<>());
-        	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-        	assertEquals("HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS", entityResult.getMessage());
-        	verify(daoHelper).insert(any(), anyMap());
+        	Map<String,Object> attrMap = new HashMap<>();
+        	Map<String, Object> dataToInsert = new HashMap<>();
+        	dataToInsert.put("htl_name", "FN Oviedo");
+        	dataToInsert.put("htl_email", "fnoviedo@fnhotels.com");
+        	dataToInsert.put("htl_address", "Calle Uria, 98");
+        	dataToInsert.put("htl_phone", "985446789");
+        	attrMap.put("0", dataToInsert);
+        	List<String> columnList = Arrays.asList("ID_HOTEL");
+    		EntityResult insertResult = new EntityResultMapImpl(columnList);
+    	    insertResult.addRecord(new HashMap<String, Object>() {{
+    	        put("ID_HOTEL", 2);}});
+        	when(daoHelper.insert(hotelDao, dataToInsert)).thenReturn(insertResult);
+        	EntityResult resultSuccess = hotelService.hotelInsert(dataToInsert);
+        	assertEquals(EntityResult.OPERATION_SUCCESSFUL, resultSuccess.getCode());
+        	assertEquals("SUCESSFUL_INSERTION", resultSuccess.getMessage());
+        	when(daoHelper.insert(hotelDao, dataToInsert)).thenThrow(DuplicateKeyException.class);
+        	EntityResult resultFail =hotelService.hotelInsert(dataToInsert);
+        	assertEquals(EntityResult.OPERATION_WRONG, resultFail.getCode());
+        	assertEquals("HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS", resultFail.getMessage());
+        	verify(daoHelper,times(2)).insert(any(), anyMap());
         }
         @Test
         @DisplayName("Fail trying to insert without hotel name or email fields")
         void hotel_insert_without_mail_or_hotel_name() {
-        	when(daoHelper.insert(any(), anyMap())).thenThrow(DataIntegrityViolationException.class);
-        	EntityResult entityResult = hotelService.hotelInsert(new HashMap<>());
+        	Map<String,Object> attrMap = new HashMap<>();
+        	Map<String, Object> dataToInsert = new HashMap<>();
+        	dataToInsert.put("htl_address", "Calle Uria, 98");
+        	dataToInsert.put("htl_phone", "985446789");
+        	attrMap.put("0", dataToInsert);
+        	when(daoHelper.insert(hotelDao, attrMap)).thenThrow(DataIntegrityViolationException.class);
+        	EntityResult entityResult = hotelService.hotelInsert(attrMap);
         	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
         	assertEquals("HOTEL_NAME_AND_EMAIL_REQUIRED", entityResult.getMessage());
         	verify(daoHelper).insert(any(), anyMap());
@@ -158,14 +185,28 @@ public class HotelServiceTest {
         @Test
         @DisplayName("hotel update succesful")
         void hotel_update_success() {
+        	//given
+        	Map<String,Object> keyMap = new HashMap<>();
+        	Map<String, Object> filter = new HashMap<>();
+        	filter.put("id_hotel", 32);
+        	keyMap.put("filter", filter);
+        	Map<String,Object> attrMap = new HashMap<>();
+        	Map<String, Object> dataToUpdate = new HashMap<>();
+        	dataToUpdate.put("htl_name", "FN Oviedo");
+        	dataToUpdate.put("htl_email", "fnoviedo@fnhotels.com");
+        	dataToUpdate.put("htl_address", "Calle Uria, 98");
+        	dataToUpdate.put("htl_phone", "985446789");
+        	List<String> attrList = new ArrayList<>();
+    		attrList.add("id_hotel");
         	EntityResult er = new EntityResultMapImpl();
         	er.setCode(EntityResult.OPERATION_SUCCESSFUL);
         	EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_HOTEL","HTL_NAME"));
-        	when(daoHelper.update(any(), anyMap(),anyMap())).thenReturn(er);
-        	when(daoHelper.query(any(), anyMap(),anyList())).thenReturn(queryResult);
-        	EntityResult entityResult = hotelService.hotelUpdate(new HashMap<>(),new HashMap<>());
+        	//when
+        	when(daoHelper.update(hotelDao, attrMap,keyMap)).thenReturn(er);
+        	when(daoHelper.query(hotelDao, keyMap, attrList)).thenReturn(queryResult);
+        	//then
+        	EntityResult entityResult = hotelService.hotelUpdate(attrMap,keyMap);
         	assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
-        	assertEquals("SUCESSFUL_UPDATE", entityResult.getMessage());
         	verify(daoHelper).update(any(), anyMap(),anyMap());
         	verify(daoHelper).query(any(), anyMap(),anyList());
         }
@@ -176,12 +217,22 @@ public class HotelServiceTest {
         	EntityResult er = new EntityResultMapImpl();
         	er.setCode(EntityResult.OPERATION_WRONG);
         	er.setMessage("HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
+        	Map<String,Object> keyMap = new HashMap<>();
+        	Map<String, Object> filter = new HashMap<>();
+        	filter.put("id_hotel", 32);
+        	keyMap.put("filter", filter);
+        	Map<String,Object> attrMap = new HashMap<>();
+        	Map<String, Object> dataToUpdate = new HashMap<>();
+        	dataToUpdate.put("htl_name", "FN Oviedo");
+        	dataToUpdate.put("htl_email", "fnoviedo@fnhotels.com");
+        	List<String> attrList = new ArrayList<>();
+    		attrList.add("id_hotel");
         	EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_HOTEL","HTL_NAME"));
             er.addRecord(new HashMap<String, Object>() {{put("ID_HOTEL", 2);put("HTL_NAME","FN Vigo");}});
             er.setCode(EntityResult.OPERATION_SUCCESSFUL);
-            when(daoHelper.query(any(), anyMap(),anyList())).thenReturn(queryResult);
-        	when(daoHelper.update(any(), anyMap(),anyMap())).thenThrow(DuplicateKeyException.class);
-        	EntityResult entityResult = hotelService.hotelUpdate(new HashMap<>(),new HashMap<>());
+            when(daoHelper.query(hotelDao, keyMap, attrList)).thenReturn(queryResult);
+        	when(daoHelper.update(hotelDao, attrMap, keyMap)).thenThrow(DuplicateKeyException.class);
+        	EntityResult entityResult = hotelService.hotelUpdate(attrMap,keyMap);
         	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
         	assertEquals("HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS", entityResult.getMessage());
         	verify(daoHelper).update(any(), anyMap(),anyMap());
@@ -190,12 +241,24 @@ public class HotelServiceTest {
         @Test
         @DisplayName("Fail trying to update an hotel that doesn´t exists")
         void update_hotel_doesnt_exists() {
+        	Map<String,Object> keyMap = new HashMap<>();
+        	Map<String, Object> filter = new HashMap<>();
+        	filter.put("id_hotel",222);
+        	keyMap.put("filter", filter);
+        	Map<String,Object> attrMap = new HashMap<>();
+        	Map<String, Object> dataToUpdate = new HashMap<>();
+        	dataToUpdate.put("htl_name", "FN Oviedo");
+        	dataToUpdate.put("htl_email", "fnoviedo@fnhotels.com");
+        	dataToUpdate.put("htl_address", "Calle Uria, 98");
+        	dataToUpdate.put("htl_phone", "985446789");
+        	List<String> attrList = new ArrayList<>();
+    		attrList.add("id_hotel");
         	EntityResult er = new EntityResultMapImpl();
         	er.setCode(EntityResult.OPERATION_WRONG);
         	er.setMessage("HOTEL_DOESN'T_EXISTS");
         	EntityResult queryResult = new EntityResultMapImpl();
-        	when(daoHelper.query(any(), anyMap(),anyList())).thenReturn(queryResult);
-        	EntityResult entityResult = hotelService.hotelUpdate(new HashMap<>(),new HashMap<>());
+        	when(daoHelper.query(hotelDao, keyMap,attrList)).thenReturn(queryResult);
+        	EntityResult entityResult = hotelService.hotelUpdate(attrMap,keyMap);
         	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
         	assertEquals("HOTEL_DOESN'T_EXISTS", entityResult.getMessage());
         	verify(daoHelper).query(any(), anyMap(),anyList());
