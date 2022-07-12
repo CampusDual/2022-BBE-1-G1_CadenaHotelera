@@ -15,6 +15,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelServic
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
@@ -64,13 +65,12 @@ public class HotelService implements IHotelService {
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
 			control.setErrorMessage(searchResult, e.getMessage());
-		}catch (BadSqlGrammarException e) {
+		} catch (BadSqlGrammarException e) {
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
 	}
 
-	
 	/**
 	 * 
 	 * Adds a new register on the hotels table. We assume that we are receiving the
@@ -84,10 +84,13 @@ public class HotelService implements IHotelService {
 	public EntityResult hotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
+			control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
 			insertResult = this.daoHelper.insert(this.hotelDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCESSFUL_INSERTION");
+		} catch (InvalidEmailException e) {
+			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
@@ -114,8 +117,13 @@ public class HotelService implements IHotelService {
 		try {
 			checkIfDataIsEmpty(attrMap);
 			checkIfHotelExists(keyMap);
+			if (attrMap.get("htl_email") != null) {
+				control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
+			}
 			updateResult = this.daoHelper.update(this.hotelDao, attrMap, keyMap);
 			updateResult.setMessage("SUCESSFUL_UPDATE");
+		} catch (InvalidEmailException e) {
+			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
@@ -125,7 +133,6 @@ public class HotelService implements IHotelService {
 		}
 		return updateResult;
 	}
-
 
 	private boolean checkIfHotelExists(Map<String, Object> attrMap) {
 		if (attrMap.get("id_hotel") == null) {

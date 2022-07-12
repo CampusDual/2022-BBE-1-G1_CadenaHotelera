@@ -20,6 +20,8 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IClientServi
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ClientDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
@@ -74,7 +76,7 @@ public class ClientService implements IClientService {
 		try {
 			searchResult = daoHelper.query(clientDao, keyMap, attrList);
 			control.checkResults(searchResult);
-		}  catch (NoResultsException e) {
+		} catch (NoResultsException e) {
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
@@ -97,7 +99,10 @@ public class ClientService implements IClientService {
 		attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
+			control.checkIfEmailIsValid(attrMap.get("cl_email").toString());
 			insertResult = this.daoHelper.insert(this.clientDao, attrMap);
+		} catch (InvalidEmailException e) {
+			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "EMAIL_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
@@ -124,12 +129,19 @@ public class ClientService implements IClientService {
 		try {
 			checkIfClientExists(keyMap);
 			checkIfDataIsEmpty(attrMap);
+
+			if (attrMap.get("cl_email") != null) {
+				control.checkIfEmailIsValid(attrMap.get("cl_email").toString());
+			}
+
 			updateResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
 			if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
 				updateResult.setMessage("ERROR_WHILE_UPDATING");
 			} else {
 				updateResult.setMessage("SUCCESSFUL_UPDATE");
 			}
+		} catch (InvalidEmailException e) {
+			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (RecordNotFoundException e) {
 			control.setErrorMessage(updateResult, "CLIENT_DOESN'T_EXISTS");
 		} catch (EmptyRequestException e) {
