@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities;
 import java.util.regex.Pattern;
 
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.*;
 import com.ontimize.jee.common.dto.EntityResult;
 /**
@@ -51,5 +52,11 @@ public class Control {
 		return Pattern.compile(RFC5322regexPattern)
 			      .matcher(emailAddress)
 			      .matches();
+	}
+	public void checkResults(EntityResult searchResult)throws NoResultsException {
+		if(searchResult.isEmpty()) {
+			throw new NoResultsException("NO_RESULTS");
+		}
+		
 	}
 }

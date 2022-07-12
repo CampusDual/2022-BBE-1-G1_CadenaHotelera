@@ -3,7 +3,6 @@ package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -15,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingService;
@@ -24,6 +24,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.OccupiedRoomException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
@@ -79,13 +80,7 @@ public class BookingService implements IBookingService {
 	@Override
 	public EntityResult clientbookingsQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
-		EntityResult searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_BOOKINGS");
-		if (searchResult.getCode() == EntityResult.OPERATION_WRONG) {
-			searchResult.setMessage("ERROR_WHILE_SEARCHING");
-		}
-		if (searchResult.isEmpty())
-			searchResult.setMessage("THERE ARE NOT ACTIVE BOOKINGS ASSOCIATED WITH THAT CLIENT");
-		return searchResult;
+		return searchBookingsByClient(keyMap, attrList, false);
 	}
 
 	/**
@@ -100,13 +95,36 @@ public class BookingService implements IBookingService {
 	 */
 	@Override
 	public EntityResult clientactivebookingsQuery(Map<String, Object> keyMap, List<String> attrList) {
-		EntityResult searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_ACTIVE_BOOKINGS");
-		if (searchResult.getCode() == EntityResult.OPERATION_WRONG) {
-			searchResult.setMessage("ERROR_WHILE_SEARCHING");
+		return searchBookingsByClient(keyMap, attrList, true);
+	}
+
+	/**
+	 * 
+	 * Executes a query over the bookings table filtered by client. It returns the
+	 * active bookings or all of them depending of the boolean param
+	 * 
+	 * @since 27/06/2022
+	 * @param The filters, the fields of the query and a boolean indicating the
+	 *            bookings we want to search
+	 * @return The columns from the bookings table especified in the params and a
+	 *         message with the operation result
+	 */
+	private EntityResult searchBookingsByClient(Map<String, Object> keyMap, List<String> attrList, boolean onlyActive) {
+		EntityResult searchResult = new EntityResultMapImpl();
+		try {
+			searchResult = onlyActive ? daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_ACTIVE_BOOKINGS")
+					: daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_BOOKINGS");
+
+			searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_ACTIVE_BOOKINGS");
+
+			control.checkResults(searchResult);
+		} catch (NoResultsException e) {
+			control.setErrorMessage(searchResult, e.getMessage());
+		} catch (BadSqlGrammarException e) {
+			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
-		if (searchResult.isEmpty())
-			searchResult.setMessage("THERE ARE NOT BOOKINGS ASSOCIATED WITH THAT CLIENT");
 		return searchResult;
+
 	}
 
 	/**
@@ -122,12 +140,15 @@ public class BookingService implements IBookingService {
 	@Override
 	public EntityResult bookingQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
-		EntityResult searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList);
-		if (searchResult.getCode() == EntityResult.OPERATION_WRONG) {
-			searchResult.setMessage("ERROR_WHILE_SEARCHING");
+		EntityResult searchResult = new EntityResultMapImpl();
+		try {
+			searchResult = daoHelper.query(bookingDao, keyMap, attrList);
+			control.checkResults(searchResult);
+		} catch (NoResultsException e) {
+			control.setErrorMessage(searchResult, e.getMessage());
+		} catch (BadSqlGrammarException e) {
+			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
-		if (searchResult.isEmpty())
-			searchResult.setMessage("THERE ARE NOT RESULTS");
 		return searchResult;
 	}
 
@@ -147,26 +168,61 @@ public class BookingService implements IBookingService {
 			throws OntimizeJEERuntimeException {
 		EntityResult resultsByHotel = new EntityResultMapImpl();
 		try {
-			if (keyMap.get("bk_check_in") != null && keyMap.get("bk_check_out") != null
-					&& keyMap.get("id_hotel") != null) {
-
-				resultsByHotel = searchAvailableRooms(keyMap, attrList);
-
-			} else {
-				resultsByHotel = this.daoHelper.query(this.bookingDao, keyMap, attrList);
-				resultsByHotel.setCode(EntityResult.OPERATION_WRONG);
-				resultsByHotel.setMessage("ID_HOTEL, CHECK IN AND CHECK OUT FIELDS NEEDED");
-			}
+			checkAvailableRoomsFields(keyMap);
+			resultsByHotel = searchAvailableRooms(keyMap, attrList);
+		} catch (AllFieldsRequiredException e) {
+			control.setErrorMessage(resultsByHotel, e.getMessage());
 		} catch (InvalidDateException e) {
 			control.setErrorMessage(resultsByHotel, e.getMessage());
 		} catch (ParseException e) {
-			e.printStackTrace();
-			EntityResult res = new EntityResultMapImpl();
-			res.setCode(EntityResult.OPERATION_WRONG);
-			return res;
+			control.setErrorMessage(resultsByHotel, e.getMessage());
+		} catch (BadSqlGrammarException e) {
+			control.setErrorMessage(resultsByHotel, "INCORRECT_REQUEST");
 		}
 
 		return resultsByHotel;
+	}
+
+	private void checkAvailableRoomsFields(Map<String, Object> keyMap) {
+		if (keyMap.get("bk_check_in") == null || keyMap.get("bk_check_out") == null || keyMap.get("id_hotel") == null) {
+			throw new AllFieldsRequiredException("CHECK_IN_CHECK_OUT_AND HOTEL_NEEDED");
+		}
+
+	}
+
+	/**
+	 * 
+	 * Searchs the rooms with the checkout on the current date on a concrete hotel
+	 * 
+	 * @since 12/07/2022
+	 * @param The id of the hotel
+	 * @return The rooms with the chek-out on the current date filtered by hotel
+	 */
+	public EntityResult todaycheckoutQuery(Map<String, Object> keyMap, List<String> attrList)
+			throws OntimizeJEERuntimeException {
+		EntityResult result = new EntityResultMapImpl();
+		try {
+			checkIfHotel(keyMap);
+			result = daoHelper.query(bookingDao, keyMap, attrList, "TODAY_CHECKOUTS");
+			control.checkResults(result);
+		} catch (RecordNotFoundException e) {
+			control.setErrorMessage(result, e.getMessage());
+		} catch (EmptyRequestException e) {
+			control.setErrorMessage(result, e.getMessage());
+		} catch (NoResultsException e) {
+			control.setErrorMessage(result, e.getMessage());
+		} catch (BadSqlGrammarException e) {
+			control.setErrorMessage(result, "INCORRECT_REQUEST");
+		}
+
+		return result;
+	}
+
+	private void checkIfHotel(Map<String, Object> keyMap) {
+		if (keyMap.get("rm_hotel") == null) {
+			throw new RecordNotFoundException("RM_HOTEL_NEEDED");
+		}
+
 	}
 
 	/**
@@ -270,6 +326,8 @@ public class BookingService implements IBookingService {
 			}
 			if (attrMap.containsKey("bk_room"))
 				checkIfRoomExists(attrMap);
+
+//			checkDisponibility(attrMap);
 
 			insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
 
@@ -406,22 +464,21 @@ public class BookingService implements IBookingService {
 		}
 	}
 
-//	
+	private void checkHotelIsEmpty(Map<String, Object> attrMap) {
+		if (attrMap.get("rm_hotel") == null) {
+			throw new EmptyRequestException("HOTEL_NEEDED");
+
+		}
+	}
+
+	private void checkIfEmpty(EntityResult result) {
+		if (result.isEmpty()) {
+			throw new RecordNotFoundException("WITHOUT_RESULTS");
+		}
+
+	}
+
 //	private boolean checkDisponibility(Map<String, Object> attrMap) {
-//		List<String> attrList = new ArrayList<>();
-//		attrList.add("id_room");
-//		EntityResult x;
-//		try {
-//			x = searchAvailableRooms(attrMap, attrList);
-//			if (x.isEmpty()) {
-//				throw new OccupiedRoomException("ERROR_OCCUPIED_ROOM");
-//			}
-//		} catch (ParseException e) {
-//
-//			e.printStackTrace();
-//		}
-//		return true;
 //
 //	}
-
 }

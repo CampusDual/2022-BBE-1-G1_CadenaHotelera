@@ -8,12 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -56,13 +58,19 @@ public class HotelService implements IHotelService {
 	@Override
 	public EntityResult hotelQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
-		EntityResult searchResult = this.daoHelper.query(this.hotelDao, keyMap, attrList);
-		if (searchResult != null && searchResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
-			searchResult.setMessage("ERROR_WHILE_SEARCHING");
+		EntityResult searchResult = new EntityResultMapImpl();
+		try {
+			searchResult = this.daoHelper.query(this.hotelDao, keyMap, attrList);
+			control.checkResults(searchResult);
+		} catch (NoResultsException e) {
+			control.setErrorMessage(searchResult, e.getMessage());
+		}catch (BadSqlGrammarException e) {
+			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
 	}
 
+	
 	/**
 	 * 
 	 * Adds a new register on the hotels table. We assume that we are receiving the
@@ -118,11 +126,11 @@ public class HotelService implements IHotelService {
 		return updateResult;
 	}
 
+
 	private boolean checkIfHotelExists(Map<String, Object> attrMap) {
 		if (attrMap.get("id_hotel") == null) {
 			throw new RecordNotFoundException("ID_HOTEL_REQUIRED");
 		}
-
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_hotel");
 		EntityResult existingHotel = hotelQuery(attrMap, attrList);

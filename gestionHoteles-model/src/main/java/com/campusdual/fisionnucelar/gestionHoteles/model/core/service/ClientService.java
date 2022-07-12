@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingService;
@@ -19,6 +20,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IClientServi
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ClientDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -68,9 +70,14 @@ public class ClientService implements IClientService {
 	@Override
 	public EntityResult clientQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
-		EntityResult searchResult = this.daoHelper.query(this.clientDao, keyMap, attrList);
-		if (searchResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
-			searchResult.setMessage("ERROR_WHILE_SEARCHING");
+		EntityResult searchResult = new EntityResultMapImpl();
+		try {
+			searchResult = daoHelper.query(clientDao, keyMap, attrList);
+			control.checkResults(searchResult);
+		}  catch (NoResultsException e) {
+			control.setErrorMessage(searchResult, e.getMessage());
+		} catch (BadSqlGrammarException e) {
+			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
 	}

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelService;
@@ -17,6 +18,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomTypeSer
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -67,12 +69,20 @@ public class RoomService implements IRoomService {
 	public EntityResult roomQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 
-		EntityResult searchResult = this.daoHelper.query(this.roomDao, keyMap, attrList);
-		if (searchResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
-			searchResult.setMessage("ERROR_WHILE_SEARCHING");
+		EntityResult searchResult = new EntityResultMapImpl();
+		try {
+			searchResult = daoHelper.query(roomDao, keyMap, attrList);
+			control.checkResults(searchResult);
+		} catch (NoResultsException e) {
+			control.setErrorMessage(searchResult, e.getMessage());
+		}catch (BadSqlGrammarException e) {
+			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
 	}
+
+	
+
 
 	/**
 	 * 

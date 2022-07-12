@@ -1,6 +1,5 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +16,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomTypeSer
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomTypeDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -46,6 +46,7 @@ public class RoomTypeService implements IRoomTypeService {
 		super();
 		this.control = new Control();
 	}
+
 	/**
 	 * 
 	 * Executes a generic query over the roomtypes table
@@ -58,9 +59,15 @@ public class RoomTypeService implements IRoomTypeService {
 	@Override
 	public EntityResult roomtypeQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
-		EntityResult searchResult = this.daoHelper.query(this.roomTypeDao, keyMap, attrList);
-		if (searchResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
-			searchResult.setMessage("ERROR_WHILE_SEARCHING");
+
+		EntityResult searchResult = new EntityResultMapImpl();
+		try {
+			searchResult = daoHelper.query(roomTypeDao, keyMap, attrList);
+			control.checkResults(searchResult);
+		} catch (NoResultsException e) {
+			control.setErrorMessage(searchResult, e.getMessage());
+		} catch (BadSqlGrammarException e) {
+			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
 	}
@@ -86,9 +93,9 @@ public class RoomTypeService implements IRoomTypeService {
 			control.setErrorMessage(insertResult, "PRICE_MUST_BE_NUMERIC");
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "ROOM_TYPE_ALREADY_EXISTS");
-		}catch (DataIntegrityViolationException e) {
+		} catch (DataIntegrityViolationException e) {
 			control.setErrorMessage(insertResult, "ALL_FIELDS_REQUIRED");
-		}catch (AllFieldsRequiredException e) {
+		} catch (AllFieldsRequiredException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
@@ -111,37 +118,37 @@ public class RoomTypeService implements IRoomTypeService {
 			checkIfRoomTypeExists(keyMap);
 			checkIfDataIsEmpty(attrMap);
 			updateResult = this.daoHelper.update(this.roomTypeDao, attrMap, keyMap);
-			
+
 			updateResult.setMessage("SUCESSFUL_UPDATE");
 		} catch (BadSqlGrammarException e) {
 			control.setErrorMessage(updateResult, "PRICE_MUST_BE_NUMERIC");
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "ROOM_TYPE_ALREADY_EXISTS");
-		}catch (RecordNotFoundException e) {
+		} catch (RecordNotFoundException e) {
 			control.setErrorMessage(updateResult, "ROOM_TYPE_DOESN'T_EXISTS");
-		}catch (EmptyRequestException e) {
+		} catch (EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
-	
+
 	private boolean checkIfRoomTypeExists(Map<String, Object> attrMap) {
-		if(attrMap.get("id_room_type")==null) {
+		if (attrMap.get("id_room_type") == null) {
 			throw new RecordNotFoundException("ID_ROOM_TYPE_REQUIRED");
 		}
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_room_type");
 		EntityResult existingRoomType = roomtypeQuery(attrMap, attrList);
-		if(existingRoomType.isEmpty()) throw new RecordNotFoundException("ROOM_TYPE_DOESN'T_EXISTS");
+		if (existingRoomType.isEmpty())
+			throw new RecordNotFoundException("ROOM_TYPE_DOESN'T_EXISTS");
 		return !(existingRoomType.isEmpty());
 	}
-	
+
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
 		if (attrMap.get("rmt_name") == null && attrMap.get("rmt_capacity") == null
 				&& attrMap.get("rmt_price") == null) {
 			throw new EmptyRequestException("EMPTY_REQUEST");
 		}
 	}
-	
 
 }

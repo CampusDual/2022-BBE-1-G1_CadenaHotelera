@@ -35,6 +35,19 @@
    </Sentence>
   </Query>
   
+    <Query id="TODAY_CHECKOUTS">
+   <Sentence>
+   <![CDATA[
+     SELECT
+      DISTINCT #COLUMNS#
+     FROM
+      ROOMS R LEFT JOIN BOOKINGS B ON
+      B.BK_ROOM = R.ID_ROOM
+      WHERE B.BK_CHECK_OUT=CURRENT_DATE
+     #WHERE_CONCAT#
+   ]]>
+   </Sentence>
+  </Query>
   
   <Query id="CLIENT_BOOKINGS">
    <Sentence>
