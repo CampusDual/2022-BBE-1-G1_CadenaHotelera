@@ -10,10 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IServiceService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ServiceDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -53,13 +57,16 @@ public class ServiceService implements IServiceService{
 	   */
 	@Override
 	public EntityResult serviceQuery(Map<String, Object> keyMap, List<String> attrList)
-			throws OntimizeJEERuntimeException {
-		EntityResult searchResult = this.daoHelper.query(this.serviceDao, keyMap, attrList);		
-		if (searchResult.getCode() == EntityResult.OPERATION_WRONG) {
-			searchResult.setMessage("ERROR_WHILE_SEARCHING");
-		}
-		if(searchResult.isEmpty()) {
-			searchResult.setMessage("THERE ARE NOT SERVICES");
+			throws OntimizeJEERuntimeException {		
+		EntityResult searchResult = new EntityResultMapImpl();
+		try {
+			searchResult = this.daoHelper.query(this.serviceDao, keyMap, attrList);	
+			control.checkResults(searchResult);
+			
+		}catch (NoResultsException e) {
+			control.setErrorMessage(searchResult, e.getMessage());
+		} catch (BadSqlGrammarException e) {
+			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
 	}
@@ -76,11 +83,15 @@ public class ServiceService implements IServiceService{
 		EntityResult insertResult = new EntityResultMapImpl();
 			try {
 				insertResult= this.daoHelper.insert(this.serviceDao, attrMap);
+				if (insertResult.isEmpty())
+					throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 				insertResult.setMessage("SUCCESSFUL_INSERTION");
 			}catch (DuplicateKeyException e) {
 				control.setErrorMessage(insertResult, "THERE ARE SERVICES WITH THIS NAME");
 			}catch (DataIntegrityViolationException e) {
 				control.setErrorMessage(insertResult, "SERVICE_NAME_REQUIRED");
+			} catch (AllFieldsRequiredException e) {
+				control.setErrorMessage(insertResult, e.getMessage());
 			}
 		return insertResult;
 	}
@@ -97,49 +108,35 @@ public class ServiceService implements IServiceService{
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
+			checkIfDataIsEmpty(attrMap);
 			checkIfServiceExists(keyMap);
 			updateResult = this.daoHelper.update(this.serviceDao, attrMap, keyMap);
-				if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
-					updateResult.setMessage("ERROR_WHILE_UPDATING");
-				} else {
-					updateResult.setMessage("SUCCESSFUL_UPDATE");
-				}
+			updateResult.setMessage("SUCCESSFUL_UPDATE");
+				
 		}catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "SERVICE_NAME_ALREADY_EXISTS");
 		}catch (RecordNotFoundException e) {
-			control.setErrorMessage(updateResult, "ERROR_SERVICE_NOT_FOUND");
+			control.setErrorMessage(updateResult, e.getMessage());
+		} catch (EmptyRequestException e) {
+			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
 
-//	@Override
-//	public EntityResult serviceDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
-//		Map<Object, Object> attrMap = new HashMap<>();
-//		attrMap.put("sv_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
-//		
-//		EntityResult deleteResult = new EntityResultMapImpl();
-//		
-//		if (!checkIfServiceExists(keyMap)) {
-//			deleteResult.setMessage("ERROR_SERVICE_NOT_FOUND");
-//			deleteResult.setCode(1);
-//		}else {				
-//			deleteResult=this.daoHelper.update(this.serviceDao, attrMap, keyMap);
-//			deleteResult.setMessage("SUCCESSFUL_DELETE");
-//		}
-//		return deleteResult;
-//	}
 	
 	private boolean checkIfServiceExists(Map<String, Object> keyMap) {
+		if(keyMap.get("id_service")==null) {
+			throw new RecordNotFoundException("ID_SERVICE_REQUIRED");
+		}
 		List<String> fields = new ArrayList<>();
 		fields.add("id_service");
 		EntityResult existingServices = daoHelper.query(serviceDao, keyMap, fields);
 		if(existingServices.isEmpty()) throw new RecordNotFoundException("ERROR_SERVICE_NOT_FOUND");
 		return existingServices.isEmpty();
 	}
-//	private boolean checkIfServiceNameExists(Map<String, Object> keyMap) {
-//		List<String> fields = new ArrayList<>();
-//		fields.add("sv_name");
-//		EntityResult existingNameServices = daoHelper.query(serviceDao, keyMap, fields);	
-//		return existingNameServices.isEmpty();
-//	}
+	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
+		if (attrMap.get("sv_name") == null && attrMap.get("sv_description") == null) {
+			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
+		}
+	}
 }

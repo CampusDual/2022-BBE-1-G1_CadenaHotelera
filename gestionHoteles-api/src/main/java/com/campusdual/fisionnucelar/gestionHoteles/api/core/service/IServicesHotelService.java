@@ -13,9 +13,7 @@ import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
  */
 public interface IServicesHotelService {
 	 // Service_hotel
-	 public EntityResult serviceHotelQuery(Map<String, Object> keyMap, List<String> attrList) throws OntimizeJEERuntimeException;
-	 public EntityResult serviceHotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException;
-	 public EntityResult serviceHotelUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap) throws OntimizeJEERuntimeException;
-	 public EntityResult serviceHotelDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException;
-
+	 public EntityResult servicehotelQuery(Map<String, Object> keyMap, List<String> attrList) throws OntimizeJEERuntimeException;
+	 public EntityResult servicehotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException;
+	 public EntityResult servicehotelUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap) throws OntimizeJEERuntimeException;
 }

@@ -3,7 +3,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IServiceService;
+
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IServicesHotelService;
 import com.ontimize.jee.server.rest.ORestController;
 
@@ -15,7 +15,7 @@ import com.ontimize.jee.server.rest.ORestController;
  *
  */
 @RestController
-@RequestMapping("/serviceshotel")
+@RequestMapping("/servicehotel")
 public class ServiceHotelRestController  extends ORestController<IServicesHotelService>{
 
 	 @Autowired

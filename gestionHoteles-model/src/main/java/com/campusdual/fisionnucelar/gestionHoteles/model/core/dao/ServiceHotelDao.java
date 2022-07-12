@@ -1,8 +1,6 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.dao;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Repository;
-
-import com.ontimize.jee.server.dao.IOntimizeDaoSupport;
 import com.ontimize.jee.server.dao.common.ConfigurationFile;
 import com.ontimize.jee.server.dao.jdbc.OntimizeJdbcDaoSupport;
 /**

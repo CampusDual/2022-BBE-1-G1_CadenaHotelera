@@ -1,0 +1,203 @@
+{
+	"info": {
+		"_postman_id": "14d718cd-e559-447a-b23d-b3de7965f8bc",
+		"name": "Service management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21017428"
+	},
+	"item": [
+		{
+			"name": "get service",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/services/service?columns=id_service,sv_name,sv_description",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"services",
+						"service"
+					],
+					"query": [
+						{
+							"key": "columns",
+							"value": "id_service,sv_name,sv_description"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search service",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"id_service\": 3\r\n    },\r\n    \"columns\": [\"id_service\",\"sv_name\",\"sv_description\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/services/service/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"services",
+						"service",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert service",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {\r\n        \"sv_name\": \"Piscina\",\r\n        \"sv_description\": \"Recinto cubierto\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"sv_name\": 12,\r\n        \"sv_description\": 12,\r\n        \"id_service\": 4\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/services/service",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"services",
+						"service"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update service",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_service\" : 2\r\n },\r\n    \"data\": {\r\n        \"sv_name\": \"Piscina\"\r\n    },\r\n     \"sqltypes\": {\r\n        \"sv_name\": 12,\r\n        \"sv_description\": 12,\r\n        \"id_service\": 4\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/services/service",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"services",
+						"service"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "basic"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

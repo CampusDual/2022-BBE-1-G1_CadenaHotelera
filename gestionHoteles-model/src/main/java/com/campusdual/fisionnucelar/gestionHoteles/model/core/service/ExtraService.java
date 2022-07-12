@@ -9,10 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IExtraService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -53,15 +57,20 @@ public class ExtraService implements IExtraService{
 	@Override
 	public EntityResult extraQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
-		EntityResult searchResult = this.daoHelper.query(this.extraDao, keyMap, attrList);		
-		if (searchResult.getCode() == EntityResult.OPERATION_WRONG) {
-			searchResult.setMessage("ERROR_WHILE_SEARCHING");
-		}
-		if(searchResult.isEmpty()) {
-			searchResult.setMessage("THERE ARE NOT EXTRAS");
-		}
+		EntityResult searchResult = new EntityResultMapImpl();
+		try {
+			searchResult = this.daoHelper.query(this.extraDao, keyMap, attrList);
+			control.checkResults(searchResult);
+			
+		}catch (NoResultsException e) {
+			control.setErrorMessage(searchResult, e.getMessage());
+		} catch (BadSqlGrammarException e) {
+			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
+		}		
+	
 		return searchResult;
 	}
+
 	/**
 	 * 
 	 * Adds a new register on the extra table.
@@ -75,11 +84,15 @@ public class ExtraService implements IExtraService{
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
 			insertResult= this.daoHelper.insert(this.extraDao, attrMap);
+			if (insertResult.isEmpty())
+				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		}catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "THERE ARE EXTRAS WITH THIS NAME");
 		}catch (DataIntegrityViolationException e) {
 			control.setErrorMessage(insertResult, "EXTRA_NAME_REQUIRED");
+		} catch (AllFieldsRequiredException e) {
+			control.setErrorMessage(insertResult, e.getMessage());
 		}
 	return insertResult;
 	}
@@ -96,26 +109,34 @@ public class ExtraService implements IExtraService{
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
+			checkIfDataIsEmpty(attrMap);
 			checkIfExtraExists(keyMap);
 			updateResult = this.daoHelper.update(this.extraDao, attrMap, keyMap);
-			if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
-					updateResult.setMessage("ERROR_WHILE_UPDATING");
-				} else {
-					updateResult.setMessage("SUCCESSFUL_UPDATE");
-				}
+			updateResult.setMessage("SUCCESSFUL_UPDATE");
+				
 		}catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "EXTRA_NAME_ALREADY_EXISTS");
 		}catch (RecordNotFoundException e) {
-			control.setErrorMessage(updateResult, "ERROR_EXTRA_NOT_FOUND");
+			control.setErrorMessage(updateResult, e.getMessage());
+		}catch (EmptyRequestException e) {
+			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
 	
 	private boolean checkIfExtraExists(Map<String, Object> keyMap) {
+		if(keyMap.get("id_extra")==null) {
+			throw new RecordNotFoundException("ID_EXTRA_REQUIRED");
+		}
 		List<String> fields = new ArrayList<>();
 		fields.add("id_extra");
 		EntityResult existingExtras = daoHelper.query(extraDao, keyMap, fields);
 		if(existingExtras.isEmpty()) throw new RecordNotFoundException("ERROR_EXTRA_NOT_FOUND");
 		return existingExtras.isEmpty();
+	}
+	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
+		if (attrMap.get("ex_name") == null && attrMap.get("ex_description") == null) {
+			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
+		}
 	}
 }

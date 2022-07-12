@@ -1,0 +1,203 @@
+{
+	"info": {
+		"_postman_id": "28cdb6e2-bb7f-4018-878e-470b5cb19c03",
+		"name": "Extra management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21017428"
+	},
+	"item": [
+		{
+			"name": "get extra",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/extras/extra?columns=id_extra,ex_name,ex_description",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"extras",
+						"extra"
+					],
+					"query": [
+						{
+							"key": "columns",
+							"value": "id_extra,ex_name,ex_description"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search extra",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"id_extra\": 3\r\n    },\r\n    \"columns\": [\"id_extra\",\"ex_name\",\"ex_description\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/extras/extra/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"extras",
+						"extra",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert extra",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {\r\n        \"ex_name\": \"Catering\",\r\n        \"ex_description\": \"Servicio que ofrece un menú adecuado para el cliente en tus celebraciones o reuniones\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_extra\": 4,\r\n        \"ex_name\": 12,\r\n        \"ex_description\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/extras/extra",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"extras",
+						"extra"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update extra",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_extra\" : 2\r\n },\r\n    \"data\": {\r\n        \"ex_name\": \"Niñera\"\r\n    },\r\n     \"sqltypes\": {\r\n       \"id_extra\": 4,\r\n        \"ex_name\": 12,\r\n        \"ex_description\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/extras/extra",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"extras",
+						"extra"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "basic"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

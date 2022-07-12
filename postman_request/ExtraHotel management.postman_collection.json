@@ -1,0 +1,203 @@
+{
+	"info": {
+		"_postman_id": "f911f371-0b8e-470f-9121-82fa85313888",
+		"name": "ExtraHotel management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21017428"
+	},
+	"item": [
+		{
+			"name": "get extraHotel",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/extrahotel/extrahotel?columns=id_extras_hotel,exh_hotel,exh_extra,exh_price,exh_active",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"extrahotel",
+						"extrahotel"
+					],
+					"query": [
+						{
+							"key": "columns",
+							"value": "id_extras_hotel,exh_hotel,exh_extra,exh_price,exh_active"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search extraHotel",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"id_extras_hotel\": 2\r\n    },\r\n    \"columns\": [\"id_extras_hotel\",\"exh_hotel\",\"exh_extra\",\"exh_price\",\"exh_active\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/extrahotel/extrahotel/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"extrahotel",
+						"extrahotel",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert extraHotel",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {\r\n        \"exh_hotel\": 1,\r\n        \"exh_extra\": 3,\r\n        \"exh_price\": 200\r\n    },\r\n    \"sqltypes\": {\r\n        \"exh_hotel\": 4,\r\n        \"exh_active\": -7,\r\n        \"id_extras_hotel\": 4,\r\n        \"exh_extra\": 4,\r\n        \"exh_price\": 2\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/extrahotel/extrahotel",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"extrahotel",
+						"extrahotel"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update extraHotel",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_extras_hotel\" : 7\r\n },\r\n    \"data\": {\r\n        \"exh_hotel\": 1,\r\n        \"exh_extra\": 3,\r\n        \"exh_price\": 200\r\n    },\r\n     \"sqltypes\": {\r\n        \"exh_hotel\": 4,\r\n        \"exh_active\": -7,\r\n        \"id_extras_hotel\": 4,\r\n        \"exh_extra\": 4,\r\n        \"exh_price\": 2\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/extrahotel/extrahotel",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"extrahotel",
+						"extrahotel"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "basic"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
