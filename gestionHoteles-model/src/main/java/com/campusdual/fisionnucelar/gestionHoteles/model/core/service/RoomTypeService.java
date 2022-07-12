@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomTypeService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomTypeDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -108,6 +109,7 @@ public class RoomTypeService implements IRoomTypeService {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
 			checkIfRoomTypeExists(keyMap);
+			checkIfDataIsEmpty(attrMap);
 			updateResult = this.daoHelper.update(this.roomTypeDao, attrMap, keyMap);
 			
 			updateResult.setMessage("SUCESSFUL_UPDATE");
@@ -117,16 +119,28 @@ public class RoomTypeService implements IRoomTypeService {
 			control.setErrorMessage(updateResult, "ROOM_TYPE_ALREADY_EXISTS");
 		}catch (RecordNotFoundException e) {
 			control.setErrorMessage(updateResult, "ROOM_TYPE_DOESN'T_EXISTS");
+		}catch (EmptyRequestException e) {
+			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
 	
 	private boolean checkIfRoomTypeExists(Map<String, Object> attrMap) {
+		if(attrMap.get("id_room_type")==null) {
+			throw new RecordNotFoundException("ID_ROOM_TYPE_REQUIRED");
+		}
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_room_type");
 		EntityResult existingRoomType = roomtypeQuery(attrMap, attrList);
 		if(existingRoomType.isEmpty()) throw new RecordNotFoundException("ROOM_TYPE_DOESN'T_EXISTS");
 		return !(existingRoomType.isEmpty());
+	}
+	
+	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
+		if (attrMap.get("rmt_name") == null && attrMap.get("rmt_capacity") == null
+				&& attrMap.get("rmt_price") == null) {
+			throw new EmptyRequestException("EMPTY_REQUEST");
+		}
 	}
 	
 

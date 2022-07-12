@@ -18,6 +18,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingServ
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IClientService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ClientDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -113,8 +114,9 @@ public class ClientService implements IClientService {
 			throws OntimizeJEERuntimeException {
 		attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		EntityResult updateResult = new EntityResultMapImpl();
-		try {		
+		try {
 			checkIfClientExists(keyMap);
+			checkIfDataIsEmpty(attrMap);
 			updateResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
 			if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
 				updateResult.setMessage("ERROR_WHILE_UPDATING");
@@ -123,6 +125,8 @@ public class ClientService implements IClientService {
 			}
 		} catch (RecordNotFoundException e) {
 			control.setErrorMessage(updateResult, "CLIENT_DOESN'T_EXISTS");
+		} catch (EmptyRequestException e) {
+			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
@@ -142,12 +146,12 @@ public class ClientService implements IClientService {
 		attrMap.put("cl_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 
 		EntityResult deleteResult = new EntityResultMapImpl();
-		try{
+		try {
 			checkIfClientExists(keyMap);
 			checkActiveReservations(keyMap);
 			deleteResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
 			deleteResult.setMessage("SUCCESSFUL_DELETE");
-		}catch (RecordNotFoundException e) {
+		} catch (RecordNotFoundException e) {
 			control.setErrorMessage(deleteResult, e.getMessage());
 		}
 		return deleteResult;
@@ -163,12 +167,23 @@ public class ClientService implements IClientService {
 	 * @return True if the client exists, false if it does't exists
 	 */
 	private boolean checkIfClientExists(Map<String, Object> keyMap) {
+		if (keyMap.get("id_client") == null) {
+			throw new RecordNotFoundException("ID_CLIENT_REQUIRED");
+		}
 		List<String> fields = new ArrayList<>();
 		fields.add("id_client");
 		EntityResult existingClients = daoHelper.query(clientDao, keyMap, fields);
 		if (existingClients.isEmpty())
 			throw new RecordNotFoundException("ERROR_CLIENT_NOT_FOUND");
 		return existingClients.isEmpty();
+	}
+
+	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
+		if (attrMap.get("cl_nif") == null && attrMap.get("cl_name") == null && attrMap.get("cl_phone") == null
+				&& attrMap.get("cl_email") == null && attrMap.get("cl_entry_date") == null
+				&& attrMap.get("cl_last_update") == null && attrMap.get("cl_leaving_date") == null) {
+			throw new EmptyRequestException("EMPTY_REQUEST");
+		}
 	}
 
 	/**
@@ -181,11 +196,12 @@ public class ClientService implements IClientService {
 	 * @return True if the client has active bookings, false if he hasn't
 	 */
 	private boolean checkActiveReservations(Map<String, Object> keyMap) {
+
 		List<String> fields = new ArrayList<>();
 		fields.add("id_booking");
 		EntityResult activeBookings = bookingService.clientactivebookingsQuery(keyMap, fields);
 		if (!activeBookings.isEmpty())
-			throw new RecordNotFoundException("ERROR_ACTIVE_BOOKINGS_FOUND");	
+			throw new RecordNotFoundException("ERROR_ACTIVE_BOOKINGS_FOUND");
 		return activeBookings.isEmpty();
 	}
 }
