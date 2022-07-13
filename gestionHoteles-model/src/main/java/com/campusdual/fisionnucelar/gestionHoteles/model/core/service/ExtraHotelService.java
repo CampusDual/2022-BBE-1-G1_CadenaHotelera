@@ -112,6 +112,8 @@ public class ExtraHotelService implements IExtraHotelService{
 			control.setErrorMessage(insertResult, "EXTRA_PRICE_AND_HOTEL_REQUIRED");
 		}catch (AllFieldsRequiredException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
+		}catch(BadSqlGrammarException e) {
+			control.setErrorMessage(insertResult, "PRICE_MUST_BE_NUMERIC");
 		}
 	return insertResult;
 	}
@@ -133,8 +135,12 @@ public class ExtraHotelService implements IExtraHotelService{
 			if (attrMap.containsKey("exh_hotel")) {
 				checkIfHotelExists(attrMap);
 			}
-			if (attrMap.containsKey("exh_service")) {
+			if (attrMap.containsKey("exh_extra")) {
 				checkIfExtraExists(attrMap);
+			}
+
+			if(attrMap.containsKey("exh_active")) {
+				boolean checkActive=(boolean) attrMap.get("exh_active");
 			}
 			
 			updateResult = this.daoHelper.update(this.extraHotelDao, attrMap, keyMap);
@@ -174,6 +180,8 @@ public class ExtraHotelService implements IExtraHotelService{
 			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
 		}
 	}
+	
+	
 	private boolean checkIfExtraExists(Map<String, Object> attrMap) {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_extra");

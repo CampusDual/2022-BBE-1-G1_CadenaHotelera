@@ -112,7 +112,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n     \"bk_client\": 1\r\n    },\r\n    \"columns\": [\"id_booking\",\"bk_check_in\",\"bk_check_out\",\"bk_room\",\"htl_name\",\"htl_address\",\"htl_phone\",\"htl_email\"]\r\n}\r\n",
+					"raw": "{\r\n    \"filter\": {\r\n     \"bk_client\": 2\r\n    },\r\n    \"columns\": [\"id_booking\",\"bk_check_in\",\"bk_check_out\",\"bk_room\",\"htl_name\",\"htl_address\",\"htl_phone\",\"htl_email\"]\r\n}\r\n",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -164,6 +164,50 @@
 			"response": []
 		},
 		{
+			"name": "search today check-outs",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"rm_hotel\":1\r\n    },\r\n    \"columns\": [\"bk_room\",\"rm_hotel\",\"rm_number\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/todaycheckout/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"todaycheckout",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "insert booking",
 			"request": {
 				"auth": {
@@ -201,6 +245,49 @@
 					"path": [
 						"bookings",
 						"booking"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add extras to booking",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_booking\" : 48\r\n },\r\n    \"data\": {\r\n        \"id_extras_hotel\":7,\r\n        \"quantity\":3\r\n\r\n    },\r\n     \"sqltypes\": {\r\n        \"svh_hotel\": 4,\r\n        \"svh_active\": -7,\r\n        \"id_services_hotel\": 4,\r\n        \"svh_service\": 4\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/bookingextra",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"bookingextra"
 					]
 				}
 			},
