@@ -22,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
@@ -51,7 +52,6 @@ public class ClientServiceTest {
 		@Test
 		@DisplayName("Insert a client successfully")
 		void hotel_insert_success() {
-			Map<String, Object> attrMap = new HashMap<>();
 			Map<String, Object> dataToInsert = new HashMap<>();
 			dataToInsert.put("cl_nif", "98766789I");
 			dataToInsert.put("cl_email", "alfredoperez@outlook.com");
@@ -68,7 +68,7 @@ public class ClientServiceTest {
 			int recordIndex = entityResult.getRecordIndex(keyMap);
 			//assertEquals("INSERT_SUCCESSFULLY", entityResult.getMessage());
 			assertEquals(2, entityResult.getRecordValues(recordIndex).get("ID_CLIENT"));
-			verify(daoHelper).insert(clientDao, attrMap);
+			verify(daoHelper).insert(clientDao, dataToInsert);
 
 		}
 
@@ -100,10 +100,33 @@ public class ClientServiceTest {
 		void hotel_insert_without_any_fields() {
 			Map<String, Object> attrMap = new HashMap<>();
 			EntityResult insertResult = new EntityResultMapImpl();
-			EntityResult entityResult = clientService.clientInsert(attrMap);
-			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			assertEquals("EMPTY_REQUEST", entityResult.getMessage());
+			when(daoHelper.insert(clientDao, attrMap)).thenThrow(DataIntegrityViolationException.class);
+			insertResult = clientService.clientInsert(attrMap);
+			assertEquals(EntityResult.OPERATION_WRONG, insertResult.getCode());
+			assertEquals("DNI_NAME_AND_EMAIL_REQUIRED", insertResult.getMessage());
 		}
+        @Test
+        @DisplayName("Fail trying to insert duplicated email")
+        void client_insert_duplicated_mail() {
+        	Map<String, Object> dataToInsert = new HashMap<>();
+			dataToInsert.put("cl_nif", "98766789I");
+			dataToInsert.put("cl_email", "alfredoperez@outlook.com");
+			dataToInsert.put("cl_name", "Alfredo Pérez");
+			dataToInsert.put("cl_phone", "985446789");
+        	List<String> columnList = Arrays.asList("ID_CLIENT");
+    		EntityResult insertResult = new EntityResultMapImpl(columnList);
+    	    insertResult.addRecord(new HashMap<String, Object>() {{
+    	        put("ID_CLIENT", 2);}});
+        	when(daoHelper.insert(clientDao, dataToInsert)).thenReturn(insertResult);
+        	EntityResult resultSuccess = clientService.clientInsert(dataToInsert);
+        	assertEquals(EntityResult.OPERATION_SUCCESSFUL, resultSuccess.getCode());
+        	//assertEquals("SUCESSFUL_INSERTION", resultSuccess.getMessage());
+        	when(daoHelper.insert(clientDao, dataToInsert)).thenThrow(DuplicateKeyException.class);
+        	EntityResult resultFail =clientService.clientInsert(dataToInsert);
+        	assertEquals(EntityResult.OPERATION_WRONG, resultFail.getCode());
+        	assertEquals("EMAIL_ALREADY_EXISTS", resultFail.getMessage());
+        	verify(daoHelper,times(2)).insert(any(), anyMap());
+        }
 	}
 		
 	

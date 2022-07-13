@@ -99,7 +99,9 @@ public class ClientService implements IClientService {
 		attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
-			control.checkIfEmailIsValid(attrMap.get("cl_email").toString());
+			if (attrMap.get("cl_email") != null) {
+				control.checkIfEmailIsValid(attrMap.get("cl_email").toString());
+			}
 			insertResult = this.daoHelper.insert(this.clientDao, attrMap);
 		} catch (InvalidEmailException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
