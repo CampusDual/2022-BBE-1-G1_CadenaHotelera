@@ -347,4 +347,8 @@ public class HotelServiceTest {
 			assertEquals("INVALID_EMAIL", entityResult.getMessage());
 		}
     }
+    
+    
+    
+    
 }

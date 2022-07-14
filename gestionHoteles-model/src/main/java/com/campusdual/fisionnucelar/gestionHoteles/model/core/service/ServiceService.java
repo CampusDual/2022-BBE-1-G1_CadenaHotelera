@@ -85,9 +85,9 @@ public class ServiceService implements IServiceService{
 				insertResult= this.daoHelper.insert(this.serviceDao, attrMap);
 				if (insertResult.isEmpty())
 					throw new AllFieldsRequiredException("FIELDS_REQUIRED");
-				insertResult.setMessage("SUCCESSFUL_INSERTION");
+				insertResult.setMessage("SUCESSFUL_INSERTION");
 			}catch (DuplicateKeyException e) {
-				control.setErrorMessage(insertResult, "THERE ARE SERVICES WITH THIS NAME");
+				control.setErrorMessage(insertResult, "SERVICE_NAME_ALREADY_EXISTS");
 			}catch (DataIntegrityViolationException e) {
 				control.setErrorMessage(insertResult, "SERVICE_NAME_REQUIRED");
 			} catch (AllFieldsRequiredException e) {
@@ -122,7 +122,6 @@ public class ServiceService implements IServiceService{
 		}
 		return updateResult;
 	}
-
 	
 	private boolean checkIfServiceExists(Map<String, Object> keyMap) {
 		if(keyMap.get("id_service")==null) {
@@ -136,7 +135,7 @@ public class ServiceService implements IServiceService{
 	}
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
 		if (attrMap.get("sv_name") == null && attrMap.get("sv_description") == null) {
-			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
+			throw new EmptyRequestException("EMPTY_REQUEST");
 		}
 	}
 }
