@@ -88,7 +88,7 @@ public class ExtraService implements IExtraService{
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		}catch (DuplicateKeyException e) {
-			control.setErrorMessage(insertResult, "THERE ARE EXTRAS WITH THIS NAME");
+			control.setErrorMessage(insertResult, "EXTRA_NAME_ALREADY_EXISTS");
 		}catch (DataIntegrityViolationException e) {
 			control.setErrorMessage(insertResult, "EXTRA_NAME_REQUIRED");
 		} catch (AllFieldsRequiredException e) {
