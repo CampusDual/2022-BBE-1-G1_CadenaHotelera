@@ -60,9 +60,8 @@ public class ServiceService implements IServiceService{
 			throws OntimizeJEERuntimeException {		
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
-			searchResult = this.daoHelper.query(this.serviceDao, keyMap, attrList);	
-			control.checkResults(searchResult);
-			
+			searchResult = this.daoHelper.query(this.serviceDao, keyMap, attrList);
+			control.checkResults(searchResult);			
 		}catch (NoResultsException e) {
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
@@ -115,9 +114,7 @@ public class ServiceService implements IServiceService{
 				
 		}catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "SERVICE_NAME_ALREADY_EXISTS");
-		}catch (RecordNotFoundException e) {
-			control.setErrorMessage(updateResult, e.getMessage());
-		} catch (EmptyRequestException e) {
+		}catch (RecordNotFoundException|EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;

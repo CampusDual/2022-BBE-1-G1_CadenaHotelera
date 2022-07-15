@@ -26,6 +26,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
+
 @ExtendWith(MockitoExtension.class)
 public class HotelServiceTest {
     @Mock
@@ -243,7 +244,7 @@ public class HotelServiceTest {
         	List<String> attrList = new ArrayList<>();
     		attrList.add("id_hotel");
         	EntityResult er = new EntityResultMapImpl();
-        	er.setCode(EntityResult.OPERATION_SUCCESSFUL);
+        	
         	EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_HOTEL","HTL_NAME"));
         	//when
         	when(daoHelper.update(hotelDao, dataToUpdate,filter)).thenReturn(er);

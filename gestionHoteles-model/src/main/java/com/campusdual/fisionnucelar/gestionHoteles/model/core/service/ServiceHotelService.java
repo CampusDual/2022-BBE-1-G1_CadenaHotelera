@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelService;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IServiceService;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IServicesHotelService;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ServiceDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ServiceHotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
@@ -41,13 +43,13 @@ public class ServiceHotelService implements IServicesHotelService {
 	private ServiceHotelDao serviceHotelDao;
 
 	@Autowired
+	private HotelDao hotelDao;
+
+	@Autowired
+	private ServiceDao serviceDao;
+
+	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
-
-	@Autowired
-	private IHotelService hotelService;
-
-	@Autowired
-	private IServiceService serviceService;
 
 	private Control control;
 
@@ -72,7 +74,6 @@ public class ServiceHotelService implements IServicesHotelService {
 		try {
 			searchResult = daoHelper.query(serviceHotelDao, keyMap, attrList);
 			control.checkResults(searchResult);
-
 		} catch (NoResultsException e) {
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
@@ -94,12 +95,14 @@ public class ServiceHotelService implements IServicesHotelService {
 	public EntityResult servicehotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
+
 			if (attrMap.containsKey("svh_hotel")) {
 				checkIfHotelExists(attrMap);
 			}
 			if (attrMap.containsKey("svh_service")) {
 				checkIfServiceExists(attrMap);
 			}
+
 			insertResult = this.daoHelper.insert(this.serviceHotelDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
@@ -107,12 +110,10 @@ public class ServiceHotelService implements IServicesHotelService {
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "DUPLICATED_SERVICES_IN_HOTEL");
-		} catch (RecordNotFoundException e) {
+		} catch (RecordNotFoundException | AllFieldsRequiredException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DataIntegrityViolationException e) {
 			control.setErrorMessage(insertResult, "SERVICE_AND_HOTEL_REQUIRED");
-		} catch (AllFieldsRequiredException e) {
-			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
 	}
@@ -145,22 +146,16 @@ public class ServiceHotelService implements IServicesHotelService {
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "DUPLICATED_SERVICES_IN_HOTEL");
-		} catch (RecordNotFoundException e) {
-			control.setErrorMessage(updateResult, e.getMessage());
-		} catch (IncorrectBooleanException e) {
-			control.setErrorMessage(updateResult, e.getMessage());
-		} catch (EmptyRequestException e) {
+		} catch (RecordNotFoundException | IncorrectBooleanException | EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
 
 	private void checkCorrectBoolean(Map<String, Object> attrMap) throws IncorrectBooleanException {
-
 		if ((int) attrMap.get("svh_active") > 1 || (int) attrMap.get("svh_active") < 0) {
 			throw new IncorrectBooleanException("SVH_ACTIVE_MUST_BE_1_OR_0");
 		}
-
 	}
 
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
@@ -187,7 +182,7 @@ public class ServiceHotelService implements IServicesHotelService {
 		attrList.add("id_hotel");
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_hotel", attrMap.get("svh_hotel"));
-		EntityResult existingHotel = hotelService.hotelQuery(keyMap, attrList);
+		EntityResult existingHotel = daoHelper.query(hotelDao, keyMap, attrList);
 		if (existingHotel.isEmpty())
 			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
 		return existingHotel.isEmpty();
@@ -198,7 +193,7 @@ public class ServiceHotelService implements IServicesHotelService {
 		attrList.add("id_service");
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_service", attrMap.get("svh_service"));
-		EntityResult existingService = serviceService.serviceQuery(keyMap, attrList);
+		EntityResult existingService = daoHelper.query(serviceDao, keyMap, attrList);
 		if (existingService.isEmpty())
 			throw new RecordNotFoundException("SERVICE_DOESN'T_EXISTS");
 		return existingService.isEmpty();
