@@ -13,13 +13,15 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 
-import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelService;
-
-import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IExtraService;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IExtraHotelService;
+import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IExtraService;
+import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelService;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraHotelDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.IncorrectBooleanException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
@@ -43,11 +45,13 @@ public class ExtraHotelService implements IExtraHotelService{
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
 	
+
 	@Autowired
-	private IHotelService hotelService;
-	
+	private HotelDao hotelDao;
+
 	@Autowired
-	private IExtraService extraService;
+	private ExtraDao extraDao;
+
 	
 	private Control control;
 
@@ -77,9 +81,6 @@ public class ExtraHotelService implements IExtraHotelService{
 		} catch (BadSqlGrammarException e) {
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
-//		if(searchResult.isEmpty()) {
-//			searchResult.setMessage("NOT_EXTRAS_IN_HOTEL");
-//		}
 		return searchResult;
 	}
 	/**
@@ -106,12 +107,10 @@ public class ExtraHotelService implements IExtraHotelService{
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		}catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "DUPLICATED_EXTRAS_IN_HOTEL");
-		}catch (RecordNotFoundException e) {
+		}catch (RecordNotFoundException| AllFieldsRequiredException e) {
 				control.setErrorMessage(insertResult, e.getMessage());
 		}catch (DataIntegrityViolationException e) {
 			control.setErrorMessage(insertResult, "EXTRA_PRICE_AND_HOTEL_REQUIRED");
-		}catch (AllFieldsRequiredException e) {
-			control.setErrorMessage(insertResult, e.getMessage());
 		}catch(BadSqlGrammarException e) {
 			control.setErrorMessage(insertResult, "PRICE_MUST_BE_NUMERIC");
 		}
@@ -138,18 +137,15 @@ public class ExtraHotelService implements IExtraHotelService{
 			if (attrMap.containsKey("exh_extra")) {
 				checkIfExtraExists(attrMap);
 			}
-
 			if(attrMap.containsKey("exh_active")) {
-				boolean checkActive=(boolean) attrMap.get("exh_active");
+				checkCorrectBoolean(attrMap);
 			}
 			
 			updateResult = this.daoHelper.update(this.extraHotelDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");		
 		}catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "DUPLICATED_EXTRA_IN_HOTEL");
-		}catch (RecordNotFoundException e) {
-			control.setErrorMessage(updateResult, e.getMessage());
-		}catch (EmptyRequestException e) {
+		}catch (RecordNotFoundException|IncorrectBooleanException | EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
@@ -170,7 +166,7 @@ public class ExtraHotelService implements IExtraHotelService{
 		attrList.add("id_hotel");
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_hotel", attrMap.get("exh_hotel"));
-		EntityResult existingHotel = hotelService.hotelQuery(keyMap, attrList);
+		EntityResult existingHotel = daoHelper.query(hotelDao, keyMap, attrList);
 		if(existingHotel.isEmpty()) throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
 		return existingHotel.isEmpty();
 	}
@@ -181,13 +177,19 @@ public class ExtraHotelService implements IExtraHotelService{
 		}
 	}
 	
+	private void checkCorrectBoolean(Map<String, Object> attrMap) throws IncorrectBooleanException {
+		if ((int) attrMap.get("exh_active") > 1 || (int) attrMap.get("exh_active") < 0) {
+			throw new IncorrectBooleanException("EXH_ACTIVE_MUST_BE_1_OR_0");
+		}
+	}
+	
 	
 	private boolean checkIfExtraExists(Map<String, Object> attrMap) {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_extra");
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_extra", attrMap.get("exh_extra"));
-		EntityResult existingExtra = extraService.extraQuery(keyMap, attrList);
+		EntityResult existingExtra = daoHelper.query(extraDao,keyMap, attrList);
 		if(existingExtra.isEmpty()) throw new RecordNotFoundException("EXTRA_DOESN'T_EXISTS");
 		return existingExtra.isEmpty();
 	}

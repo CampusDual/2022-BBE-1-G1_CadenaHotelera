@@ -65,10 +65,12 @@ public class Control {
 		if(!Pattern.compile("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(-[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$").matcher(emailAddress).matches())
 			throw new InvalidEmailException("INVALID_EMAIL");
 		
-
 			
 	}
 
+	
+	
+	
 	public void checkResults(EntityResult searchResult) throws NoResultsException {
 		if (searchResult.isEmpty()) {
 			throw new NoResultsException("NO_RESULTS");
