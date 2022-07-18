@@ -44,13 +44,14 @@ import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 public class ServiceServiceTest {
 	 @Mock
 	    DefaultOntimizeDaoHelper daoHelper;
+	 
 	 @InjectMocks
 	    ServiceService serviceService;
 	    @Autowired
 	    ServiceDao serviceDao;
 	    
 	    @BeforeEach
-	    void setUp() {
+	    void setUp() {    	
 	        this.serviceService = new ServiceService();
 	        MockitoAnnotations.openMocks(this);
 	    }
@@ -188,11 +189,14 @@ public class ServiceServiceTest {
 	        @Test
 	        @DisplayName("Fail trying to insert without sv_name field")
 	        void service_insert_without_name() {
-	        	Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
-	        	when(daoHelper.insert(serviceDao, dataToInsert)).thenThrow(DataIntegrityViolationException.class);
-	        	EntityResult entityResult = serviceService.serviceInsert(dataToInsert);
-	        	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-	        	assertEquals("SERVICE_NAME_REQUIRED", entityResult.getMessage());
+	        	Map<String, Object> dataToInsert = new HashMap<>();
+	    		dataToInsert.put("sv_description", "Wireless internet");
+	    		
+	    		DataIntegrityViolationException DataIntegrityException=new DataIntegrityViolationException("RunTimeMessage");		
+	    		when(daoHelper.insert(any(), anyMap())).thenThrow(DataIntegrityException);
+	    		   		
+	    		EntityResult entityResult = serviceService.serviceInsert(dataToInsert);     	
+	           	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 	        	verify(daoHelper).insert(any(), anyMap());
 	        }     
 			
@@ -249,6 +253,7 @@ public class ServiceServiceTest {
 	        	verify(daoHelper).update(any(), anyMap(),anyMap());
 	        	verify(daoHelper).query(any(), anyMap(),anyList());
 	        }
+	        
 	        @Test
 	        @DisplayName("Fail trying to update a service that doesn´t exists")
 	        void update_service_doesnt_exists() {

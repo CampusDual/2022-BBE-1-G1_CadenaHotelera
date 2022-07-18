@@ -146,7 +146,7 @@ public class ExtraHotelServiceTest {
 				}
 			};
 			List<String> attrList = Arrays.asList("ID_EXTRAS_HOTEL", "EXH_HOTEL", "EXH_SERVICE", "EX_PRICE",
-					"SVH_ACTIVE");
+					"EXH_ACTIVE");
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificExtraHotelData(keyMap, attrList));
 			EntityResult entityResult = extraHotelService.extrahotelQuery(new HashMap<>(), new ArrayList<>());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
@@ -194,7 +194,6 @@ public class ExtraHotelServiceTest {
 			HashMap<String, Object> keyMap = new HashMap<>();
 			keyMap.put("ID_EXTRAS_HOTEL", 2);
 
-			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(er);
 			when(daoHelper.insert(extraHotelDao, dataToInsert)).thenReturn(er);
 
 			EntityResult entityResult = extraHotelService.extrahotelInsert(dataToInsert);
@@ -210,7 +209,6 @@ public class ExtraHotelServiceTest {
 			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
 			EntityResult insertResult = getGenericInsertResult();
 
-			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(insertResult);
 			when(daoHelper.insert(extraHotelDao, dataToInsert)).thenReturn(insertResult);
 
 			EntityResult resultSuccess = extraHotelService.extrahotelInsert(dataToInsert);
@@ -225,87 +223,38 @@ public class ExtraHotelServiceTest {
 		}
 
 		@Test
-		@DisplayName("Fail trying to insert without exh_hotel,exh_price or exh_extra")
+		@DisplayName("Fail trying to insert without a not null field or a non existing foreign key")
 		void extraHotel_insert_without_hotel_price_or_extra() {
 			Map<String, Object> dataToInsert = new HashMap<>();
-			dataToInsert.put("svh_active", 1);
-			when(daoHelper.insert(extraHotelDao, dataToInsert)).thenThrow(DataIntegrityViolationException.class);
+			dataToInsert.put("exh_active", 1);
+			DataIntegrityViolationException dataIntegrityException = new DataIntegrityViolationException("RUN_TIME_EXCEPTION");
+			when(daoHelper.insert(extraHotelDao, dataToInsert)).thenThrow(dataIntegrityException);
 			EntityResult entityResult = extraHotelService.extrahotelInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			assertEquals("EXTRA_PRICE_AND_HOTEL_REQUIRED", entityResult.getMessage());
+			assertEquals("RUN_TIME_EXCEPTION", entityResult.getMessage());
 			verify(daoHelper).insert(any(), anyMap());
 		}
 
 		@Test
 		@DisplayName("Fail trying to insert with no data")
 		void extraHotel_insert_withouth_data() {
-			EntityResult insertResult = new EntityResultMapImpl();
 			Map<String, Object> dataToInsert = new HashMap<>();
-			when(daoHelper.insert(extraHotelDao, dataToInsert)).thenReturn(insertResult);
 			EntityResult entityResult = extraHotelService.extrahotelInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			assertEquals("FIELDS_REQUIRED", entityResult.getMessage());
+			assertEquals("ANY_FIELDS_REQUIRED", entityResult.getMessage());
 		}
 
-		@Test
-		@DisplayName("Fail trying to insert with a non existing hotel")
-		void hotel_doesnt_exists() {
-			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
-
-			EntityResult hotel = new EntityResultMapImpl();
-			when(daoHelper.query(any(), any(), any())).thenReturn(hotel);
-
-			EntityResult entityResult = extraHotelService.extrahotelInsert(dataToInsert);
-			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			assertEquals("HOTEL_DOESN'T_EXISTS", entityResult.getMessage());
-
-		}
-
-		@Test
-		@DisplayName("Fail trying to insert with a non existing extra")
-		void extra_doesnt_exists() {
-			Map<String, Object> dataToInsert = new HashMap<>();
-			dataToInsert.put("exh_hotel", 1);
-			dataToInsert.put("exh_extra", 2);
-			dataToInsert.put("exh_price", 2);
-			dataToInsert.put("exh_active", 1);
-
-			EntityResult hotel = new EntityResultMapImpl();
-			Map<String, Object> keyMapHotel = new HashMap<>();
-			List<String> attrListHotel = new ArrayList<>();
-			keyMapHotel.put("id_hotel", 1);
-			attrListHotel.add("id_hotel");
-			hotel.put("id_hotel", 1);
-
-			EntityResult extra = new EntityResultMapImpl();
-			Map<String, Object> keyMapService = new HashMap<>();
-			List<String> attrListService = new ArrayList<>();
-			keyMapService.put("id_extra", 2);
-			attrListService.add("id_extra");
-
-			when(daoHelper.query(hotelDao, keyMapHotel, attrListHotel)).thenReturn(hotel);
-			when(daoHelper.query(extraDao, keyMapService, attrListService)).thenReturn(extra);
-
-			EntityResult entityResult = extraHotelService.extrahotelInsert(dataToInsert);
-			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			assertEquals("EXTRA_DOESN'T_EXISTS", entityResult.getMessage());
-		}
-		
+	
 		@Test
 		@DisplayName("Insert an ExtraHotel with a non numeric price")
 		void insert_with_non_numeric_price() {
 			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
-			when(daoHelper.query(any(), anyMap(), anyList())).thenThrow(BadSqlGrammarException.class);
+			when(daoHelper.insert(extraHotelDao, dataToInsert)).thenThrow(BadSqlGrammarException.class);		
 			EntityResult entityResult = extraHotelService.extrahotelInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("PRICE_MUST_BE_NUMERIC", entityResult.getMessage());
 
 		}
-
-		
-		
-		
-		
 
 	}
 
@@ -329,7 +278,7 @@ public class ExtraHotelServiceTest {
 			assertEquals("SUCCESSFUL_UPDATE", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			verify(daoHelper).update(any(), anyMap(), anyMap());
-			verify(daoHelper, times(2)).query(any(), any(), any());
+			verify(daoHelper).query(any(), any(), any());
 		}
 
 		@Test
@@ -346,7 +295,7 @@ public class ExtraHotelServiceTest {
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("DUPLICATED_EXTRA_IN_HOTEL", entityResult.getMessage());
 			verify(daoHelper).update(any(), anyMap(), anyMap());
-			verify(daoHelper, times(2)).query(any(), any(), any());
+			verify(daoHelper).query(any(), any(), any());
 		}
 
 		@Test
@@ -354,10 +303,9 @@ public class ExtraHotelServiceTest {
 		void update_extraHotel_doesnt_exists() {
 			Map<String, Object> filter = getGenericFilter();
 			Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
-			List<String> attrList = getGenericAttrList();
-
+			
 			EntityResult queryResult = new EntityResultMapImpl();
-			when(daoHelper.query(any(),any(),any())).thenReturn(queryResult);
+			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
 			EntityResult entityResult = extraHotelService.extrahotelUpdate(dataToUpdate, filter);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("ERROR_EXTRA_IN_HOTEL_NOT_FOUND", entityResult.getMessage());
@@ -386,7 +334,7 @@ public class ExtraHotelServiceTest {
 
 		@Test
 		@DisplayName("Fail trying to update with incorrect_boolean")
-		void hotel_update_with_big_boolean() {
+		void extraHotel_update_with_big_boolean() {
 			Map<String, Object> filter = getGenericFilter();
 			Map<String, Object> dataToUpdate = new HashMap<>();
 			dataToUpdate.put("exh_hotel", 1);
@@ -399,13 +347,13 @@ public class ExtraHotelServiceTest {
 			EntityResult entityResult = extraHotelService.extrahotelUpdate(dataToUpdate, filter);
 			assertEquals("EXH_ACTIVE_MUST_BE_1_OR_0", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			verify(daoHelper, times(3)).query(any(), any(), any());
+			verify(daoHelper).query(any(), any(), any());
 
 		}
 
 		@Test
 		@DisplayName("Fail trying to update with small boolean")
-		void hotel_update_with_small_boolean() {
+		void extraHotel_update_with_small_boolean() {
 			Map<String, Object> filter = getGenericFilter();
 			Map<String, Object> dataToUpdate = new HashMap<>();
 			dataToUpdate.put("exh_hotel", 1);
@@ -418,8 +366,29 @@ public class ExtraHotelServiceTest {
 			EntityResult entityResult = extraHotelService.extrahotelUpdate(dataToUpdate, filter);
 			assertEquals("EXH_ACTIVE_MUST_BE_1_OR_0", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			verify(daoHelper, times(3)).query(any(), any(), any());
+			verify(daoHelper).query(any(), any(), any());
 
 		}
+		
+		@Test
+		@DisplayName("Fail trying to update with a non existing foreign key")
+		void extraHotel_insert_without_hotel_price_or_extra() {
+			Map<String, Object> filter = getGenericFilter();
+			Map<String, Object> dataToUpdate = new HashMap<>();
+			dataToUpdate.put("exh_hotel", 1);
+			EntityResult queryResult = getGenericQueryResult();
+			DataIntegrityViolationException dataIntegrityException = new DataIntegrityViolationException("RUN_TIME_EXCEPTION");
+			
+			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);			
+			when(daoHelper.update(extraHotelDao, dataToUpdate, filter)).thenThrow(dataIntegrityException);		
+			
+			EntityResult entityResult = extraHotelService.extrahotelUpdate(dataToUpdate,filter);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("RUN_TIME_EXCEPTION", entityResult.getMessage());
+			
+		}
+		
+		
+		
 	}
 }
