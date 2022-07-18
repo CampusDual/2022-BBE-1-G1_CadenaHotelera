@@ -1,7 +1,6 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
-import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ServiceTestData.getAllServiceData;
-import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ServiceTestData.getSpecificServiceData;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ServiceTestData.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -23,11 +22,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
@@ -39,6 +40,7 @@ import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 
+@ExtendWith(MockitoExtension.class)
 public class ServiceServiceTest {
 	 @Mock
 	    DefaultOntimizeDaoHelper daoHelper;
@@ -60,7 +62,7 @@ public class ServiceServiceTest {
 
 	        @Test
 	        @DisplayName("Obtain all data from Services table")
-	        void when_queryOnlyWithAllColumns_return_allServiceData() {
+	        void testServiceQueryAllData() {
 	            doReturn(getAllServiceData()).when(daoHelper).query(any(), anyMap(), anyList());
 	            EntityResult entityResult = serviceService.serviceQuery(new HashMap<>(), new ArrayList<>());
 	            assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
@@ -154,12 +156,8 @@ public class ServiceServiceTest {
 	        @Test
 	        @DisplayName("Insert a service successfully")
 	        void service_insert_success() {
-	        	Map<String, Object> dataToInsert = new HashMap<>();
-	        	dataToInsert.put("sv_name", "Wifi");
-	        	dataToInsert.put("sv_description", "Wireless internet");
-	        	EntityResult er = new EntityResultMapImpl(Arrays.asList("ID_SERVICE"));
-	            er.addRecord(new HashMap<String, Object>() {{put("ID_SERVICE", 2);}});
-	            er.setCode(EntityResult.OPERATION_SUCCESSFUL);
+	        	Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
+	        	EntityResult er = getGenericInsertResult();
 	            HashMap<String, Object> keyMap = new HashMap<>();
 	            keyMap.put("ID_SERVICE", 2);
 	            when(daoHelper.insert(serviceDao, dataToInsert)).thenReturn(er);
@@ -174,13 +172,9 @@ public class ServiceServiceTest {
 	        @Test
 	        @DisplayName("Fail trying to insert duplicated name")
 	        void service_insert_duplicated_mail() {
-	        	Map<String, Object> dataToInsert = new HashMap<>();
-	        	dataToInsert.put("sv_name", "Wifi");
-	        	dataToInsert.put("sv_description", "Wireless internet");
+	        	Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
 	        	List<String> columnList = Arrays.asList("ID_SERVICE");
-	    		EntityResult insertResult = new EntityResultMapImpl(columnList);
-	    	    insertResult.addRecord(new HashMap<String, Object>() {{
-	    	        put("ID_SERVICE", 2);}});
+	    		EntityResult insertResult = getGenericInsertResult();
 	        	when(daoHelper.insert(serviceDao, dataToInsert)).thenReturn(insertResult);
 	        	EntityResult resultSuccess = serviceService.serviceInsert(dataToInsert);
 	        	assertEquals(EntityResult.OPERATION_SUCCESSFUL, resultSuccess.getCode());
@@ -194,8 +188,7 @@ public class ServiceServiceTest {
 	        @Test
 	        @DisplayName("Fail trying to insert without sv_name field")
 	        void service_insert_without_name() {
-	        	Map<String, Object> dataToInsert = new HashMap<>();
-	        	dataToInsert.put("sv_description", "Wireless internet");
+	        	Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
 	        	when(daoHelper.insert(serviceDao, dataToInsert)).thenThrow(DataIntegrityViolationException.class);
 	        	EntityResult entityResult = serviceService.serviceInsert(dataToInsert);
 	        	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
@@ -210,7 +203,7 @@ public class ServiceServiceTest {
 				Map<String, Object> dataToInsert = new HashMap<>();
 				when(daoHelper.insert(serviceDao, dataToInsert)).thenReturn(insertResult);
 				EntityResult entityResult = serviceService.serviceInsert(dataToInsert);
-				//assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+				assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 				assertEquals("FIELDS_REQUIRED", entityResult.getMessage());
 			}
 	    }
@@ -222,21 +215,15 @@ public class ServiceServiceTest {
 	        @Test
 	        @DisplayName("Service update successful")
 	        void hotel_update_success() {
-	        	//given
-	        	Map<String, Object> filter = new HashMap<>();
-	        	filter.put("id_service", 32);
-	        	Map<String, Object> dataToUpdate = new HashMap<>();
-	        	dataToUpdate.put("sv_name", "wifi");
-	        	dataToUpdate.put("sv_description", "free wifi");
-	        	List<String> attrList = new ArrayList<>();
-	    		attrList.add("id_service");
-	        	EntityResult er = new EntityResultMapImpl();
-	        	er.setCode(EntityResult.OPERATION_SUCCESSFUL);
-	        	EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_HOTEL","SV_NAME"));
-	        	//when
+	        	Map<String, Object> filter = getGenericFilter();
+	        	Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
+	        	List<String> attrList = getGenericAttrList();
+	        	EntityResult er = new EntityResultMapImpl();    
+	        	EntityResult queryResult = getGenericQueryResult();
+	        	
 	        	when(daoHelper.update(serviceDao, dataToUpdate,filter)).thenReturn(er);
 	        	when(daoHelper.query(serviceDao, filter, attrList)).thenReturn(queryResult);
-	        	//then
+	      
 	        	EntityResult entityResult = serviceService.serviceUpdate(dataToUpdate  ,filter);
 	        	assertEquals("SUCCESSFUL_UPDATE", entityResult.getMessage());
 	        	assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
@@ -247,22 +234,16 @@ public class ServiceServiceTest {
 	        @Test
 	        @DisplayName("Fail trying to update a service with an existing name ")
 	        void service_fail_update_with_duplicated_name() {
-	        	EntityResult er = new EntityResultMapImpl();
-	        	er.setCode(EntityResult.OPERATION_WRONG);
-	        	er.setMessage("SERVICE_NAME_ALREADY_EXISTS");
-	        	Map<String, Object> filter = new HashMap<>();
-	        	filter.put("id_service", 32);
-	        	Map<String, Object> dataToUpdate = new HashMap<>();
-	        	dataToUpdate.put("sv_name", "wifi");
-	        	dataToUpdate.put("sv_description", "wireless internet");
-	        	List<String> attrList = new ArrayList<>();
-	    		attrList.add("id_service");
-	        	EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_SERVICE","SV_NAME"));
-	            er.addRecord(new HashMap<String, Object>() {{put("ID_SERVICE", 2);put("ID_SERVICE","SV_NAME");}});
-	            er.setCode(EntityResult.OPERATION_SUCCESSFUL);
+
+	        	Map<String, Object> filter = getGenericFilter();
+	        	Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
+	        	List<String> attrList = getGenericAttrList();
+	        	EntityResult queryResult = getGenericQueryResult();
+	            
 	            when(daoHelper.query(serviceDao, filter, attrList)).thenReturn(queryResult);
 	        	when(daoHelper.update(serviceDao, dataToUpdate, filter)).thenThrow(DuplicateKeyException.class);
 	        	EntityResult entityResult = serviceService.serviceUpdate(dataToUpdate,filter);
+	        	
 	        	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 	        	assertEquals("SERVICE_NAME_ALREADY_EXISTS", entityResult.getMessage());
 	        	verify(daoHelper).update(any(), anyMap(),anyMap());
@@ -271,17 +252,12 @@ public class ServiceServiceTest {
 	        @Test
 	        @DisplayName("Fail trying to update a service that doesn´t exists")
 	        void update_service_doesnt_exists() {
-	        	Map<String, Object> filter = new HashMap<>();
-	        	filter.put("id_service",222);
-	        	Map<String, Object> dataToUpdate = new HashMap<>();
-	        	dataToUpdate.put("sv_name", "wifi");
-	        	dataToUpdate.put("sv_description", "wireless internet");
-	        	List<String> attrList = new ArrayList<>();
-	    		attrList.add("id_service");
+	        	Map<String, Object> filter = getGenericFilter();
+	        	Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
+	        	List<String> attrList = getGenericAttrList();
 	        	EntityResult er = new EntityResultMapImpl();
-	        	er.setCode(EntityResult.OPERATION_WRONG);
-	        	er.setMessage("SERVICE_DOESN'T_EXISTS");
 	        	EntityResult queryResult = new EntityResultMapImpl();
+	        	
 	        	when(daoHelper.query(serviceDao, filter,attrList)).thenReturn(queryResult);
 	        	EntityResult entityResult = serviceService.serviceUpdate(dataToUpdate,filter);
 	        	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
@@ -302,9 +278,7 @@ public class ServiceServiceTest {
 			@DisplayName("Fail trying to update without id_service")
 			void hotel_update_without_id_hotel() {
 				Map<String, Object> filter = new HashMap<>();
-				Map<String, Object> dataToUpdate = new HashMap<>();
-				dataToUpdate.put("sv_name", "wifi");
-	        	dataToUpdate.put("sv_description", "wireless internet");
+				Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
 				EntityResult updateResult = serviceService.serviceUpdate(dataToUpdate,filter);
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 				assertEquals("ID_SERVICE_REQUIRED", updateResult.getMessage());
