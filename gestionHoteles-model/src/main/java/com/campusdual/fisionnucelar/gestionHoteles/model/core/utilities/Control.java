@@ -2,6 +2,7 @@ package com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities;
 
 import java.util.regex.Pattern;
 
+
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
@@ -76,5 +77,37 @@ public class Control {
 			throw new NoResultsException("NO_RESULTS");
 		}
 
+	}
+	
+	public EntityResult setMessageFromException(EntityResult result, String exception) {
+		String exceptionSplit[];
+		String message;
+		result.setCode(1);
+		if(exception.contains("Key")) {
+	    exceptionSplit = exception.split("Key"); 
+	    int index = exceptionSplit[1].indexOf("=");
+	    message ="PROVIDED_"+exceptionSplit[1].substring(2, index-1).toUpperCase()+"_DOES_NOT_EXISTS";
+	    result.setMessage(message);
+		}else if(exception.contains("null value")){
+		    exceptionSplit = exception.split("column"); 
+		    int index = exceptionSplit[1].indexOf("violates");
+		    message = exceptionSplit[1].substring(2, index-2).toUpperCase()+"_MUST_BE_PROVIDED";
+			result.setMessage(message);
+		}else {
+			result.setMessage(exception);
+		}
+		return result;
+	}
+	
+	public void setMessageInUpdateException(EntityResult result, String exception) {
+		String exceptionSplit[];
+		String message;
+		result.setCode(1);
+		if(exception.contains("key")) {
+			exceptionSplit =exception.split("Key");
+			int index = exceptionSplit[1].indexOf("nested");
+			message = exceptionSplit[1].substring(2,index-3);
+			result.setMessage(message);
+		}
 	}
 }

@@ -1,41 +1,25 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
+import java.sql.Timestamp;
+import java.text.*;
+import java.util.*;
+
+import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.*;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingService;
-import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IClientService;
-import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IExtraHotelService;
-import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomService;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.OccupiedRoomException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.db.SQLStatementBuilder;
-import com.ontimize.jee.common.db.SQLStatementBuilder.BasicExpression;
-import com.ontimize.jee.common.db.SQLStatementBuilder.BasicField;
-import com.ontimize.jee.common.db.SQLStatementBuilder.BasicOperator;
-import com.ontimize.jee.common.dto.EntityResult;
-import com.ontimize.jee.common.dto.EntityResultMapImpl;
+import com.ontimize.jee.common.db.SQLStatementBuilder.*;
+import com.ontimize.jee.common.dto.*;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.common.tools.EntityResultTools;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
@@ -60,13 +44,13 @@ public class BookingService implements IBookingService {
 	private Control control;
 
 	@Autowired
-	private IRoomService roomService;
+	private RoomDao roomDao;
 
 	@Autowired
-	private IClientService clientService;
+	private ClientDao clientDao;
 
 	@Autowired
-	private IExtraHotelService extraHotelService;
+	private ExtraHotelDao extraHotelDao;
 
 	public BookingService() {
 		super();
@@ -120,7 +104,7 @@ public class BookingService implements IBookingService {
 			searchResult = onlyActive ? daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_ACTIVE_BOOKINGS")
 					: daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_BOOKINGS");
 
-			searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_ACTIVE_BOOKINGS");
+//			searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_ACTIVE_BOOKINGS");
 
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
@@ -277,28 +261,7 @@ public class BookingService implements IBookingService {
 		}
 	}
 
-	private void checkDisponibility(Map<String, Object> attrMap) throws ParseException, InvalidDateException {
-		Map<String, Object> filter = new HashMap<>();
-		filter.put("bk_room", attrMap.get("bk_room"));
-		EntityResult result;
 
-		Date startDate = (Date) attrMap.get("bk_check_in");
-		Date endDate = (Date) attrMap.get("bk_check_out");
-		checkDates(startDate, endDate);
-
-		List<String> columns = new ArrayList<>();
-		columns.add("bk_room");
-
-		filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
-				buildExpressionToSearchRooms(startDate, endDate));
-
-		result = this.daoHelper.query(this.bookingDao, filter, columns, "CHECK_ROOM_DISPONIBILITY");
-
-		if (!result.isEmpty()) {
-			throw new OccupiedRoomException("OCCUPIED_ROOM");
-		}
-
-	}
 
 	/**
 	 * 
@@ -308,7 +271,7 @@ public class BookingService implements IBookingService {
 	 * @param A check-in and a check-out date
 	 * @return The Basic expression to search the occupied rooms
 	 */
-	private BasicExpression buildExpressionToSearchRooms(Date userCheckIn, Date userCheckOut) {
+	public BasicExpression buildExpressionToSearchRooms(Date userCheckIn, Date userCheckOut) {
 
 		BasicField bdCheckIn = new BasicField(BookingDao.ATTR_CHECK_IN);
 		BasicField bdCheckOut = new BasicField(BookingDao.ATTR_CHECK_OUT);
@@ -351,23 +314,23 @@ public class BookingService implements IBookingService {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
 			if (attrMap.containsKey("bk_client")) {
-				checkIfClientExists(attrMap);
 				checkIfClientIsActive(attrMap);
 			}
 			if (attrMap.containsKey("bk_room"))
-				checkIfRoomExists(attrMap);
 			checkDisponibility(attrMap);
 			insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
 
 			if (insertResult.isEmpty()) {
-				throw new AllFieldsRequiredException(null);
+				throw new AllFieldsRequiredException("FIELDS_MUST_BE_PROVIDED");
 			}
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
-			control.setErrorMessage(insertResult, "ROOM_CLIENT_CHECK_IN_AND_CHECK_OUT_REQUIRED");
-		} catch (AllFieldsRequiredException | RecordNotFoundException | OccupiedRoomException | ParseException
-				| InvalidDateException e) {
+			control.setMessageFromException(insertResult, e.getMessage());
+		} catch (ClassCastException e) {
+			control.setMessageFromException(insertResult, "CHECK_IN_AND_CHECK_OUT_MUST_BE_DATES");
+		}catch (AllFieldsRequiredException | RecordNotFoundException | OccupiedRoomException | ParseException
+				| InvalidDateException  e) {
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
@@ -380,22 +343,18 @@ public class BookingService implements IBookingService {
 		try {
 			checkIfBookingExists(keyMap);
 			checkDataUpdateExtraPrice(attrMap);
-			checkIfExtraHotelExists(attrMap);
 			updateResult = daoHelper.update(bookingDao, calculateExtraPrice(attrMap, keyMap), keyMap);
 		} catch (RecordNotFoundException | EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (ClassCastException e) {
+			e.printStackTrace();
 			control.setErrorMessage(updateResult, "INCORRECT_REQUEST");
+		}catch(DataIntegrityViolationException e) {
+			control.setMessageInUpdateException(updateResult, e.getMessage());
 		}
 
 		return updateResult;
 
-	}
-
-	private void checkDataUpdateExtraPrice(Map<String, Object> attrMap) {
-		if (attrMap.get("id_extras_hotel") == null || attrMap.get("quantity") == null) {
-			throw new EmptyRequestException("ID_EXTRAS_AND_QUANTITY_REQUIRED");
-		}
 	}
 
 	public Map<String, Object> calculateExtraPrice(Map<String, Object> attrMap, Map<String, Object> keyMap) {
@@ -413,7 +372,7 @@ public class BookingService implements IBookingService {
 		List<String> columns = new ArrayList<>();
 		columns.add("exh_price");
 
-		extraPriceResult = extraHotelService.extrahotelQuery(filter, columns);
+		extraPriceResult = this.daoHelper.query(extraHotelDao,filter, columns);
 		unitExtraPrice = (BigDecimal) extraPriceResult.getRecordValues(0).get("exh_price");
 
 		quantity = new BigDecimal((int) attrMap.get("quantity"));
@@ -440,14 +399,20 @@ public class BookingService implements IBookingService {
 			throws OntimizeJEERuntimeException {
 
 		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
+		EntityResult updateResult = new EntityResultMapImpl();
+		try {
+		checkIfBookingExists(keyMap);
 
-		checkIfDataIsEmpty(attrMap);
-
-		EntityResult updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
+		updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
 		if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
 			updateResult.setMessage("ERROR_WHILE_UPDATING");
 		} else {
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
+		}
+		}catch(RecordNotFoundException e) {
+			control.setErrorMessage(updateResult, e.getMessage());
+		}catch(DataIntegrityViolationException e) {
+			control.setMessageInUpdateException(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
@@ -465,12 +430,16 @@ public class BookingService implements IBookingService {
 		Map<Object, Object> attrMap = new HashMap<>();
 		attrMap.put("bk_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		EntityResult deleteResult = new EntityResultMapImpl();
-		if (checkIfBookingExists(keyMap)) {
-			deleteResult.setMessage("ERROR_BOOKING_NOT_FOUND");
-			deleteResult.setCode(1);
-		} else {
-			deleteResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
-			deleteResult.setMessage("SUCCESSFUL_DELETE");
+		try {
+			if (checkIfBookingExists(keyMap)) {
+				deleteResult.setMessage("ERROR_BOOKING_NOT_FOUND");
+				deleteResult.setCode(1);
+			} else {
+				deleteResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
+				deleteResult.setMessage("SUCCESSFUL_DELETE");
+			}
+		}catch(RecordNotFoundException e) {
+			control.setErrorMessage(deleteResult, e.getMessage());
 		}
 		return deleteResult;
 	}
@@ -484,6 +453,34 @@ public class BookingService implements IBookingService {
 	 * @param The id of the client
 	 * @return True if the client exists, false if it does't exists
 	 */
+	private void checkDisponibility(Map<String, Object> attrMap) throws ParseException, InvalidDateException {
+		Map<String, Object> filter = new HashMap<>();
+		filter.put("bk_room", attrMap.get("bk_room"));
+		EntityResult result;
+
+		Date startDate = (Date) attrMap.get("bk_check_in");
+		Date endDate = (Date) attrMap.get("bk_check_out");
+		checkDates(startDate, endDate);
+
+		List<String> columns = new ArrayList<>();
+		columns.add("bk_room");
+
+		filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+				buildExpressionToSearchRooms(startDate, endDate));
+
+		result = this.daoHelper.query(this.bookingDao, filter, columns, "CHECK_ROOM_DISPONIBILITY");
+
+		if (!result.isEmpty()) {
+			throw new OccupiedRoomException("OCCUPIED_ROOM");
+		}
+
+	}
+	private void checkDataUpdateExtraPrice(Map<String, Object> attrMap) {
+		if (attrMap.get("id_extras_hotel") == null || attrMap.get("quantity") == null) {
+			throw new EmptyRequestException("ID_EXTRAS_AND_QUANTITY_REQUIRED");
+		}
+	}
+	
 	private boolean checkIfBookingExists(Map<String, Object> keyMap) {
 		if (keyMap.isEmpty()) {
 			throw new RecordNotFoundException("ID_BOOKING_REQUIRED");
@@ -505,7 +502,7 @@ public class BookingService implements IBookingService {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_extras_hotel");
 
-		EntityResult existingExtraHotel = extraHotelService.extrahotelQuery(attrMap, attrList);
+		EntityResult existingExtraHotel = this.daoHelper.query(extraHotelDao, attrMap, attrList);
 
 		if (existingExtraHotel.isEmpty())
 			throw new RecordNotFoundException("EXTRA_HOTEL_DOESN'T_EXISTS");
@@ -518,7 +515,7 @@ public class BookingService implements IBookingService {
 		attrList.add("id_client");
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_client", attrMap.get("bk_client"));
-		EntityResult existingClient = clientService.clientQuery(keyMap, attrList);
+		EntityResult existingClient = this.daoHelper.query(clientDao, keyMap, attrList);
 		if (existingClient.isEmpty())
 			throw new RecordNotFoundException("CLIENT_DOESN'T_EXISTS");
 		return existingClient.isEmpty();
@@ -530,7 +527,7 @@ public class BookingService implements IBookingService {
 		attrList.add("cl_leaving_date");
 		Map<String, Object> attrMap = new HashMap<>();
 		attrMap.put("id_client", keyMap.get("bk_client"));
-		EntityResult activeClient = clientService.clientQuery(attrMap, attrList);
+		EntityResult activeClient = this.daoHelper.query(clientDao, attrMap, attrList);
 
 		if (activeClient.getRecordValues(0).get("cl_leaving_date") != null) {
 			throw new RecordNotFoundException("CLIENT_IS_NOT_ACTIVE");
@@ -543,7 +540,7 @@ public class BookingService implements IBookingService {
 		attrList.add("id_room");
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_room", attrMap.get("bk_room"));
-		EntityResult existingRoom = roomService.roomQuery(keyMap, attrList);
+		EntityResult existingRoom = this.daoHelper.query(roomDao, keyMap, attrList);
 		if (existingRoom.isEmpty())
 			throw new RecordNotFoundException("ROOM_DOESN'T_EXISTS");
 		return existingRoom.isEmpty();
@@ -552,8 +549,7 @@ public class BookingService implements IBookingService {
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
 		if (attrMap.get("bk_check_in") == null && attrMap.get("bk_room") == null && attrMap.get("bk_room") == null
 				&& attrMap.get("bk_client") == null && attrMap.get("bk_price") == null
-				&& attrMap.get("bk_entry_date") == null && attrMap.get("bk_last_update") == null
-				&& attrMap.get("bk_leaving_date") == null && attrMap.get("bk_extras_price") == null) {
+				&& attrMap.get("bk_entry_date") == null) {
 			throw new EmptyRequestException("EMPTY_REQUEST");
 		}
 	}
