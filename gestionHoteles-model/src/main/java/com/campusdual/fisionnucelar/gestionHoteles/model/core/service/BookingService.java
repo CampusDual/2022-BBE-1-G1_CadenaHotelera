@@ -95,6 +95,8 @@ public class BookingService implements IBookingService {
 	 * @since 27/06/2022
 	 * @param The filters, the fields of the query and a boolean indicating the
 	 *            bookings we want to search
+	 * @exception NoResultsException Sends a message to the user when the list of results is empty 
+	 * @exception BadSqlGrammarException sends a message to the user when he send a string in a numeric field           
 	 * @return The columns from the bookings table especified in the params and a
 	 *         message with the operation result
 	 */
@@ -123,6 +125,8 @@ public class BookingService implements IBookingService {
 	 * 
 	 * @since 27/06/2022
 	 * @param The filters and the fields of the query
+	 * @exception NoResultsException Sends a message to the user when the list of results is empty
+	 * @exception BadSqlGrammarException sends a message to the user when he send a string in a numeric field  
 	 * @return The columns from the bookings table especified in the params and a
 	 *         message with the operation result
 	 */
@@ -144,11 +148,13 @@ public class BookingService implements IBookingService {
 	/**
 	 * 
 	 * Executes a query over the bookings table listing only the available rooms on
-	 * a concrete hotel in a date range. We assume that we are receiving the correct
-	 * fields and the dates range has been previously checked.
+	 * a concrete hotel in a date range.
 	 * 
 	 * @since 30/06/2022
 	 * @param The id of the hotel, the check-in and the check-out
+	 * @exception AllFieldsRequiredException sends a message to the user when he is not providing all the fields required to execute the query
+	 * @exception ParseException sends a message to the user when the method searchAvailableRooms is not capable of parsing check_in or check_out dates
+	 * @exception BadSqlGrammarException sends a message to the user when he send a string in a numeric field
 	 * @return The available rooms filtered by hotel, with a calculated price for
 	 *         the selected dates
 	 */
@@ -169,6 +175,12 @@ public class BookingService implements IBookingService {
 
 		return resultsByHotel;
 	}
+	
+	/**
+	 * Checks if the user is providing all the fields required to execute a query to obtain all available rooms in a given date
+	 * @exception AllFieldsRequiredException sends a message to the user when he is not providing the neccesary fields to execute the query
+	 * @param keyMap the fields to be checked if are present or not
+	 */
 
 	private void checkAvailableRoomsFields(Map<String, Object> keyMap) {
 		if (keyMap.get("bk_check_in") == null || keyMap.get("bk_check_out") == null || keyMap.get("id_hotel") == null) {
@@ -183,6 +195,9 @@ public class BookingService implements IBookingService {
 	 * 
 	 * @since 12/07/2022
 	 * @param The id of the hotel
+	 * @exception RecordNotFoundException shends a message to the user when he shends a hotel id that doesn´t exists
+	 * @exception BadSqlGrammarException sends a message to the user when he send a string in a numeric field
+	 * @exception EmptyRequestException sends a message to the user when he try to execute an empty request
 	 * @return The rooms with the chek-out on the current date filtered by hotel
 	 */
 	public EntityResult todaycheckoutQuery(Map<String, Object> keyMap, List<String> attrList)
@@ -204,6 +219,11 @@ public class BookingService implements IBookingService {
 		return result;
 	}
 
+	/**
+	 * Checks if rm_hotel exists in a request
+	 * @param keyMap
+	 * @exception RecordNotFoundException if rm_hotel not exists in the user request
+	 */
 	private void checkIfHotel(Map<String, Object> keyMap) {
 		if (keyMap.get("rm_hotel") == null) {
 			throw new RecordNotFoundException("RM_HOTEL_NEEDED");
@@ -217,8 +237,7 @@ public class BookingService implements IBookingService {
 	 * receiving the needed params and it filters the occupied rooms
 	 * 
 	 * @since 30/06/2022
-	 * @param The id of the hotel, the check-in date and the check-out dates and the
-	 *            columns to send back
+	 * @param The id of the hotel, the check-in date and the check-out dates and the columns to send back to the user
 	 * @return The available rooms in a concrete hotel on a date range
 	 */
 	private EntityResult searchAvailableRooms(Map<String, Object> keyMap, List<String> attrList) throws ParseException {
@@ -251,7 +270,12 @@ public class BookingService implements IBookingService {
 
 		return EntityResultTools.dofilter(result, hotelFilter);
 	}
-
+	/**
+	 * Checks if the given fdayes
+	 * @param startDate
+	 * @param endDate
+	 * @throws InvalidDateException Sends a message to the user when check_in or check_out fields are invalid
+	 */
 	private void checkDates(Date startDate, Date endDate) throws InvalidDateException {
 		if (endDate.before(startDate) || endDate.equals(startDate)) {
 			throw new InvalidDateException("CHECK_IN_MUST_BE_BEFORE_CHECK_OUT");
@@ -304,6 +328,12 @@ public class BookingService implements IBookingService {
 	 * 
 	 * @since 27/06/2022
 	 * @param The fields of the new register
+	 * @exception DuplicateKeyException sends a message to the user when he is trying to insert duplicate foreign keys
+	 * @exception DataIntegrityViolationException sends a message to the user when he is trying to insert a null value or an inexistent id in 
+	 * a foreign key field
+	 * @exception ClassCastException sends a message to the user when he is trying to insert an invalid or inintelligible date
+	 * @exception RecordNotFoundException sends a message to the user when he is trying to book with an non active client id
+	 * @exception InvalidDateException Sends a message to the user when check_in or check_out fields are invalid
 	 * @return The id of the new register and a message with the operation result
 	 */
 	@Override
@@ -336,6 +366,16 @@ public class BookingService implements IBookingService {
 		return insertResult;
 	}
 
+	/**
+	 * Adds and extra to the given booking and updates the booking price
+	 * @param the id of the booking, the id of the extra and an integer as a quantity
+	 * @return a confirmation message if the updates completes successfully or a message indicating the error
+	 * @exception RecordNotFoundException sends a message to the user if id_booking not exists
+	 * @exception EmptyRequestException sends a message to the user if he sends anm empty request
+	 * @exception ClassCastException  sends a message to the user if sends null or srting values in a numeric field
+	 * @exception DataIntegrityViolationException sends a message to the user if he sends an inexistent or null foreign key
+	 * 
+	 */
 	@Override
 	public EntityResult bookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
@@ -350,12 +390,19 @@ public class BookingService implements IBookingService {
 			e.printStackTrace();
 			control.setErrorMessage(updateResult, "INCORRECT_REQUEST");
 		}catch(DataIntegrityViolationException e) {
-			control.setMessageInUpdateException(updateResult, e.getMessage());
+			control.setMessageFromException(updateResult, e.getMessage());
 		}
 
 		return updateResult;
 
 	}
+	
+	/**
+	 * Calculates the price of the extra added to the booking based on the extra id and a quantity
+	 * @param attrMap the quantity and the id of the extra
+	 * @param keyMap the id of the booking
+	 * @return a hashpMap with the field price updated, ready to update in the bookings table
+	 */
 
 	public Map<String, Object> calculateExtraPrice(Map<String, Object> attrMap, Map<String, Object> keyMap) {
 		BigDecimal unitExtraPrice, bookingExtraPrice, updatedExtraPrice, quantity, totalExtraPrice;
@@ -393,6 +440,8 @@ public class BookingService implements IBookingService {
 	 * @since 27/06/2022
 	 * @param The fields to be updated
 	 * @return A message with the operation result
+	 * @exception RecordNotFoundException sends a message to the user if the id_booking not exists
+	 * @exception DataIntegrityViolationException sends a message to the user if he is trying to insert a null or inexistent foreign key
 	 */
 	@Override
 	public EntityResult bookingUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
@@ -412,7 +461,7 @@ public class BookingService implements IBookingService {
 		}catch(RecordNotFoundException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		}catch(DataIntegrityViolationException e) {
-			control.setMessageInUpdateException(updateResult, e.getMessage());
+			control.setMessageFromException(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
@@ -420,10 +469,10 @@ public class BookingService implements IBookingService {
 	/**
 	 * 
 	 * Deletes a existing register on the bookings table
-	 * 
 	 * @since 27/06/2022
 	 * @param The id of the booking
 	 * @return A message with the operation result
+	 * @exception RecordNotFoundException sends a message to the user if the id_booking not exists
 	 */
 	@Override
 	public EntityResult bookingDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
@@ -446,12 +495,12 @@ public class BookingService implements IBookingService {
 
 	/**
 	 * 
-	 * Puts a leaving date on a client. If the client doesn't exists or has active
-	 * reservations returns an error message
-	 * 
+	 * checks if a room has not bookings in the given dates
 	 * @since 05/07/2022
 	 * @param The id of the client
 	 * @return True if the client exists, false if it does't exists
+	 * @exception OccupiedRoomException sends a message to the user if the given room is ocuppied in the request dates
+	 * @exception InvalidDateException sends a message to the user if he is providing an invalid dates, valid dates are defined in checkDates method
 	 */
 	private void checkDisponibility(Map<String, Object> attrMap) throws ParseException, InvalidDateException {
 		Map<String, Object> filter = new HashMap<>();
@@ -475,12 +524,23 @@ public class BookingService implements IBookingService {
 		}
 
 	}
+	/**
+	 * Checks if the user is providing id_extras_hotel and quantity parameters to add an extra to the booking
+	 * @param attrMap id_extras_hotel and quantity
+	 * @exception EmptyRequestException sends a message to the user if he is not providing the two required parameters
+	 */
 	private void checkDataUpdateExtraPrice(Map<String, Object> attrMap) {
 		if (attrMap.get("id_extras_hotel") == null || attrMap.get("quantity") == null) {
 			throw new EmptyRequestException("ID_EXTRAS_AND_QUANTITY_REQUIRED");
 		}
 	}
 	
+	/**
+	 * Checks if the provid id_booking exists in bookings table
+	 * @param keyMap the id of the booking
+	 * @return true if the booking exists in bookings table
+	 * @exception RecordNotFoundException sends a message to the user if the provided id_booking not exists in bookings table
+	 */
 	private boolean checkIfBookingExists(Map<String, Object> keyMap) {
 		if (keyMap.isEmpty()) {
 			throw new RecordNotFoundException("ID_BOOKING_REQUIRED");
@@ -488,11 +548,18 @@ public class BookingService implements IBookingService {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_booking");
 		EntityResult existingBooking = this.daoHelper.query(bookingDao, keyMap, attrList);
-		if (existingBooking.isEmpty())
+        if (existingBooking.isEmpty())
 			throw new RecordNotFoundException("BOOKING_DOESN'T_EXISTS");
 		return existingBooking.isEmpty();
 
 	}
+	
+	/**
+	 * Checks if the id_extra_hotel provid by the user exists in extras_hotel table
+	 * @param keyMap the id of extras hotel
+	 * @return true if the id_extras_hotel provid by the user exists in extras_hotel table
+	 * @exception RecordNotFoundException sends a message to the user if the provided id_extras_hotel doesn´t exists in extras_hotel table
+	 */
 
 	private boolean checkIfExtraHotelExists(Map<String, Object> keyMap) {
 
@@ -510,6 +577,12 @@ public class BookingService implements IBookingService {
 
 	}
 
+	/**
+	 * Checks if the client provided by the user exists in clients tavble
+	 * @param attrMap the id_client
+	 * @return true id the id provided by the users exists in clients table
+	 * @exception RecordNotFoundException sends a message to the user if the provided id_client not exists in clients table
+	 */
 	private boolean checkIfClientExists(Map<String, Object> attrMap) {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_client");
@@ -521,6 +594,12 @@ public class BookingService implements IBookingService {
 		return existingClient.isEmpty();
 	}
 
+	/**
+	 * checks if the provided client is marked as active in clients table
+	 * @param keyMap the id of the client
+	 * @return true if the client is marked as active
+	 * @exception RecordNotFoundException sends a message to the user if the client provided is not active
+	 */
 	private boolean checkIfClientIsActive(Map<String, Object> keyMap) {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_client");
@@ -530,11 +609,17 @@ public class BookingService implements IBookingService {
 		EntityResult activeClient = this.daoHelper.query(clientDao, attrMap, attrList);
 
 		if (activeClient.getRecordValues(0).get("cl_leaving_date") != null) {
-			throw new RecordNotFoundException("CLIENT_IS_NOT_ACTIVE");
+			throw new ("CLIENT_IS_NOT_ACTIVE");
 		}
 		return true;
 	}
 
+	/**
+	 * Checks if the provided id_room is present in rooms table
+	 * @param attrMap the id of the room
+	 * @return true id the provided id_room exists in rooms table
+	 * @exception ecordNotFoundException sends a message to the user if the provided room doesn´t exists in rooms table
+	 */
 	private boolean checkIfRoomExists(Map<String, Object> attrMap) {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_room");
@@ -545,6 +630,12 @@ public class BookingService implements IBookingService {
 			throw new RecordNotFoundException("ROOM_DOESN'T_EXISTS");
 		return existingRoom.isEmpty();
 	}
+	
+	/**
+	 * Checks if the fields neccesary to make requests at some methods in this service has been provided by the user
+	 * @param attrMap the fields to be checked
+	 * EmptyRequestException sends a message to the user if the request provided is empty
+	 */
 
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
 		if (attrMap.get("bk_check_in") == null && attrMap.get("bk_room") == null && attrMap.get("bk_room") == null
@@ -554,12 +645,22 @@ public class BookingService implements IBookingService {
 		}
 	}
 
+	/**
+	 * Checks if rm_hotel field provided by the user is empty
+	 * @param attrMap the foregign key rm_hotel
+	 * @exception EmptyRequestException sends a message to the user if he is not providing rm_hotel field for make the request
+	 */
 	private void checkHotelIsEmpty(Map<String, Object> attrMap) {
 		if (attrMap.get("rm_hotel") == null) {
 			throw new EmptyRequestException("HOTEL_NEEDED");
 		}
 	}
 
+	/**
+	 * checks if the given EntityResults is empty
+	 * @param result an EntityResult
+	 * @exception RecordNotFoundException sends a message to the user if the resultant query has not results
+	 */
 	private void checkIfEmpty(EntityResult result) {
 		if (result.isEmpty()) {
 			throw new RecordNotFoundException("WITHOUT_RESULTS");

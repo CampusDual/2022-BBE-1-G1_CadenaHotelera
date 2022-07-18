@@ -71,7 +71,7 @@ public class BookingServiceTest {
     public class BookingQuery {
 
         @Test
-        @DisplayName("Obtain all data from Hotels table")
+        @DisplayName("Obtain all data from bookings table")
         void when_queryOnlyWithAllColumns_return_allHotelData() {
             doReturn(getAllBookingData()).when(daoHelper).query(any(), anyMap(), anyList());
             EntityResult entityResult = bookingService.bookingQuery(new HashMap<>(), new ArrayList<>());
@@ -620,7 +620,6 @@ public class BookingServiceTest {
 		      	  assertEquals("FIELDS_MUST_BE_PROVIDED", insertResult.getMessage());	
 		      	  assertEquals(EntityResult.OPERATION_WRONG, insertResult.getCode());
 			  }
-		        	
 				    		  
 		}
 		
