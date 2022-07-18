@@ -43,12 +43,6 @@ public class ServiceHotelService implements IServicesHotelService {
 	private ServiceHotelDao serviceHotelDao;
 
 	@Autowired
-	private HotelDao hotelDao;
-
-	@Autowired
-	private ServiceDao serviceDao;
-
-	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
 
 	private Control control;
@@ -64,6 +58,12 @@ public class ServiceHotelService implements IServicesHotelService {
 	 * 
 	 * @since 08/07/2022
 	 * @param The filters and the fields of the query
+	 * @exception NoResultsException     when there are not matching results on the
+	 *                                   ServicesHotel table
+	 * 
+	 * @exception BadSqlGrammarException when it receives an incorrect type in the
+	 *                                   params
+	 * 
 	 * @return The columns from the services-hotel table especified in the params
 	 *         and a message with the operation result
 	 */
@@ -88,6 +88,16 @@ public class ServiceHotelService implements IServicesHotelService {
 	 * 
 	 * @since 08/07/2022
 	 * @param The fields of the new register
+	 * 
+	 * @exception DuplicateKeyException           when receives an existing
+	 *                                            HotelService
+	 * 
+	 * @exception DataIntegrityViolationException when the params don't include the
+	 *                                            not null fields or include a non
+	 *                                            existing hotel or service
+	 * 
+	 * @exception EmptyRequestException           when the params are empty
+	 * 
 	 * @return The id of the new service_hotel and a message with the operation
 	 *         result
 	 */
@@ -96,24 +106,17 @@ public class ServiceHotelService implements IServicesHotelService {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
 
-			if (attrMap.containsKey("svh_hotel")) {
-				checkIfHotelExists(attrMap);
-			}
-			if (attrMap.containsKey("svh_service")) {
-				checkIfServiceExists(attrMap);
-			}
-
 			insertResult = this.daoHelper.insert(this.serviceHotelDao, attrMap);
 			if (insertResult.isEmpty())
-				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
+				throw new EmptyRequestException("FIELDS_REQUIRED");
 
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "DUPLICATED_SERVICES_IN_HOTEL");
-		} catch (RecordNotFoundException | AllFieldsRequiredException e) {
+		} catch (EmptyRequestException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DataIntegrityViolationException e) {
-			control.setErrorMessage(insertResult, "SERVICE_AND_HOTEL_REQUIRED");
+			control.setMessageFromException(insertResult, e.getMessage());
 		}
 		return insertResult;
 	}
@@ -124,6 +127,23 @@ public class ServiceHotelService implements IServicesHotelService {
 	 * 
 	 * @since 08/07/2022
 	 * @param The fields to be updated
+	 * @exception DuplicateKeyException           when trying to change a not null
+	 *                                            field of an hotelService for an
+	 *                                            existing one
+	 * 
+	 * @exception EmptyRequestException           when the params are empty
+	 * 
+	 * @exception RecordNotFoundException         when receives a non existing
+	 *                                            hotelService to update
+	 * 
+	 * @exception DataIntegrityViolationException when the params don't include the
+	 *                                            not null fields or include a non
+	 *                                            existing hotel or service
+	 * 
+	 * @exception IncorrectBooleanException       when receive an incorrect value
+	 *                                            for the svh_active field (only 1
+	 *                                            for true and 0 for false admitted)
+	 * 
 	 * @return A message with the operation result
 	 */
 	@Override
@@ -133,39 +153,30 @@ public class ServiceHotelService implements IServicesHotelService {
 		try {
 			checkIfDataIsEmpty(attrMap);
 			checkIfServiceHotelExists(keyMap);
-			if (attrMap.containsKey("svh_hotel")) {
-				checkIfHotelExists(attrMap);
-			}
-			if (attrMap.containsKey("svh_service")) {
-				checkIfServiceExists(attrMap);
-			}
-			if (attrMap.containsKey("svh_active")) {
+			if (attrMap.containsKey("svh_active"))
 				checkCorrectBoolean(attrMap);
-			}
 			updateResult = this.daoHelper.update(this.serviceHotelDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "DUPLICATED_SERVICES_IN_HOTEL");
+		} catch (DataIntegrityViolationException e) {
+			control.setMessageFromException(updateResult, e.getMessage());
 		} catch (RecordNotFoundException | IncorrectBooleanException | EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
+
 		return updateResult;
+
 	}
 
-	private void checkCorrectBoolean(Map<String, Object> attrMap) throws IncorrectBooleanException {
-		if ((int) attrMap.get("svh_active") > 1 || (int) attrMap.get("svh_active") < 0) {
-			throw new IncorrectBooleanException("SVH_ACTIVE_MUST_BE_1_OR_0");
-		}
-	}
-
-	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.get("svh_hotel") == null && attrMap.get("svh_service") == null
-				&& attrMap.get("svh_active") == null) {
-			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
-		}
-	}
-
-	private boolean checkIfServiceHotelExists(Map<String, Object> keyMap) {
+	
+	
+	/**
+	 * Search a concrete hotelService. It throws an exception if it doesn't exists
+	 * @param keyMap The hotelService to search
+	 * @exception RecordNotFoundException If it doesn't find any result
+	 */
+	private void checkIfServiceHotelExists(Map<String, Object> keyMap) {
 		if (keyMap.get("id_services_hotel") == null) {
 			throw new RecordNotFoundException("ID_SERVICES_HOTEL_REQUIRED");
 		}
@@ -174,28 +185,58 @@ public class ServiceHotelService implements IServicesHotelService {
 		EntityResult existingServicesHotel = daoHelper.query(serviceHotelDao, keyMap, fields);
 		if (existingServicesHotel.isEmpty())
 			throw new RecordNotFoundException("ERROR_SERVICE_IN_HOTEL_NOT_FOUND");
-		return existingServicesHotel.isEmpty();
+		
+	}
+		
+	
+	/**
+	 * Checks if the user has introduced a valid value for the svh_active field
+	 * 
+	 * @param attrMap A numeric boolean to indicate if the serviceHotel is active (1) or not (0)
+	 * @throws IncorrectBooleanException if the value is different than 1 or 0
+	 */
+	
+	private void checkCorrectBoolean(Map<String, Object> attrMap) throws IncorrectBooleanException {
+		if ((int) attrMap.get("svh_active") > 1 || (int) attrMap.get("svh_active") < 0) {
+			throw new IncorrectBooleanException("SVH_ACTIVE_MUST_BE_1_OR_0");
+		}
 	}
 
-	private boolean checkIfHotelExists(Map<String, Object> attrMap) {
-		List<String> attrList = new ArrayList<>();
-		attrList.add("id_hotel");
-		Map<String, Object> keyMap = new HashMap<>();
-		keyMap.put("id_hotel", attrMap.get("svh_hotel"));
-		EntityResult existingHotel = daoHelper.query(hotelDao, keyMap, attrList);
-		if (existingHotel.isEmpty())
-			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
-		return existingHotel.isEmpty();
+	
+	/**
+	 * Throws an exception if the params introduce by the users are empty
+	 * 
+	 * @param attrMap The params of the user
+	 * @exception EmptyRequestException if the params are empty
+	 */
+
+	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
+		if (attrMap.isEmpty()) {
+			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
+		}
 	}
 
-	private boolean checkIfServiceExists(Map<String, Object> attrMap) {
-		List<String> attrList = new ArrayList<>();
-		attrList.add("id_service");
-		Map<String, Object> keyMap = new HashMap<>();
-		keyMap.put("id_service", attrMap.get("svh_service"));
-		EntityResult existingService = daoHelper.query(serviceDao, keyMap, attrList);
-		if (existingService.isEmpty())
-			throw new RecordNotFoundException("SERVICE_DOESN'T_EXISTS");
-		return existingService.isEmpty();
-	}
+
 }
+//	private boolean checkIfHotelExists(Map<String, Object> attrMap) {
+//		List<String> attrList = new ArrayList<>();
+//		attrList.add("id_hotel");
+//		Map<String, Object> keyMap = new HashMap<>();
+//		keyMap.put("id_hotel", attrMap.get("svh_hotel"));
+//		EntityResult existingHotel = daoHelper.query(hotelDao, keyMap, attrList);
+//		if (existingHotel.isEmpty())
+//			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
+//		return existingHotel.isEmpty();
+//	}
+//
+//	private boolean checkIfServiceExists(Map<String, Object> attrMap) {
+//		List<String> attrList = new ArrayList<>();
+//		attrList.add("id_service");
+//		Map<String, Object> keyMap = new HashMap<>();
+//		keyMap.put("id_service", attrMap.get("svh_service"));
+//		EntityResult existingService = daoHelper.query(serviceDao, keyMap, attrList);
+//		if (existingService.isEmpty())
+//			throw new RecordNotFoundException("SERVICE_DOESN'T_EXISTS");
+//		return existingService.isEmpty();
+//	}
+//}

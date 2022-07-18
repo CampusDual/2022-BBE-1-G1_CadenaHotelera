@@ -144,6 +144,9 @@ public class RoomTypeService implements IRoomTypeService {
 		return !(existingRoomType.isEmpty());
 	}
 
+		
+	
+	
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
 		if (attrMap.get("rmt_name") == null && attrMap.get("rmt_capacity") == null
 				&& attrMap.get("rmt_price") == null) {
