@@ -55,6 +55,8 @@ public class RoomTypeService implements IRoomTypeService {
 	 * @param The filters and the fields of the query
 	 * @return The columns from the roomtypes table especified in the params and a
 	 *         message with the operation result
+	 *@exception BadSqlGrammarException when it introduces a string instead of a numeric on id
+	 *@exception NoResultsException when the query doesn´t return results
 	 */
 	@Override
 	public EntityResult roomtypeQuery(Map<String, Object> keyMap, List<String> attrList)
@@ -80,6 +82,11 @@ public class RoomTypeService implements IRoomTypeService {
 	 * @since 27/06/2022
 	 * @param The fields of the new register
 	 * @return The id of the new register and a message with the operation result
+	 * 
+	 * @exception BadSqlGrammarException when it introduces a string instead of a numeric
+	 * @exception DuplicateKeyException when it introduces a roomType that it exists
+	 * @exception DataIntegrityViolationException when it doesn´t introduce a not null field 
+	 * @exception AllFieldsRequiredException when it doesn´t introduce all not null field 
 	 */
 	@Override
 	public EntityResult roomtypeInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
@@ -109,6 +116,11 @@ public class RoomTypeService implements IRoomTypeService {
 	 * @since 27/06/2022
 	 * @param The fields to be updated
 	 * @return A message with the operation result
+	 * 
+	 * @exception BadSqlGrammarException when it introduces a string instead of a numeric
+	 * @exception DuplicateKeyException when it introduces a roomType that it exists in other register
+	 * @exception RecordNotFoundException when it doesn´t introduce a not null field 
+	 * @exception EmptyRequestException when it doesn´t introduce any field
 	 */
 	@Override
 	public EntityResult roomtypeUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
@@ -138,7 +150,7 @@ public class RoomTypeService implements IRoomTypeService {
 		}
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_room_type");
-		EntityResult existingRoomType = roomtypeQuery(attrMap, attrList);
+		EntityResult existingRoomType = daoHelper.query(roomTypeDao, attrMap, attrList);
 		if (existingRoomType.isEmpty())
 			throw new RecordNotFoundException("ROOM_TYPE_DOESN'T_EXISTS");
 		return !(existingRoomType.isEmpty());

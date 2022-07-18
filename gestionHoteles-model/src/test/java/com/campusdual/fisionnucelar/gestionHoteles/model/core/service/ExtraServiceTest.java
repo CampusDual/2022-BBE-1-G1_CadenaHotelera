@@ -175,7 +175,7 @@ public class ExtraServiceTest {
 	       
 	        @Test
 	        @DisplayName("Fail trying to insert duplicated name")
-	        void service_insert_duplicated_mail() {
+	        void service_insert_duplicated_name() {
 	        	Map<String, Object> dataToInsert = new HashMap<>();
 	        	dataToInsert.put("ex_name", "Sala de conferencias");
 	        	dataToInsert.put("ex_description", "Sala completamente equipada");
@@ -233,7 +233,7 @@ public class ExtraServiceTest {
 	    		attrList.add("id_extra");
 	        	EntityResult er = new EntityResultMapImpl();
 	        	er.setCode(EntityResult.OPERATION_SUCCESSFUL);
-	        	EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_HOTEL","EX_NAME"));
+	        	EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_EXTRA","EX_NAME"));
 	        	//when
 	        	when(daoHelper.update(extraDao, dataToUpdate,filter)).thenReturn(er);
 	        	when(daoHelper.query(extraDao, filter, attrList)).thenReturn(queryResult);
