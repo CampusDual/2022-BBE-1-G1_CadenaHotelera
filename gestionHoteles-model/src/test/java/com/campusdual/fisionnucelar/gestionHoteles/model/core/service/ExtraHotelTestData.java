@@ -96,7 +96,7 @@ public class ExtraHotelTestData {
 	
 	public static Map<String,Object> getGenericFilter() {
 		Map<String, Object> filter = new HashMap<>();
-		filter.put("ID_EXTRAS_HOTEL", 32);
+		filter.put("id_extras_hotel", 32);
 		return filter;
 	}
 	public static EntityResult getGenericQueryResult() {
@@ -113,6 +113,3 @@ public class ExtraHotelTestData {
 
 	
 	}
-
-
-

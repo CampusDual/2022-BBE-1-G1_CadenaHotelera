@@ -208,7 +208,6 @@ public class ExtraHotelServiceTest {
 		@DisplayName("Fail trying to insert duplicated combination of hotel and extra")
 		void extraHotel_insert_duplicated() {
 			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
-			List<String> columnList = Arrays.asList("ID_EXTRAS_HOTEL");
 			EntityResult insertResult = getGenericInsertResult();
 
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(insertResult);
@@ -252,7 +251,6 @@ public class ExtraHotelServiceTest {
 		@DisplayName("Fail trying to insert with a non existing hotel")
 		void hotel_doesnt_exists() {
 			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
-			EntityResult er = getGenericInsertResult();
 
 			EntityResult hotel = new EntityResultMapImpl();
 			when(daoHelper.query(any(), any(), any())).thenReturn(hotel);
@@ -271,8 +269,6 @@ public class ExtraHotelServiceTest {
 			dataToInsert.put("exh_extra", 2);
 			dataToInsert.put("exh_price", 2);
 			dataToInsert.put("exh_active", 1);
-
-			EntityResult er = getGenericInsertResult();
 
 			EntityResult hotel = new EntityResultMapImpl();
 			Map<String, Object> keyMapHotel = new HashMap<>();
@@ -293,8 +289,23 @@ public class ExtraHotelServiceTest {
 			EntityResult entityResult = extraHotelService.extrahotelInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("EXTRA_DOESN'T_EXISTS", entityResult.getMessage());
+		}
+		
+		@Test
+		@DisplayName("Insert an ExtraHotel with a non numeric price")
+		void insert_with_non_numeric_price() {
+			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
+			when(daoHelper.query(any(), anyMap(), anyList())).thenThrow(BadSqlGrammarException.class);
+			EntityResult entityResult = extraHotelService.extrahotelInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("PRICE_MUST_BE_NUMERIC", entityResult.getMessage());
 
 		}
+
+		
+		
+		
+		
 
 	}
 
@@ -318,7 +329,7 @@ public class ExtraHotelServiceTest {
 			assertEquals("SUCCESSFUL_UPDATE", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			verify(daoHelper).update(any(), anyMap(), anyMap());
-			verify(daoHelper, times(3)).query(any(), any(), any());
+			verify(daoHelper, times(2)).query(any(), any(), any());
 		}
 
 		@Test
@@ -333,20 +344,20 @@ public class ExtraHotelServiceTest {
 			when(daoHelper.update(extraHotelDao, dataToUpdate, filter)).thenThrow(DuplicateKeyException.class);
 			EntityResult entityResult = extraHotelService.extrahotelUpdate(dataToUpdate, filter);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			assertEquals("DUPLICATED_SERVICES_IN_HOTEL", entityResult.getMessage());
+			assertEquals("DUPLICATED_EXTRA_IN_HOTEL", entityResult.getMessage());
 			verify(daoHelper).update(any(), anyMap(), anyMap());
-			verify(daoHelper, times(3)).query(any(), any(), any());
+			verify(daoHelper, times(2)).query(any(), any(), any());
 		}
 
 		@Test
-		@DisplayName("Fail trying to update an  that doesn´t exists")
+		@DisplayName("Fail trying to update an extra that doesn´t exists")
 		void update_extraHotel_doesnt_exists() {
 			Map<String, Object> filter = getGenericFilter();
 			Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
 			List<String> attrList = getGenericAttrList();
 
 			EntityResult queryResult = new EntityResultMapImpl();
-			when(daoHelper.query(extraHotelDao, filter, attrList)).thenReturn(queryResult);
+			when(daoHelper.query(any(),any(),any())).thenReturn(queryResult);
 			EntityResult entityResult = extraHotelService.extrahotelUpdate(dataToUpdate, filter);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("ERROR_EXTRA_IN_HOTEL_NOT_FOUND", entityResult.getMessage());
