@@ -45,7 +45,6 @@ public class ExtraHotelService implements IExtraHotelService {
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
 
-
 	private Control control;
 
 	public ExtraHotelService() {
@@ -98,7 +97,7 @@ public class ExtraHotelService implements IExtraHotelService {
 	 * @exception EmptyRequestException           when the params are empty
 	 * @return The id of the new extra_hotel and a message with the operation result
 	 */
-	
+
 	@Override
 	public EntityResult extrahotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
@@ -124,7 +123,7 @@ public class ExtraHotelService implements IExtraHotelService {
 	 * 
 	 * @since 12/07/2022
 	 * @param The fields to be updated
-	 
+	 * 
 	 * @exception DuplicateKeyException           when trying to change a not null
 	 *                                            field of an extraHotel for an
 	 *                                            existing one
@@ -161,16 +160,17 @@ public class ExtraHotelService implements IExtraHotelService {
 			control.setErrorMessage(updateResult, "DUPLICATED_EXTRA_IN_HOTEL");
 		} catch (DataIntegrityViolationException e) {
 			control.setMessageFromException(updateResult, e.getMessage());
+		} catch (BadSqlGrammarException e) {
+			control.setErrorMessage(updateResult, "PRICE_MUST_BE_NUMERIC");
 		} catch (RecordNotFoundException | IncorrectBooleanException | EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
 
-	
-	
 	/**
 	 * Search a concrete extraHotel. It throws an exception if it doesn't exists
+	 * 
 	 * @param keyMap The extraHotel to search
 	 * @exception RecordNotFoundException If it doesn't find any result
 	 */
@@ -198,10 +198,12 @@ public class ExtraHotelService implements IExtraHotelService {
 			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
 		}
 	}
+
 	/**
 	 * Checks if the user has introduced a valid value for the exh_active field
 	 * 
-	 * @param attrMap A numeric boolean to indicate if the extraHotel is active (1) or not (0)
+	 * @param attrMap A numeric boolean to indicate if the extraHotel is active (1)
+	 *                or not (0)
 	 * @throws IncorrectBooleanException if the value is different than 1 or 0
 	 */
 	private void checkCorrectBoolean(Map<String, Object> attrMap) throws IncorrectBooleanException {

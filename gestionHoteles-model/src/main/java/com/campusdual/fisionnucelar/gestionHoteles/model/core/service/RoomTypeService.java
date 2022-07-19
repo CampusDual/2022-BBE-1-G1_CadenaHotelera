@@ -127,8 +127,9 @@ public class RoomTypeService implements IRoomTypeService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfRoomTypeExists(keyMap);
 			checkIfDataIsEmpty(attrMap);
+			checkIfRoomTypeExists(keyMap);
+		
 			updateResult = this.daoHelper.update(this.roomTypeDao, attrMap, keyMap);
 
 			updateResult.setMessage("SUCESSFUL_UPDATE");
@@ -137,13 +138,23 @@ public class RoomTypeService implements IRoomTypeService {
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "ROOM_TYPE_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
-			control.setErrorMessage(updateResult, "ROOM_TYPE_DOESN'T_EXISTS");
+			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
 
+	
+	/**
+	   * 
+	   * In update, check the roomType id exist in a roomType table
+	   * 
+	   * @since 27/06/2022
+	   * @param The field roomType
+	   * @return true if roomType is in a roomType table or false if it isn´t
+	   * @exception RecordNotFoundException when it doesn´t introduce a not null field 
+	   */
 	private boolean checkIfRoomTypeExists(Map<String, Object> attrMap) {
 		if (attrMap.get("id_room_type") == null) {
 			throw new RecordNotFoundException("ID_ROOM_TYPE_REQUIRED");
@@ -158,7 +169,15 @@ public class RoomTypeService implements IRoomTypeService {
 
 		
 	
-	
+	/**
+	   * 
+	   * In update, check all fields are introduced
+	   * 
+	   * @since 27/06/2022
+	   * @param The field to introduce
+	   * @return If fields don´t introduce, it catch a exception with a own message
+	   * @exception EmptyRequestException when it doesn´t introduce any field 
+	   */
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
 		if (attrMap.get("rmt_name") == null && attrMap.get("rmt_capacity") == null
 				&& attrMap.get("rmt_price") == null) {

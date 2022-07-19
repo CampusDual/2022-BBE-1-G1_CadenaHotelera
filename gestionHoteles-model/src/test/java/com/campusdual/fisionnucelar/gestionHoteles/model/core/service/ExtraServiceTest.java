@@ -2,8 +2,6 @@ package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ExtraTestData.getAllExtraData;
 import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ExtraTestData.getSpecificExtraData;
-import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ServiceTestData.getAllServiceData;
-import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ServiceTestData.getSpecificServiceData;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;

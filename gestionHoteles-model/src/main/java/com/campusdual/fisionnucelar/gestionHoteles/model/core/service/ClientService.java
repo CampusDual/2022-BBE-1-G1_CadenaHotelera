@@ -126,12 +126,13 @@ public class ClientService implements IClientService {
 	@Override
 	public EntityResult clientUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
-		attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
+		
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfClientExists(keyMap);
 			checkIfDataIsEmpty(attrMap);
-
+			checkIfClientExists(keyMap);
+			attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
+			
 			if (attrMap.get("cl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("cl_email").toString());
 			}
@@ -200,10 +201,8 @@ public class ClientService implements IClientService {
 	}
 
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.get("cl_nif") == null && attrMap.get("cl_name") == null && attrMap.get("cl_phone") == null
-				&& attrMap.get("cl_email") == null && attrMap.get("cl_entry_date") == null
-				&& attrMap.get("cl_last_update") == null && attrMap.get("cl_leaving_date") == null) {
-			throw new EmptyRequestException("EMPTY_REQUEST");
+		if (attrMap.isEmpty()) {
+			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
 		}
 	}
 

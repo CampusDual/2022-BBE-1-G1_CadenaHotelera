@@ -1,31 +1,50 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.math.BigDecimal;
-
 import java.sql.Timestamp;
-import java.text.*;
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.ZoneId;
-import java.util.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.dao.*;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingService;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.*;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ClientDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraHotelDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.OccupiedRoomException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.db.SQLStatementBuilder;
-import com.ontimize.jee.common.db.SQLStatementBuilder.*;
-import com.ontimize.jee.common.dto.*;
+import com.ontimize.jee.common.db.SQLStatementBuilder.BasicExpression;
+import com.ontimize.jee.common.db.SQLStatementBuilder.BasicField;
+import com.ontimize.jee.common.db.SQLStatementBuilder.BasicOperator;
+import com.ontimize.jee.common.db.SQLStatementBuilder.SQLStatement;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.common.tools.EntityResultTools;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
+import com.ontimize.jee.server.dao.IOntimizeDaoSupport;
+import com.ontimize.jee.server.dao.ISQLQueryAdapter;
 
 /**
  * This class builds the operations over the bookings table
@@ -48,6 +67,9 @@ public class BookingService implements IBookingService {
 
 	@Autowired
 	private RoomDao roomDao;
+	
+	@Autowired
+	private HotelDao hotelDao;
 
 	@Autowired
 	private ClientDao clientDao;
@@ -98,8 +120,10 @@ public class BookingService implements IBookingService {
 	 * @since 27/06/2022
 	 * @param The filters, the fields of the query and a boolean indicating the
 	 *            bookings we want to search
-	 * @exception NoResultsException Sends a message to the user when the list of results is empty 
-	 * @exception BadSqlGrammarException sends a message to the user when he send a string in a numeric field           
+	 * @exception NoResultsException     Sends a message to the user when the list
+	 *                                   of results is empty
+	 * @exception BadSqlGrammarException sends a message to the user when he send a
+	 *                                   string in a numeric field
 	 * @return The columns from the bookings table especified in the params and a
 	 *         message with the operation result
 	 */
@@ -108,8 +132,6 @@ public class BookingService implements IBookingService {
 		try {
 			searchResult = onlyActive ? daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_ACTIVE_BOOKINGS")
 					: daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_BOOKINGS");
-
-//			searchResult = this.daoHelper.query(this.bookingDao, keyMap, attrList, "CLIENT_ACTIVE_BOOKINGS");
 
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
@@ -128,8 +150,10 @@ public class BookingService implements IBookingService {
 	 * 
 	 * @since 27/06/2022
 	 * @param The filters and the fields of the query
-	 * @exception NoResultsException Sends a message to the user when the list of results is empty
-	 * @exception BadSqlGrammarException sends a message to the user when he send a string in a numeric field  
+	 * @exception NoResultsException     Sends a message to the user when the list
+	 *                                   of results is empty
+	 * @exception BadSqlGrammarException sends a message to the user when he send a
+	 *                                   string in a numeric field
 	 * @return The columns from the bookings table especified in the params and a
 	 *         message with the operation result
 	 */
@@ -155,9 +179,15 @@ public class BookingService implements IBookingService {
 	 * 
 	 * @since 30/06/2022
 	 * @param The id of the hotel, the check-in and the check-out
-	 * @exception AllFieldsRequiredException sends a message to the user when he is not providing all the fields required to execute the query
-	 * @exception ParseException sends a message to the user when the method searchAvailableRooms is not capable of parsing check_in or check_out dates
-	 * @exception BadSqlGrammarException sends a message to the user when he send a string in a numeric field
+	 * @exception AllFieldsRequiredException sends a message to the user when he is
+	 *                                       not providing all the fields required
+	 *                                       to execute the query
+	 * @exception ParseException             sends a message to the user when the
+	 *                                       method searchAvailableRooms is not
+	 *                                       capable of parsing check_in or
+	 *                                       check_out dates
+	 * @exception BadSqlGrammarException     sends a message to the user when he
+	 *                                       send a string in a numeric field
 	 * @return The available rooms filtered by hotel, with a calculated price for
 	 *         the selected dates
 	 */
@@ -168,7 +198,9 @@ public class BookingService implements IBookingService {
 		try {
 			checkAvailableRoomsFields(keyMap);
 			resultsByHotel = searchAvailableRooms(keyMap, attrList);
-		} catch (AllFieldsRequiredException | InvalidDateException e) {
+			checkIfHotelExists(keyMap);
+			
+		} catch (AllFieldsRequiredException | InvalidDateException|RecordNotFoundException e) {
 			control.setErrorMessage(resultsByHotel, e.getMessage());
 		} catch (ParseException e) {
 			control.setErrorMessage(resultsByHotel, e.getMessage());
@@ -179,9 +211,16 @@ public class BookingService implements IBookingService {
 		return resultsByHotel;
 	}
 	
+
+
+
 	/**
-	 * Checks if the user is providing all the fields required to execute a query to obtain all available rooms in a given date
-	 * @exception AllFieldsRequiredException sends a message to the user when he is not providing the neccesary fields to execute the query
+	 * Checks if the user is providing all the fields required to execute a query to
+	 * obtain all available rooms in a given date
+	 * 
+	 * @exception AllFieldsRequiredException sends a message to the user when he is
+	 *                                       not providing the neccesary fields to
+	 *                                       execute the query
 	 * @param keyMap the fields to be checked if are present or not
 	 */
 
@@ -198,9 +237,12 @@ public class BookingService implements IBookingService {
 	 * 
 	 * @since 12/07/2022
 	 * @param The id of the hotel
-	 * @exception RecordNotFoundException shends a message to the user when he shends a hotel id that doesn´t exists
-	 * @exception BadSqlGrammarException sends a message to the user when he send a string in a numeric field
-	 * @exception EmptyRequestException sends a message to the user when he try to execute an empty request
+	 * @exception RecordNotFoundException shends a message to the user when he
+	 *                                    shends a hotel id that doesn´t exists
+	 * @exception BadSqlGrammarException  sends a message to the user when he send a
+	 *                                    string in a numeric field
+	 * @exception EmptyRequestException   sends a message to the user when he try to
+	 *                                    execute an empty request
 	 * @return The rooms with the chek-out on the current date filtered by hotel
 	 */
 	public EntityResult todaycheckoutQuery(Map<String, Object> keyMap, List<String> attrList)
@@ -224,6 +266,7 @@ public class BookingService implements IBookingService {
 
 	/**
 	 * Checks if rm_hotel exists in a request
+	 * 
 	 * @param keyMap
 	 * @exception RecordNotFoundException if rm_hotel not exists in the user request
 	 */
@@ -240,7 +283,8 @@ public class BookingService implements IBookingService {
 	 * receiving the needed params and it filters the occupied rooms
 	 * 
 	 * @since 30/06/2022
-	 * @param The id of the hotel, the check-in date and the check-out dates and the columns to send back to the user
+	 * @param The id of the hotel, the check-in date and the check-out dates and the
+	 *            columns to send back to the user
 	 * @return The available rooms in a concrete hotel on a date range
 	 */
 	private EntityResult searchAvailableRooms(Map<String, Object> keyMap, List<String> attrList) throws ParseException {
@@ -261,9 +305,24 @@ public class BookingService implements IBookingService {
 
 		checkDates(startDate, endDate);
 
-		keyMap.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+		Map<String, Object> keyMap2 = new HashMap<>();
+
+		keyMap2.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
 				buildExpressionToSearchRooms(startDate, endDate));
-		result = this.daoHelper.query(this.bookingDao, keyMap, attrList, "AVAILABLE_ROOMS");
+	
+		long diff = endDate.getTime() - startDate.getTime();
+		TimeUnit time = TimeUnit.DAYS;
+		long days = time.convert(diff, TimeUnit.MILLISECONDS);
+			
+		result = this.daoHelper.query(this.bookingDao, keyMap2, attrList, "AVAILABLE_ROOMS", new ISQLQueryAdapter() {
+			@Override
+			public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
+					Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
+					String queryId) {
+				return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(days)),
+						sqlStatement.getValues());
+			}
+		});
 
 		Map<String, Object> hotelFilter = new HashMap<>();
 		hotelFilter.put(hotelId, keyMap.get(hotelId));
@@ -272,12 +331,16 @@ public class BookingService implements IBookingService {
 			hotelFilter.put(roomType, keyMap.get(roomType));
 
 		return EntityResultTools.dofilter(result, hotelFilter);
+
 	}
+
 	/**
 	 * Checks if the given fdayes
+	 * 
 	 * @param startDate
 	 * @param endDate
-	 * @throws InvalidDateException Sends a message to the user when check_in or check_out fields are invalid
+	 * @throws InvalidDateException Sends a message to the user when check_in or
+	 *                              check_out fields are invalid
 	 */
 	private void checkDates(Date startDate, Date endDate) throws InvalidDateException {
 		if (endDate.before(startDate) || endDate.equals(startDate)) {
@@ -287,8 +350,6 @@ public class BookingService implements IBookingService {
 			throw new InvalidDateException("CHECK_IN_MUST_BE_EQUAL_OR_AFTER_CURRENT_DATE");
 		}
 	}
-
-
 
 	/**
 	 * 
@@ -331,12 +392,22 @@ public class BookingService implements IBookingService {
 	 * 
 	 * @since 27/06/2022
 	 * @param The fields of the new register
-	 * @exception DuplicateKeyException sends a message to the user when he is trying to insert duplicate foreign keys
-	 * @exception DataIntegrityViolationException sends a message to the user when he is trying to insert a null value or an inexistent id in 
-	 * a foreign key field
-	 * @exception ClassCastException sends a message to the user when he is trying to insert an invalid or inintelligible date
-	 * @exception RecordNotFoundException sends a message to the user when he is trying to book with an non active client id
-	 * @exception InvalidDateException Sends a message to the user when check_in or check_out fields are invalid
+	 * @exception DuplicateKeyException           sends a message to the user when
+	 *                                            he is trying to insert duplicate
+	 *                                            foreign keys
+	 * @exception DataIntegrityViolationException sends a message to the user when
+	 *                                            he is trying to insert a null
+	 *                                            value or an inexistent id in a
+	 *                                            foreign key field
+	 * @exception ClassCastException              sends a message to the user when
+	 *                                            he is trying to insert an invalid
+	 *                                            or inintelligible date
+	 * @exception RecordNotFoundException         sends a message to the user when
+	 *                                            he is trying to book with an non
+	 *                                            active client id
+	 * @exception InvalidDateException            Sends a message to the user when
+	 *                                            check_in or check_out fields are
+	 *                                            invalid
 	 * @return The id of the new register and a message with the operation result
 	 */
 	@Override
@@ -349,9 +420,9 @@ public class BookingService implements IBookingService {
 			if (attrMap.containsKey("bk_client")) {
 				checkIfClientIsActive(attrMap);
 			}
-			if (attrMap.containsKey("bk_room")){
-			checkDisponibility(attrMap);
-			calculateBookingPrice(attrMap);
+			if (attrMap.containsKey("bk_room")) {
+				checkDisponibility(attrMap);
+				calculateBookingPrice(attrMap);
 			}
 			insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
 
@@ -365,45 +436,62 @@ public class BookingService implements IBookingService {
 		} catch (ClassCastException e) {
 			e.printStackTrace();
 			control.setMessageFromException(insertResult, "CHECK_IN_AND_CHECK_OUT_MUST_BE_DATES");
-		}catch (AllFieldsRequiredException | RecordNotFoundException | OccupiedRoomException | ParseException
-				| InvalidDateException  e) {
+		} catch (AllFieldsRequiredException | RecordNotFoundException | OccupiedRoomException | ParseException
+				| InvalidDateException | EmptyRequestException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
 	}
-	
+
 	/**
-	 * Calculates the price of the booking based on the price of the room and check_in and check_out days
+	 * Calculates the price of the booking based on the price of the room and
+	 * check_in and check_out days
+	 * 
 	 * @param attrMap the id of the room and check_in, check_out dates
-	 *  @since 18/07/2022
+	 * @since 18/07/2022
 	 */
 
-	private void calculateBookingPrice(Map<String,Object> attrMap) {
-		if(attrMap.get("bk_room")==null) 
-			throw new  AllFieldsRequiredException("bk_room_field_needed");
-		Map<String,Object> filter = new HashMap<String,Object>();
+	private void calculateBookingPrice(Map<String, Object> attrMap) {
+		if (attrMap.get("bk_room") == null)
+			throw new AllFieldsRequiredException("bk_room_field_needed");
+
+		Map<String, Object> filter = new HashMap<String, Object>();
 		filter.put("id_room", attrMap.get("bk_room"));
-		EntityResult roomResult = daoHelper.query(bookingDao, filter, Arrays.asList("rmt_price"),"SEARCH_ROOM_PRICE");
+		EntityResult roomResult = daoHelper.query(bookingDao, filter, Arrays.asList("rmt_price"), "SEARCH_ROOM_PRICE");
+
+		if (roomResult.isEmpty()) {
+			throw new RecordNotFoundException("BK_ROOM_OR_BK_CLIENT_DOESN'T EXISTS");
+		}
+
 		Date checkIn = (Date) attrMap.get("bk_check_in");
 		Date checkOut = (Date) attrMap.get("bk_check_out");
-		LocalDate startDate = checkIn.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-		LocalDate endDate = checkOut.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-							
-		Period period = Period.between(startDate, endDate);
-		int days = Math.abs(period.getDays());
+		long diff = checkOut.getTime() - checkIn.getTime();
+		TimeUnit time = TimeUnit.DAYS;
+		long days = time.convert(diff, TimeUnit.MILLISECONDS);
+
 		BigDecimal roomPrice = (BigDecimal) roomResult.getRecordValues(0).get("rmt_price");
 		BigDecimal bookingDays = new BigDecimal(days);
 		BigDecimal bookingPrice = bookingDays.multiply(roomPrice);
 		attrMap.put("bk_price", bookingPrice);
 	}
+
 	/**
 	 * Adds and extra to the given booking and updates the booking price
-	 * @param the id of the booking, the id of the extra and an integer as a quantity
-	 * @return a confirmation message if the updates completes successfully or a message indicating the error
-	 * @exception RecordNotFoundException sends a message to the user if id_booking not exists
-	 * @exception EmptyRequestException sends a message to the user if he sends anm empty request
-	 * @exception ClassCastException  sends a message to the user if sends null or srting values in a numeric field
-	 * @exception DataIntegrityViolationException sends a message to the user if he sends an inexistent or null foreign key
+	 * 
+	 * @param the id of the booking, the id of the extra and an integer as a
+	 *            quantity
+	 * @return a confirmation message if the updates completes successfully or a
+	 *         message indicating the error
+	 * @exception RecordNotFoundException         sends a message to the user if
+	 *                                            id_booking not exists
+	 * @exception EmptyRequestException           sends a message to the user if he
+	 *                                            sends anm empty request
+	 * @exception ClassCastException              sends a message to the user if
+	 *                                            sends null or srting values in a
+	 *                                            numeric field
+	 * @exception DataIntegrityViolationException sends a message to the user if he
+	 *                                            sends an inexistent or null
+	 *                                            foreign key
 	 * 
 	 */
 	@Override
@@ -414,24 +502,28 @@ public class BookingService implements IBookingService {
 			checkIfBookingExists(keyMap);
 			checkDataUpdateExtraPrice(attrMap);
 			updateResult = daoHelper.update(bookingDao, calculateExtraPrice(attrMap, keyMap), keyMap);
+			updateResult.setMessage("SUCCESSFULLY_ADDED");
 		} catch (RecordNotFoundException | EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (ClassCastException e) {
 			e.printStackTrace();
 			control.setErrorMessage(updateResult, "INCORRECT_REQUEST");
-		}catch(DataIntegrityViolationException e) {
+		} catch (DataIntegrityViolationException e) {
 			control.setMessageFromException(updateResult, e.getMessage());
 		}
 
 		return updateResult;
 
 	}
-	
+
 	/**
-	 * Calculates the price of the extra added to the booking based on the extra id and a quantity
+	 * Calculates the price of the extra added to the booking based on the extra id
+	 * and a quantity
+	 * 
 	 * @param attrMap the quantity and the id of the extra
-	 * @param keyMap the id of the booking
-	 * @return a hashpMap with the field price updated, ready to update in the bookings table
+	 * @param keyMap  the id of the booking
+	 * @return a hashpMap with the field price updated, ready to update in the
+	 *         bookings table
 	 */
 
 	public Map<String, Object> calculateExtraPrice(Map<String, Object> attrMap, Map<String, Object> keyMap) {
@@ -449,7 +541,7 @@ public class BookingService implements IBookingService {
 		List<String> columns = new ArrayList<>();
 		columns.add("exh_price");
 
-		extraPriceResult = this.daoHelper.query(extraHotelDao,filter, columns);
+		extraPriceResult = this.daoHelper.query(extraHotelDao, filter, columns);
 		unitExtraPrice = (BigDecimal) extraPriceResult.getRecordValues(0).get("exh_price");
 
 		quantity = new BigDecimal((int) attrMap.get("quantity"));
@@ -470,8 +562,11 @@ public class BookingService implements IBookingService {
 	 * @since 27/06/2022
 	 * @param The fields to be updated
 	 * @return A message with the operation result
-	 * @exception RecordNotFoundException sends a message to the user if the id_booking not exists
-	 * @exception DataIntegrityViolationException sends a message to the user if he is trying to insert a null or inexistent foreign key
+	 * @exception RecordNotFoundException         sends a message to the user if the
+	 *                                            id_booking not exists
+	 * @exception DataIntegrityViolationException sends a message to the user if he
+	 *                                            is trying to insert a null or
+	 *                                            inexistent foreign key
 	 */
 	@Override
 	public EntityResult bookingUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
@@ -480,17 +575,17 @@ public class BookingService implements IBookingService {
 		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-		checkIfBookingExists(keyMap);
+			checkIfBookingExists(keyMap);
 
-		updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
-		if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
-			updateResult.setMessage("ERROR_WHILE_UPDATING");
-		} else {
-			updateResult.setMessage("SUCCESSFUL_UPDATE");
-		}
-		}catch(RecordNotFoundException e) {
+			updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
+			if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
+				updateResult.setMessage("ERROR_WHILE_UPDATING");
+			} else {
+				updateResult.setMessage("SUCCESSFUL_UPDATE");
+			}
+		} catch (RecordNotFoundException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
-		}catch(DataIntegrityViolationException e) {
+		} catch (DataIntegrityViolationException e) {
 			control.setMessageFromException(updateResult, e.getMessage());
 		}
 		return updateResult;
@@ -499,10 +594,12 @@ public class BookingService implements IBookingService {
 	/**
 	 * 
 	 * Deletes a existing register on the bookings table
+	 * 
 	 * @since 27/06/2022
 	 * @param The id of the booking
 	 * @return A message with the operation result
-	 * @exception RecordNotFoundException sends a message to the user if the id_booking not exists
+	 * @exception RecordNotFoundException sends a message to the user if the
+	 *                                    id_booking not exists
 	 */
 	@Override
 	public EntityResult bookingDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
@@ -517,7 +614,7 @@ public class BookingService implements IBookingService {
 				deleteResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
 				deleteResult.setMessage("SUCCESSFUL_DELETE");
 			}
-		}catch(RecordNotFoundException e) {
+		} catch (RecordNotFoundException e) {
 			control.setErrorMessage(deleteResult, e.getMessage());
 		}
 		return deleteResult;
@@ -526,16 +623,24 @@ public class BookingService implements IBookingService {
 	/**
 	 * 
 	 * checks if a room has not bookings in the given dates
+	 * 
 	 * @since 05/07/2022
 	 * @param The id of the client
 	 * @return True if the client exists, false if it does't exists
-	 * @exception OccupiedRoomException sends a message to the user if the given room is ocuppied in the request dates
-	 * @exception InvalidDateException sends a message to the user if he is providing an invalid dates, valid dates are defined in checkDates method
+	 * @exception OccupiedRoomException sends a message to the user if the given
+	 *                                  room is ocuppied in the request dates
+	 * @exception InvalidDateException  sends a message to the user if he is
+	 *                                  providing an invalid dates, valid dates are
+	 *                                  defined in checkDates method
 	 */
 	private void checkDisponibility(Map<String, Object> attrMap) throws ParseException, InvalidDateException {
 		Map<String, Object> filter = new HashMap<>();
 		filter.put("bk_room", attrMap.get("bk_room"));
 		EntityResult result;
+
+		if (attrMap.get("bk_check_in") == null || attrMap.get("bk_check_out") == null) {
+			throw new EmptyRequestException("CHECK_IN_AND_CHECK_OUT_REQUIRED");
+		}
 
 		Date startDate = (Date) attrMap.get("bk_check_in");
 		Date endDate = (Date) attrMap.get("bk_check_out");
@@ -554,22 +659,29 @@ public class BookingService implements IBookingService {
 		}
 
 	}
+
 	/**
-	 * Checks if the user is providing id_extras_hotel and quantity parameters to add an extra to the booking
+	 * Checks if the user is providing id_extras_hotel and quantity parameters to
+	 * add an extra to the booking
+	 * 
 	 * @param attrMap id_extras_hotel and quantity
-	 * @exception EmptyRequestException sends a message to the user if he is not providing the two required parameters
+	 * @exception EmptyRequestException sends a message to the user if he is not
+	 *                                  providing the two required parameters
 	 */
 	private void checkDataUpdateExtraPrice(Map<String, Object> attrMap) {
 		if (attrMap.get("id_extras_hotel") == null || attrMap.get("quantity") == null) {
 			throw new EmptyRequestException("ID_EXTRAS_AND_QUANTITY_REQUIRED");
 		}
 	}
-	
+
 	/**
 	 * Checks if the provid id_booking exists in bookings table
+	 * 
 	 * @param keyMap the id of the booking
 	 * @return true if the booking exists in bookings table
-	 * @exception RecordNotFoundException sends a message to the user if the provided id_booking not exists in bookings table
+	 * @exception RecordNotFoundException sends a message to the user if the
+	 *                                    provided id_booking not exists in bookings
+	 *                                    table
 	 */
 	private boolean checkIfBookingExists(Map<String, Object> keyMap) {
 		if (keyMap.isEmpty()) {
@@ -578,17 +690,21 @@ public class BookingService implements IBookingService {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_booking");
 		EntityResult existingBooking = this.daoHelper.query(bookingDao, keyMap, attrList);
-        if (existingBooking.isEmpty())
+		if (existingBooking.isEmpty())
 			throw new RecordNotFoundException("BOOKING_DOESN'T_EXISTS");
 		return existingBooking.isEmpty();
 
 	}
-	
+
 	/**
 	 * Checks if the id_extra_hotel provid by the user exists in extras_hotel table
+	 * 
 	 * @param keyMap the id of extras hotel
-	 * @return true if the id_extras_hotel provid by the user exists in extras_hotel table
-	 * @exception RecordNotFoundException sends a message to the user if the provided id_extras_hotel doesn´t exists in extras_hotel table
+	 * @return true if the id_extras_hotel provid by the user exists in extras_hotel
+	 *         table
+	 * @exception RecordNotFoundException sends a message to the user if the
+	 *                                    provided id_extras_hotel doesn´t exists in
+	 *                                    extras_hotel table
 	 */
 
 	private boolean checkIfExtraHotelExists(Map<String, Object> keyMap) {
@@ -609,9 +725,12 @@ public class BookingService implements IBookingService {
 
 	/**
 	 * Checks if the client provided by the user exists in clients tavble
+	 * 
 	 * @param attrMap the id_client
 	 * @return true id the id provided by the users exists in clients table
-	 * @exception RecordNotFoundException sends a message to the user if the provided id_client not exists in clients table
+	 * @exception RecordNotFoundException sends a message to the user if the
+	 *                                    provided id_client not exists in clients
+	 *                                    table
 	 */
 	private boolean checkIfClientExists(Map<String, Object> attrMap) {
 		List<String> attrList = new ArrayList<>();
@@ -626,9 +745,11 @@ public class BookingService implements IBookingService {
 
 	/**
 	 * checks if the provided client is marked as active in clients table
+	 * 
 	 * @param keyMap the id of the client
 	 * @return true if the client is marked as active
-	 * @exception RecordNotFoundException sends a message to the user if the client provided is not active
+	 * @exception RecordNotFoundException sends a message to the user if the client
+	 *                                    provided is not active
 	 */
 	private boolean checkIfClientIsActive(Map<String, Object> keyMap) {
 		List<String> attrList = new ArrayList<>();
@@ -646,9 +767,11 @@ public class BookingService implements IBookingService {
 
 	/**
 	 * Checks if the provided id_room is present in rooms table
+	 * 
 	 * @param attrMap the id of the room
 	 * @return true id the provided id_room exists in rooms table
-	 * @exception ecordNotFoundException sends a message to the user if the provided room doesn´t exists in rooms table
+	 * @exception ecordNotFoundException sends a message to the user if the provided
+	 *                                   room doesn´t exists in rooms table
 	 */
 	private boolean checkIfRoomExists(Map<String, Object> attrMap) {
 		List<String> attrList = new ArrayList<>();
@@ -660,11 +783,13 @@ public class BookingService implements IBookingService {
 			throw new RecordNotFoundException("ROOM_DOESN'T_EXISTS");
 		return existingRoom.isEmpty();
 	}
-	
+
 	/**
-	 * Checks if the fields neccesary to make requests at some methods in this service has been provided by the user
-	 * @param attrMap the fields to be checked
-	 * EmptyRequestException sends a message to the user if the request provided is empty
+	 * Checks if the fields neccesary to make requests at some methods in this
+	 * service has been provided by the user
+	 * 
+	 * @param attrMap the fields to be checked EmptyRequestException sends a message
+	 *                to the user if the request provided is empty
 	 */
 
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
@@ -677,8 +802,11 @@ public class BookingService implements IBookingService {
 
 	/**
 	 * Checks if rm_hotel field provided by the user is empty
+	 * 
 	 * @param attrMap the foregign key rm_hotel
-	 * @exception EmptyRequestException sends a message to the user if he is not providing rm_hotel field for make the request
+	 * @exception EmptyRequestException sends a message to the user if he is not
+	 *                                  providing rm_hotel field for make the
+	 *                                  request
 	 */
 	private void checkHotelIsEmpty(Map<String, Object> attrMap) {
 		if (attrMap.get("rm_hotel") == null) {
@@ -688,8 +816,10 @@ public class BookingService implements IBookingService {
 
 	/**
 	 * checks if the given EntityResults is empty
+	 * 
 	 * @param result an EntityResult
-	 * @exception RecordNotFoundException sends a message to the user if the resultant query has not results
+	 * @exception RecordNotFoundException sends a message to the user if the
+	 *                                    resultant query has not results
 	 */
 	private void checkIfEmpty(EntityResult result) {
 		if (result.isEmpty()) {
@@ -697,5 +827,17 @@ public class BookingService implements IBookingService {
 		}
 
 	}
+	private void checkIfHotelExists(Map<String, Object> attrMap) {
+		List<String> attrList = new ArrayList<>();
+		attrList.add("id_hotel");
+		Map<String, Object> keyMap = new HashMap<>();
+		keyMap.put("id_hotel", attrMap.get("id_hotel"));
+		EntityResult existingHotel = this.daoHelper.query(hotelDao, keyMap, attrList);
+		if (existingHotel.isEmpty())
+			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
+		
+	}
+
+	
 
 }

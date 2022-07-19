@@ -46,14 +46,16 @@ public class ExtraService implements IExtraService{
 		this.control = new Control();
 	}
 	/**
-	   * 
-	   * Executes a generic query over the services table
-	   * 
-	   * @since 09/07/2022
-	   * @param The filters and the fields of the query
-	   * @return The columns from the extras table especified in the params and a
-	   *         message with the operation result
-	   */
+     * 
+     * Executes a generic query over the services table
+     * 
+     * @since 09/07/2022
+     * @param The filters and the fields of the query
+     * @return The columns from the extras table especified in the params and a
+     *         message with the operation result
+     *@exception BadSqlGrammarException when it introduces a string instead of a numeric on id
+     *@exception NoResultsException when the query doesn´t return results       
+     */
 	@Override
 	public EntityResult extraQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
@@ -72,13 +74,16 @@ public class ExtraService implements IExtraService{
 	}
 
 	/**
-	 * 
-	 * Adds a new register on the extra table.
-	 * 
-	 * @since 09/07/2022
-	 * @param The fields of the new register
-	 * @return The id of the new extra and a message with the operation result
-	 */
+	   * 
+	   * Adds a new register on the extra table.
+	   * 
+	   * @since 09/07/2022
+	   * @param The fields of the new register
+	   * @return The id of the new extra and a message with the operation result
+	   * @exception DuplicateKeyException when it introduces a extra that it exists
+	   * @exception DataIntegrityViolationException when it doesn´t introduce a not null field 
+	   * @exception AllFieldsRequiredException when it doesn´t introduce all not null field 
+	   */
 	@Override
 	public EntityResult extraInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
@@ -96,14 +101,18 @@ public class ExtraService implements IExtraService{
 		}
 	return insertResult;
 	}
+	
 	/**
-	 * 
-	 * Updates a existing register on the extra table.
-	 * 
-	 * @since 09/07/2022
-	 * @param The fields to be updated
-	 * @return A message with the operation result
-	 */
+	   * 
+	   * Updates a existing register on the extra table.
+	   * 
+	   * @since 09/07/2022
+	   * @param The fields to be updated
+	   * @return A message with the operation result
+	   * @exception DuplicateKeyException when it introduces a roomType that it exists in other register
+	   * @exception RecordNotFoundException when it doesn´t introduce a not null field 
+	   * @exception EmptyRequestException when it doesn´t introduce any field
+	   */
 	@Override
 	public EntityResult extraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
@@ -124,6 +133,15 @@ public class ExtraService implements IExtraService{
 		return updateResult;
 	}
 	
+	/**
+	   * 
+	   * In update, check the extra id exist in a extra table
+	   * 
+	   * @since 09/07/2022
+	   * @param The field id_extra
+	   * @return true if extra isn´t in a extra table or false if it is
+	   * @exception RecordNotFoundException when it doesn´t introduce a not null field 
+	   */
 	private boolean checkIfExtraExists(Map<String, Object> keyMap) {
 		if(keyMap.get("id_extra")==null) {
 			throw new RecordNotFoundException("ID_EXTRA_REQUIRED");
@@ -134,6 +152,17 @@ public class ExtraService implements IExtraService{
 		if(existingExtras.isEmpty()) throw new RecordNotFoundException("ERROR_EXTRA_NOT_FOUND");
 		return existingExtras.isEmpty();
 	}
+	
+	/**
+	   * 
+	   * In update, check all fields are introduced
+	   * 
+	   * @since 09/07/2022
+	   * @param The field to introduce
+	   * @return If fields don´t introduce, it catch a exception with a own message
+	   * @exception EmptyRequestException when it doesn´t introduce any field 
+	   */
+
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
 		if (attrMap.get("ex_name") == null && attrMap.get("ex_description") == null) {
 			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");

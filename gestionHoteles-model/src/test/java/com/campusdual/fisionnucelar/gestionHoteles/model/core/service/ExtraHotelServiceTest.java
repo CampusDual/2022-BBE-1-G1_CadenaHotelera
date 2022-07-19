@@ -388,7 +388,38 @@ public class ExtraHotelServiceTest {
 			
 		}
 		
-		
+		@Test
+		@DisplayName("Fail trying to update with a non numeric price")
+		void extraHotel_insert_with_non_numeric_price() {
+			Map<String, Object> filter = getGenericFilter();
+			Map<String, Object> dataToUpdate = new HashMap<>();
+			dataToUpdate.put("exh_hotel", 1);
+			EntityResult queryResult = getGenericQueryResult();
+			DataIntegrityViolationException dataIntegrityException = new DataIntegrityViolationException("RUN_TIME_EXCEPTION");
+			
+			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);			
+			when(daoHelper.update(extraHotelDao, dataToUpdate, filter)).thenThrow(dataIntegrityException);		
+			
+			EntityResult entityResult = extraHotelService.extrahotelUpdate(dataToUpdate,filter);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("RUN_TIME_EXCEPTION", entityResult.getMessage());
+			
+		}
+				
+		@Test
+	      @DisplayName("Fail trying to update rmt_price field as string")
+	      void service_insert_string_price() {
+	        Map<String, Object> filter = getGenericFilter();
+	        Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
+
+	        when (daoHelper.query(any(), any(), any())).thenReturn(getGenericQueryResult());
+	        when(daoHelper.update(any(), any(),any())).thenThrow(BadSqlGrammarException.class);
+	      
+	        EntityResult updateResult = extraHotelService.extrahotelUpdate(dataToUpdate,filter);
+	        assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+	        assertEquals("PRICE_MUST_BE_NUMERIC", updateResult.getMessage());
+	    
+	      }
 		
 	}
 }

@@ -103,9 +103,10 @@ public class RoomService implements IRoomService {
 			if (attrMap.containsKey("rm_room_type")) {
 				checkIfRoomTypeExists(attrMap);
 			}
+			insertResult = this.daoHelper.insert(this.roomDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
-			insertResult = this.daoHelper.insert(this.roomDao, attrMap);
+			
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
@@ -141,6 +142,7 @@ public class RoomService implements IRoomService {
 				checkIfRoomTypeExists(attrMap);
 			}
 			updateResult = this.daoHelper.update(this.roomDao, attrMap, keyMap);
+			updateResult.setMessage("SUCCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(updateResult, "ROOM_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {

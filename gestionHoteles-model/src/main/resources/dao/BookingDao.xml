@@ -13,27 +13,30 @@
  </UpdateKeys>
  <GeneratedKey>id_booking</GeneratedKey>
   <Queries>
+
+
  <Query id="AVAILABLE_ROOMS">
- <FunctionColumns>
-                <FunctionColumn name="bk_price" value="((BK_CHECK_OUT-BK_CHECK_IN)*RT.RMT_PRICE)"/>
-            </FunctionColumns>
+<FunctionColumns>
+     <FunctionColumn 
+     name="price" value="(#days# *RT.RMT_PRICE)"/>
+     </FunctionColumns>
    <Sentence>
    <![CDATA[
      SELECT
       DISTINCT #COLUMNS#
      FROM
-      ROOMS R LEFT JOIN BOOKINGS B ON
-      B.BK_ROOM = R.ID_ROOM
-      INNER JOIN HOTELS H ON R.RM_HOTEL=H.ID_HOTEL
+      ROOMS R INNER JOIN HOTELS H ON R.RM_HOTEL=H.ID_HOTEL
       INNER JOIN ROOM_TYPES RT ON
       RT.ID_ROOM_TYPE=R.RM_ROOM_TYPE 
-      WHERE B.BK_ROOM NOT IN
+      WHERE R.ID_ROOM NOT IN
       (SELECT b.bk_room from bookings b
       WHERE B.BK_LEAVING_DATE IS NULL
      #WHERE_CONCAT#)
    ]]>
    </Sentence>
   </Query>
+  
+
   
    <Query id="CHECK_ROOM_DISPONIBILITY">
    <Sentence>
@@ -53,8 +56,6 @@
    ]]>
    </Sentence>
   </Query>
-  
-  
   
   
     <Query id="TODAY_CHECKOUTS">
