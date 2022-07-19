@@ -106,5 +106,14 @@
    </Sentence>
   </Query>
   
+     <Query id="SEARCH_ROOM_PRICE">
+   <Sentence>
+   <![CDATA[
+  SELECT #COLUMNS#
+	FROM ROOMS R INNER JOIN ROOM_TYPES RT ON R.RM_ROOM_TYPE=RT.ID_ROOM_TYPE #WHERE#
+   ]]>
+   </Sentence>
+  </Query>
+  
  </Queries>
 </JdbcEntitySetup>

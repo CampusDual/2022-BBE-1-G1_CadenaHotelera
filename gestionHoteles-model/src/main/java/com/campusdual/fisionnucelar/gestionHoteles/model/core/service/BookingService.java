@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 
 import java.sql.Timestamp;
 import java.text.*;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.*;
 
 import org.postgresql.util.PSQLException;
@@ -346,8 +349,10 @@ public class BookingService implements IBookingService {
 			if (attrMap.containsKey("bk_client")) {
 				checkIfClientIsActive(attrMap);
 			}
-			if (attrMap.containsKey("bk_room"))
+			if (attrMap.containsKey("bk_room")){
 			checkDisponibility(attrMap);
+			calculateBookingPrice(attrMap);
+			}
 			insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
 
 			if (insertResult.isEmpty()) {
@@ -358,6 +363,7 @@ public class BookingService implements IBookingService {
 		} catch (DataIntegrityViolationException e) {
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (ClassCastException e) {
+			e.printStackTrace();
 			control.setMessageFromException(insertResult, "CHECK_IN_AND_CHECK_OUT_MUST_BE_DATES");
 		}catch (AllFieldsRequiredException | RecordNotFoundException | OccupiedRoomException | ParseException
 				| InvalidDateException  e) {
@@ -365,7 +371,31 @@ public class BookingService implements IBookingService {
 		}
 		return insertResult;
 	}
+	
+	/**
+	 * Calculates the price of the booking based on the price of the room and check_in and check_out days
+	 * @param attrMap the id of the room and check_in, check_out dates
+	 *  @since 18/07/2022
+	 */
 
+	private void calculateBookingPrice(Map<String,Object> attrMap) {
+		if(attrMap.get("bk_room")==null) 
+			throw new  AllFieldsRequiredException("bk_room_field_needed");
+		Map<String,Object> filter = new HashMap<String,Object>();
+		filter.put("id_room", attrMap.get("bk_room"));
+		EntityResult roomResult = daoHelper.query(bookingDao, filter, Arrays.asList("rmt_price"),"SEARCH_ROOM_PRICE");
+		Date checkIn = (Date) attrMap.get("bk_check_in");
+		Date checkOut = (Date) attrMap.get("bk_check_out");
+		LocalDate startDate = checkIn.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		LocalDate endDate = checkOut.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+							
+		Period period = Period.between(startDate, endDate);
+		int days = Math.abs(period.getDays());
+		BigDecimal roomPrice = (BigDecimal) roomResult.getRecordValues(0).get("rmt_price");
+		BigDecimal bookingDays = new BigDecimal(days);
+		BigDecimal bookingPrice = bookingDays.multiply(roomPrice);
+		attrMap.put("bk_price", bookingPrice);
+	}
 	/**
 	 * Adds and extra to the given booking and updates the booking price
 	 * @param the id of the booking, the id of the extra and an integer as a quantity
@@ -609,7 +639,7 @@ public class BookingService implements IBookingService {
 		EntityResult activeClient = this.daoHelper.query(clientDao, attrMap, attrList);
 
 		if (activeClient.getRecordValues(0).get("cl_leaving_date") != null) {
-			throw new ("CLIENT_IS_NOT_ACTIVE");
+			throw new RecordNotFoundException("CLIENT_IS_NOT_ACTIVE");
 		}
 		return true;
 	}
