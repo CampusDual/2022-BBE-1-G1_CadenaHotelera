@@ -329,8 +329,6 @@ public class ServiceHotelServiceTest {
 			EntityResult updateResult = serviceHotelService.servicehotelUpdate(dataToUpdate, filter);
 			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 			assertEquals("ID_SERVICES_HOTEL_REQUIRED", updateResult.getMessage());
-			
-		
 		}
 		
 		@Test

@@ -91,6 +91,7 @@ public class HotelService implements IHotelService {
 			if (insertResult.isEmpty())
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCESSFUL_INSERTION");
+
 		} catch (InvalidEmailException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DuplicateKeyException e) {

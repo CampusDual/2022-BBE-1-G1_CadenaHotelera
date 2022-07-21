@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.params.shadow.com.univocity.parsers.common.processor.AbstractRowProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingExtraDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ClientDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraHotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
@@ -67,7 +69,10 @@ public class BookingService implements IBookingService {
 
 	@Autowired
 	private RoomDao roomDao;
-	
+
+	@Autowired
+	private BookingExtraDao bookingExtraDao;
+
 	@Autowired
 	private HotelDao hotelDao;
 
@@ -199,8 +204,8 @@ public class BookingService implements IBookingService {
 			checkAvailableRoomsFields(keyMap);
 			resultsByHotel = searchAvailableRooms(keyMap, attrList);
 			checkIfHotelExists(keyMap);
-			
-		} catch (AllFieldsRequiredException | InvalidDateException|RecordNotFoundException e) {
+
+		} catch (AllFieldsRequiredException | InvalidDateException | RecordNotFoundException e) {
 			control.setErrorMessage(resultsByHotel, e.getMessage());
 		} catch (ParseException e) {
 			control.setErrorMessage(resultsByHotel, e.getMessage());
@@ -210,9 +215,6 @@ public class BookingService implements IBookingService {
 
 		return resultsByHotel;
 	}
-	
-
-
 
 	/**
 	 * Checks if the user is providing all the fields required to execute a query to
@@ -309,11 +311,11 @@ public class BookingService implements IBookingService {
 
 		keyMap2.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
 				buildExpressionToSearchRooms(startDate, endDate));
-	
+
 		long diff = endDate.getTime() - startDate.getTime();
 		TimeUnit time = TimeUnit.DAYS;
 		long days = time.convert(diff, TimeUnit.MILLISECONDS);
-			
+
 		result = this.daoHelper.query(this.bookingDao, keyMap2, attrList, "AVAILABLE_ROOMS", new ISQLQueryAdapter() {
 			@Override
 			public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
@@ -501,12 +503,12 @@ public class BookingService implements IBookingService {
 		try {
 			checkIfBookingExists(keyMap);
 			checkDataUpdateExtraPrice(attrMap);
-			updateResult = daoHelper.update(bookingDao, calculateExtraPrice(attrMap, keyMap), keyMap);
+			updateResult = daoHelper.update(bookingDao, calculateAndInsertExtra(attrMap, keyMap), keyMap);
+
 			updateResult.setMessage("SUCCESSFULLY_ADDED");
 		} catch (RecordNotFoundException | EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
-		} catch (ClassCastException e) {
-			e.printStackTrace();
+		} catch (ClassCastException | BadSqlGrammarException e) {
 			control.setErrorMessage(updateResult, "INCORRECT_REQUEST");
 		} catch (DataIntegrityViolationException e) {
 			control.setMessageFromException(updateResult, e.getMessage());
@@ -518,17 +520,20 @@ public class BookingService implements IBookingService {
 
 	/**
 	 * Calculates the price of the extra added to the booking based on the extra id
-	 * and a quantity
+	 * and a quantity. It also insert a new register in the bookingExtra table
 	 * 
 	 * @param attrMap the quantity and the id of the extra
 	 * @param keyMap  the id of the booking
+	 * 
+	 * @exception RecordNotFoundException when the extra doesn't exists
+	 * 
 	 * @return a hashpMap with the field price updated, ready to update in the
 	 *         bookings table
 	 */
 
-	public Map<String, Object> calculateExtraPrice(Map<String, Object> attrMap, Map<String, Object> keyMap) {
+	public Map<String, Object> calculateAndInsertExtra(Map<String, Object> attrMap, Map<String, Object> keyMap) {
 		BigDecimal unitExtraPrice, bookingExtraPrice, updatedExtraPrice, quantity, totalExtraPrice;
-		EntityResult extraPriceResult = new EntityResultMapImpl();
+		EntityResult extraResult;
 
 		EntityResult bookingExtrasPriceResult = new EntityResultMapImpl();
 		List<String> columnsBooking = new ArrayList<>();
@@ -540,13 +545,27 @@ public class BookingService implements IBookingService {
 		filter.put("id_extras_hotel", attrMap.get("id_extras_hotel"));
 		List<String> columns = new ArrayList<>();
 		columns.add("exh_price");
+		columns.add("ex_name");
 
-		extraPriceResult = this.daoHelper.query(extraHotelDao, filter, columns);
-		unitExtraPrice = (BigDecimal) extraPriceResult.getRecordValues(0).get("exh_price");
+		extraResult = this.daoHelper.query(extraHotelDao, filter, columns, "BOOKING_EXTRA_DATA");
+		if (extraResult.isEmpty()) {
+			throw new RecordNotFoundException("ID_EXTRA_NOT FOUND");
+		}
 
+		unitExtraPrice = (BigDecimal) extraResult.getRecordValues(0).get("exh_price");
+		String nameExtra = (String) extraResult.getRecordValues(0).get("ex_name");
 		quantity = new BigDecimal((int) attrMap.get("quantity"));
 		totalExtraPrice = unitExtraPrice.multiply(quantity);
 		updatedExtraPrice = bookingExtraPrice.add(totalExtraPrice);
+
+		HashMap<String, Object> attrMapBookingExtra = new HashMap<>();
+		attrMapBookingExtra.put("bke_booking", keyMap.get("id_booking"));
+		attrMapBookingExtra.put("bke_name", nameExtra);
+		attrMapBookingExtra.put("bke_quantity", quantity);
+		attrMapBookingExtra.put("bke_unit_price", unitExtraPrice);
+		attrMapBookingExtra.put("bke_total_price", totalExtraPrice);
+
+		daoHelper.insert(bookingExtraDao, attrMapBookingExtra);
 
 		Map<String, Object> finalPrice = new HashMap<>();
 		finalPrice.put("bk_extras_price", updatedExtraPrice);
@@ -827,6 +846,7 @@ public class BookingService implements IBookingService {
 		}
 
 	}
+
 	private void checkIfHotelExists(Map<String, Object> attrMap) {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_hotel");
@@ -835,9 +855,7 @@ public class BookingService implements IBookingService {
 		EntityResult existingHotel = this.daoHelper.query(hotelDao, keyMap, attrList);
 		if (existingHotel.isEmpty())
 			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
-		
-	}
 
-	
+	}
 
 }

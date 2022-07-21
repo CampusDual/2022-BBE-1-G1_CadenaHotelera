@@ -333,7 +333,7 @@ public class ExtraHotelServiceTest {
 		}
 
 		@Test
-		@DisplayName("Fail trying to update with incorrect_boolean")
+		@DisplayName("Fail trying to update with big boolean")
 		void extraHotel_update_with_big_boolean() {
 			Map<String, Object> filter = getGenericFilter();
 			Map<String, Object> dataToUpdate = new HashMap<>();
