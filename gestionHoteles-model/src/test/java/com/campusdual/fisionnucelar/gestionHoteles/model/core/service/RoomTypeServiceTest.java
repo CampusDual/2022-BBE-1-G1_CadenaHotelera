@@ -171,13 +171,13 @@ public class RoomTypeServiceTest {
   public class RoomTypeInsert {
 
     @Test
-    @DisplayName("Insert a ServicesHotel successfully")
+    @DisplayName("Insert a TypeRooms successfully")
     void roomtypes_insert_success() {
       Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
       EntityResult er = getGenericInsertResult();
 
 
-HashMap<String, Object> keyMap = new HashMap<>();
+      HashMap<String, Object> keyMap = new HashMap<>();
       keyMap.put("ID_ROOM_TYPE", 2);
       when(daoHelper.insert(roomtypeDao, dataToInsert)).thenReturn(er);
 
@@ -245,7 +245,7 @@ HashMap<String, Object> keyMap = new HashMap<>();
     }
 
     @Test
-    @DisplayName("Fail trying to insert rmt_price field as string")
+    @DisplayName("Fail trying to insert without rmt_price")
     void service_insert_without_price() {
       Map<String, Object> dataToInsert = new HashMap<>();
       dataToInsert.put("rmt_name", "Suite");

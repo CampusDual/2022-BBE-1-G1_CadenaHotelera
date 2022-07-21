@@ -2,6 +2,12 @@ package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ExtraTestData.getAllExtraData;
 import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ExtraTestData.getSpecificExtraData;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ExtraTestData.getGenericDataToInsertOrUpdate;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ExtraTestData.getGenericInsertResult;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ExtraTestData.getGenericFilter;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ExtraTestData.getGenericAttrList;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ExtraTestData.getGenericQueryResult;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -154,15 +160,13 @@ public class ExtraServiceTest {
 	        @Test
 	        @DisplayName("Insert a extra successfully")
 	        void extra_insert_success() {
-	        	Map<String, Object> dataToInsert = new HashMap<>();
-	        	dataToInsert.put("ex_name", "Sala de conferencias");
-	        	dataToInsert.put("ex_description", "Sala completamente equipada");
-	        	EntityResult er = new EntityResultMapImpl(Arrays.asList("ID_EXTRA"));
-	            er.addRecord(new HashMap<String, Object>() {{put("ID_EXTRA", 2);}});
-	            er.setCode(EntityResult.OPERATION_SUCCESSFUL);
+	        	Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
+	        	EntityResult er = getGenericInsertResult();
+	        	
 	            HashMap<String, Object> keyMap = new HashMap<>();
 	            keyMap.put("ID_EXTRA", 2);
 	            when(daoHelper.insert(extraDao, dataToInsert)).thenReturn(er);
+	            
 	            EntityResult entityResult = extraService.extraInsert(dataToInsert);
 	            assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 	            int recordIndex = entityResult.getRecordIndex(keyMap);
@@ -174,17 +178,15 @@ public class ExtraServiceTest {
 	        @Test
 	        @DisplayName("Fail trying to insert duplicated name")
 	        void service_insert_duplicated_name() {
-	        	Map<String, Object> dataToInsert = new HashMap<>();
-	        	dataToInsert.put("ex_name", "Sala de conferencias");
-	        	dataToInsert.put("ex_description", "Sala completamente equipada");
+	        	Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
 	        	List<String> columnList = Arrays.asList("ID_EXTRA");
-	    		EntityResult insertResult = new EntityResultMapImpl(columnList);
-	    	    insertResult.addRecord(new HashMap<String, Object>() {{
-	    	        put("ID_EXTRA", 2);}});
+	    		EntityResult insertResult = getGenericInsertResult();
+	    		
 	        	when(daoHelper.insert(extraDao, dataToInsert)).thenReturn(insertResult);
 	        	EntityResult resultSuccess = extraService.extraInsert(dataToInsert);
 	        	assertEquals(EntityResult.OPERATION_SUCCESSFUL, resultSuccess.getCode());
 	        	assertEquals("SUCCESSFUL_INSERTION", resultSuccess.getMessage());
+	        	
 	        	when(daoHelper.insert(extraDao, dataToInsert)).thenThrow(DuplicateKeyException.class);
 	        	EntityResult resultFail =extraService.extraInsert(dataToInsert);
 	        	assertEquals(EntityResult.OPERATION_WRONG, resultFail.getCode());
@@ -210,6 +212,7 @@ public class ExtraServiceTest {
 				Map<String, Object> dataToInsert = new HashMap<>();
 				when(daoHelper.insert(extraDao, dataToInsert)).thenReturn(insertResult);
 				EntityResult entityResult = extraService.extraInsert(dataToInsert);
+				assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 				assertEquals("FIELDS_REQUIRED", entityResult.getMessage());
 			}
 	    }
@@ -221,17 +224,13 @@ public class ExtraServiceTest {
 	        @Test
 	        @DisplayName("Extra update successful")
 	        void hotel_update_success() {
-	        	//given
-	        	Map<String, Object> filter = new HashMap<>();
-	        	filter.put("id_extra", 32);
-	        	Map<String, Object> dataToUpdate = new HashMap<>();
-	        	dataToUpdate.put("ex_name", "Sala de conferencias");
-	        	dataToUpdate.put("ex_description", "Sala completamente equipada modificada");
-	        	List<String> attrList = new ArrayList<>();
-	    		attrList.add("id_extra");
+	        	
+	        	Map<String, Object> filter = getGenericFilter();
+	        	Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
 	        	EntityResult er = new EntityResultMapImpl();
-	        	er.setCode(EntityResult.OPERATION_SUCCESSFUL);
-	        	EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_EXTRA","EX_NAME"));
+	        	EntityResult queryResult =getGenericQueryResult();
+	        	List<String> attrList = getGenericAttrList();
+	        	
 	        	//when
 	        	when(daoHelper.update(extraDao, dataToUpdate,filter)).thenReturn(er);
 	        	when(daoHelper.query(extraDao, filter, attrList)).thenReturn(queryResult);
@@ -244,21 +243,13 @@ public class ExtraServiceTest {
 	        }
 	        
 	        @Test
-	        @DisplayName("Fail trying to update a extra with an existing name ")
+	        @DisplayName("Fail trying to update a extra with a duplicated name")
 	        void service_fail_update_with_duplicated_name() {
-	        	EntityResult er = new EntityResultMapImpl();
-	        	er.setCode(EntityResult.OPERATION_WRONG);
-	        	er.setMessage("EXTRA_NAME_ALREADY_EXISTS");
-	        	Map<String, Object> filter = new HashMap<>();
-	        	filter.put("id_extra", 32);
-	        	Map<String, Object> dataToUpdate = new HashMap<>();
-	        	dataToUpdate.put("ex_name", "Sala de conferencias");
-	        	dataToUpdate.put("ex_description", "Sala completamente equipada modificada");
+	        	Map<String, Object> filter =getGenericFilter();
+	        	Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
 	        	List<String> attrList = new ArrayList<>();
 	    		attrList.add("id_extra");
-	        	EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_EXTRA","EX_NAME"));
-	            er.addRecord(new HashMap<String, Object>() {{put("ID_SERVICE", 2);put("ID_EXTRA","EX_NAME");}});
-	            er.setCode(EntityResult.OPERATION_SUCCESSFUL);
+	        	EntityResult queryResult = getGenericQueryResult();
 	            when(daoHelper.query(extraDao, filter, attrList)).thenReturn(queryResult);
 	        	when(daoHelper.update(extraDao, dataToUpdate, filter)).thenThrow(DuplicateKeyException.class);
 	        	EntityResult entityResult = extraService.extraUpdate(dataToUpdate,filter);
@@ -270,16 +261,10 @@ public class ExtraServiceTest {
 	        @Test
 	        @DisplayName("Fail trying to update a extra that doesn´t exists")
 	        void update_service_doesnt_exists() {
-	        	Map<String, Object> filter = new HashMap<>();
-	        	filter.put("id_extra",222);
-	        	Map<String, Object> dataToUpdate = new HashMap<>();
-	        	dataToUpdate.put("ex_name", "Sala de conferencias");
-	        	dataToUpdate.put("ex_description", "Sala completamente equipada modificada");
-	        	List<String> attrList = new ArrayList<>();
-	    		attrList.add("id_extra");
-	        	EntityResult er = new EntityResultMapImpl();
-	        	er.setCode(EntityResult.OPERATION_WRONG);
-	        	er.setMessage("EXTRA_DOESN'T_EXISTS");
+	        	Map<String, Object> filter = getGenericFilter();
+	        	Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
+	        	List<String> attrList = getGenericAttrList();
+	        	
 	        	EntityResult queryResult = new EntityResultMapImpl();
 	        	when(daoHelper.query(extraDao, filter,attrList)).thenReturn(queryResult);
 	        	EntityResult entityResult = extraService.extraUpdate(dataToUpdate,filter);
@@ -291,7 +276,7 @@ public class ExtraServiceTest {
 			@Test
 			@DisplayName("Fail trying to update without any fields")
 			void hotel_update_without_any_fields() {
-				Map<String, Object> filter = new HashMap<>();
+				Map<String, Object> filter = getGenericFilter();
 				Map<String, Object> dataToUpdate = new HashMap<>();
 				EntityResult updateResult = extraService.extraUpdate(dataToUpdate,filter);
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
@@ -301,9 +286,8 @@ public class ExtraServiceTest {
 			@DisplayName("Fail trying to update without id_extra")
 			void hotel_update_without_id_hotel() {
 				Map<String, Object> filter = new HashMap<>();
-				Map<String, Object> dataToUpdate = new HashMap<>();
-				dataToUpdate.put("ex_name", "Sala de conferencias");
-	        	dataToUpdate.put("ex_description", "Sala completamente equipada modificada");
+				Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
+				
 				EntityResult updateResult = extraService.extraUpdate(dataToUpdate,filter);
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 				assertEquals("ID_EXTRA_REQUIRED", updateResult.getMessage());
