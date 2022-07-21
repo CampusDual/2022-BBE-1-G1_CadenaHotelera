@@ -797,7 +797,7 @@ public class BookingServiceTest {
 			}).when(daoHelper).query(any(), anyMap(), anyList());
 			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(extrasPriceResult);
 			when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
-			EntityResult updateResult = bookingService.bookingextraUpdate(attrMap, keyMap);
+			EntityResult updateResult = bookingService.addbookingextraUpdate(attrMap, keyMap);
 			 assertEquals("SUCCESSFULLY_ADDED",updateResult.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, updateResult.getCode());
 		}
@@ -815,7 +815,7 @@ public class BookingServiceTest {
 			EntityResult bookingResult = new EntityResultMapImpl();
 
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
-			EntityResult updateResult = bookingService.bookingextraUpdate(attrMap, keyMap);
+			EntityResult updateResult = bookingService.addbookingextraUpdate(attrMap, keyMap);
 			assertEquals("BOOKING_DOESN'T_EXISTS", updateResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 		}
@@ -848,7 +848,7 @@ public class BookingServiceTest {
 
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
 			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(extrasPriceResult);
-			EntityResult updateResult = bookingService.bookingextraUpdate(attrMap, keyMap);
+			EntityResult updateResult = bookingService.addbookingextraUpdate(attrMap, keyMap);
 			assertEquals("INCORRECT_REQUEST", updateResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 		}

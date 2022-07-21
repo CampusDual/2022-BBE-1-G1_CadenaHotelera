@@ -33,7 +33,10 @@ public interface IBookingService {
 
 	public EntityResult clientactivebookingsQuery(Map<String, Object> keyMap, List<String> fields);
 
-	public EntityResult bookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
+	public EntityResult addbookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
+			throws OntimizeJEERuntimeException;
+	
+	public EntityResult cancelbookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException;
 
 }

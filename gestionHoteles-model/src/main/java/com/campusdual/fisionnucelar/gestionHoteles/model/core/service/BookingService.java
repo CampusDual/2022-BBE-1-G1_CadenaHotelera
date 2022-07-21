@@ -20,6 +20,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
@@ -32,6 +33,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllField
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotEnoughExtrasException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.OccupiedRoomException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
@@ -389,8 +391,7 @@ public class BookingService implements IBookingService {
 
 	/**
 	 * 
-	 * Adds a new register on the bookings table. We assume that we are receiving
-	 * the correct fields and the dates range has been previously checked
+	 * Adds a new register on the bookings table.
 	 * 
 	 * @since 27/06/2022
 	 * @param The fields of the new register
@@ -478,7 +479,8 @@ public class BookingService implements IBookingService {
 	}
 
 	/**
-	 * Adds and extra to the given booking and updates the booking price
+	 * Adds and extra to the given booking and updates the booking extras price. It also creates a detailed
+	 * register in the bookingExtra table
 	 * 
 	 * @param the id of the booking, the id of the extra and an integer as a
 	 *            quantity
@@ -497,14 +499,14 @@ public class BookingService implements IBookingService {
 	 * 
 	 */
 	@Override
-	public EntityResult bookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
+	@Transactional
+	public EntityResult addbookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
 			checkIfBookingExists(keyMap);
 			checkDataUpdateExtraPrice(attrMap);
 			updateResult = daoHelper.update(bookingDao, calculateAndInsertExtra(attrMap, keyMap), keyMap);
-
 			updateResult.setMessage("SUCCESSFULLY_ADDED");
 		} catch (RecordNotFoundException | EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
@@ -513,6 +515,90 @@ public class BookingService implements IBookingService {
 		} catch (DataIntegrityViolationException e) {
 			control.setMessageFromException(updateResult, e.getMessage());
 		}
+
+		return updateResult;
+	}
+
+
+	/**
+	 * Cancels a variable quantity of extras associated with a concrete booking, updating
+	 * the booking extra price
+	 * 
+	 * @param the id of the bookingExtra and an integer as the quantity of extras to cancel
+	 * 
+	 * @return a confirmation message if the updates completes successfully or a
+	 *         message indicating the error
+	 * 
+	 * @exception NotEnoughExtrasException        when there aren't enough unenjoyed extras to cancel 
+	 * 											
+	 * @exception EmptyRequestException           when it doesn't receives the required fields
+	 * 
+	 * @exception RecordNotFoundException         when it receives an unexisting bookingExtra
+	 * 
+	 * @exception ClassCastException sends 		  when it receives a String instead a number
+	 * 
+	 * @exception BadSqlGrammarException		  when it receives an incorrect type for a field
+	 * 
+	
+	 */
+	
+	@Override 
+	@Transactional
+	public EntityResult cancelbookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
+			throws OntimizeJEERuntimeException {
+		EntityResult updateResult = new EntityResultMapImpl();
+		try {
+			checkIfExtraBookingExists(keyMap);
+			checkIfDataIsEmpty(attrMap);
+			if(attrMap.get("quantity")==null) {
+				throw new EmptyRequestException("QUANTITY_FIELD_REQUIRED");
+			}
+			
+			List<String> columnsExtraBooking = new ArrayList<>();
+			columnsExtraBooking.add("id_booking_extra");
+			columnsExtraBooking.add("bke_booking");
+			columnsExtraBooking.add("bke_name");
+			columnsExtraBooking.add("bke_quantity");
+			columnsExtraBooking.add("bke_unit_price");
+			columnsExtraBooking.add("bke_total_price");
+			columnsExtraBooking.add("bke_enjoyed");
+			columnsExtraBooking.add("bk_extras_price");
+
+			updateResult = daoHelper.query(bookingExtraDao, keyMap, columnsExtraBooking, "BOOKINGEXTRA_DATA");
+
+			int bookingExtraQuantity = ((Integer) updateResult.getRecordValues(0).get("bke_quantity"));
+			int bookingExtraEnjoyed = ((Integer) updateResult.getRecordValues(0).get("bke_enjoyed"));
+			int pendingExtras = bookingExtraQuantity - bookingExtraEnjoyed;
+			int extrasToCancel = (int) attrMap.get("quantity");
+			BigDecimal unitExtraPrice = (BigDecimal) updateResult.getRecordValues(0).get("bke_unit_price");
+			BigDecimal totalExtraPrice = (BigDecimal) updateResult.getRecordValues(0).get("bke_total_price");
+
+			if (pendingExtras - extrasToCancel < 0)
+				throw new NotEnoughExtrasException("NOT_ENOUGH_PENDING_EXTRAS_TO_CANCEL");
+
+			Map<String, Object> bookingExtraUpdate = new HashMap<>();
+			bookingExtraUpdate.put("bke_quantity", bookingExtraQuantity - extrasToCancel);
+			BigDecimal canceledExtrasPrice = unitExtraPrice.multiply(BigDecimal.valueOf(extrasToCancel));
+			BigDecimal newTotalExtraPrice = totalExtraPrice.subtract(canceledExtrasPrice);
+			bookingExtraUpdate.put("bke_total_price", newTotalExtraPrice);
+			daoHelper.update(bookingExtraDao, bookingExtraUpdate, keyMap);
+
+			BigDecimal oldBookingExtraPrice = (BigDecimal) updateResult.getRecordValues(0).get("bk_extras_price");
+			BigDecimal newBookingExtraPrice = oldBookingExtraPrice.subtract(canceledExtrasPrice);
+
+			Map<String, Object> bookingKeymap = new HashMap<>();
+			Map<String, Object> bookingAttrMap = new HashMap<>();
+
+			bookingKeymap.put("id_booking", updateResult.getRecordValues(0).get("bke_booking"));
+			bookingAttrMap.put("bk_extras_price", newBookingExtraPrice);
+			updateResult = daoHelper.update(bookingDao, bookingAttrMap, bookingKeymap);
+			updateResult.setMessage("SUCCESSFULLY_ADDED");
+			
+		} catch (RecordNotFoundException |EmptyRequestException|NotEnoughExtrasException e) {
+			control.setErrorMessage(updateResult, e.getMessage());
+		} catch (ClassCastException | BadSqlGrammarException e) {
+			control.setErrorMessage(updateResult, "INCORRECT_REQUEST");
+		} 
 
 		return updateResult;
 
@@ -715,6 +801,18 @@ public class BookingService implements IBookingService {
 
 	}
 
+	private void checkIfExtraBookingExists(Map<String, Object> keyMap) {
+		if (keyMap.isEmpty()) {
+			throw new RecordNotFoundException("ID_EXTRA_BOOKING_REQUIRED");
+		}
+		List<String> attrList = new ArrayList<>();
+		attrList.add("id_booking_extra");
+		EntityResult existingbookingExtra = this.daoHelper.query(bookingExtraDao, keyMap, attrList);
+		if (existingbookingExtra.isEmpty())
+			throw new RecordNotFoundException("BOOKING_EXTRA_DOESN'T_EXISTS");
+
+	}
+
 	/**
 	 * Checks if the id_extra_hotel provid by the user exists in extras_hotel table
 	 * 
@@ -812,9 +910,7 @@ public class BookingService implements IBookingService {
 	 */
 
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.get("bk_check_in") == null && attrMap.get("bk_room") == null && attrMap.get("bk_room") == null
-				&& attrMap.get("bk_client") == null && attrMap.get("bk_price") == null
-				&& attrMap.get("bk_entry_date") == null) {
+		if (attrMap.isEmpty()) {
 			throw new EmptyRequestException("EMPTY_REQUEST");
 		}
 	}
