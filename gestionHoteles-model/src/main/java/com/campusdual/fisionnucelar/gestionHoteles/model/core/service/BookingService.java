@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.params.shadow.com.univocity.parsers.common.processor.AbstractRowProcessor;
+import org.mockito.internal.stubbing.answers.ThrowsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -32,6 +32,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotEnoughExtrasException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.OccupiedRoomException;
@@ -45,6 +46,7 @@ import com.ontimize.jee.common.db.SQLStatementBuilder.SQLStatement;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
+import com.ontimize.jee.common.gui.SearchValue;
 import com.ontimize.jee.common.tools.EntityResultTools;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 import com.ontimize.jee.server.dao.IOntimizeDaoSupport;
@@ -186,6 +188,7 @@ public class BookingService implements IBookingService {
 	 * 
 	 * @since 30/06/2022
 	 * @param The id of the hotel, the check-in and the check-out
+	 * 
 	 * @exception AllFieldsRequiredException sends a message to the user when he is
 	 *                                       not providing all the fields required
 	 *                                       to execute the query
@@ -195,6 +198,16 @@ public class BookingService implements IBookingService {
 	 *                                       check_out dates
 	 * @exception BadSqlGrammarException     sends a message to the user when he
 	 *                                       send a string in a numeric field
+	 * 
+	 * @exception InvalidDateException		when the check in date is after the check out date
+	 * 										or the dates are before the current date
+	 * 
+	 * @exception InvalidRequestException	when the minprice is higher thant the maxprice
+	 * 
+	 * @exception RecordNotFoundException	when it receives an unexisting hotel
+	 * 
+	 * @exception ClassCastException		when it receives a String instead of an Numeric value
+	 * 
 	 * @return The available rooms filtered by hotel, with a calculated price for
 	 *         the selected dates
 	 */
@@ -207,17 +220,15 @@ public class BookingService implements IBookingService {
 			resultsByHotel = searchAvailableRooms(keyMap, attrList);
 			checkIfHotelExists(keyMap);
 
-		} catch (AllFieldsRequiredException | InvalidDateException | RecordNotFoundException e) {
+		} catch (AllFieldsRequiredException | InvalidDateException | RecordNotFoundException|InvalidRequestException|ParseException e) {
 			control.setErrorMessage(resultsByHotel, e.getMessage());
-		} catch (ParseException e) {
-			control.setErrorMessage(resultsByHotel, e.getMessage());
-		} catch (BadSqlGrammarException e) {
+		}  catch (BadSqlGrammarException|ClassCastException e) {
 			control.setErrorMessage(resultsByHotel, "INCORRECT_REQUEST");
 		}
-
 		return resultsByHotel;
 	}
 
+	
 	/**
 	 * Checks if the user is providing all the fields required to execute a query to
 	 * obtain all available rooms in a given date
@@ -256,14 +267,10 @@ public class BookingService implements IBookingService {
 			checkIfHotel(keyMap);
 			result = daoHelper.query(bookingDao, keyMap, attrList, "TODAY_CHECKOUTS");
 			control.checkResults(result);
-		} catch (RecordNotFoundException e) {
+		} catch (RecordNotFoundException|EmptyRequestException|NoResultsException e) {
 			control.setErrorMessage(result, e.getMessage());
-		} catch (EmptyRequestException e) {
-			control.setErrorMessage(result, e.getMessage());
-		} catch (NoResultsException e) {
-			control.setErrorMessage(result, e.getMessage());
-		} catch (BadSqlGrammarException e) {
-			control.setErrorMessage(result, "INCORRECT_REQUEST");
+		}  catch (BadSqlGrammarException e) {
+			control.setErrorMessage(result, "INCORRECT_REQUEST");		
 		}
 		return result;
 	}
@@ -291,7 +298,7 @@ public class BookingService implements IBookingService {
 	 *            columns to send back to the user
 	 * @return The available rooms in a concrete hotel on a date range
 	 */
-	private EntityResult searchAvailableRooms(Map<String, Object> keyMap, List<String> attrList) throws ParseException {
+	private EntityResult searchAvailableRooms(Map<String, Object> keyMap, List<String> attrList) throws ParseException,ClassCastException,InvalidRequestException {
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
 		EntityResult result;
 		final String checkIn = "bk_check_in";
@@ -317,7 +324,7 @@ public class BookingService implements IBookingService {
 		long diff = endDate.getTime() - startDate.getTime();
 		TimeUnit time = TimeUnit.DAYS;
 		long days = time.convert(diff, TimeUnit.MILLISECONDS);
-
+			
 		result = this.daoHelper.query(this.bookingDao, keyMap2, attrList, "AVAILABLE_ROOMS", new ISQLQueryAdapter() {
 			@Override
 			public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
@@ -327,16 +334,57 @@ public class BookingService implements IBookingService {
 						sqlStatement.getValues());
 			}
 		});
-
+		
+		result=filterBookingByPrice(result, keyMap);
+				
 		Map<String, Object> hotelFilter = new HashMap<>();
 		hotelFilter.put(hotelId, keyMap.get(hotelId));
-
+		
 		if (keyMap.get(roomType) != null)
 			hotelFilter.put(roomType, keyMap.get(roomType));
-
-		return EntityResultTools.dofilter(result, hotelFilter);
-
+								
+		return EntityResultTools.dofilter(result, hotelFilter);	
+		
 	}
+	
+	
+	
+	/**
+	 * It filters the available rooms using a maxprice, a minprice or both introduced
+	 * by the user
+	 * 
+	 * @param result	 the available rooms
+	 * @param keyMap	 the prices to filter 
+	 * @return			 the available rooms filtered by price
+	 * @throws InvalidRequestException		when the min price is higher than the max price
+	 */
+	private EntityResult filterBookingByPrice(EntityResult result,Map<String, Object>keyMap) throws InvalidRequestException {
+		SearchValue maxPrice;
+		SearchValue minPrice;
+		Map<String, Object> priceFilter = new HashMap<>();
+			
+		if((keyMap.get("max_price")!=null)&&(keyMap.get("min_price")!=null)) {
+			if((Integer)keyMap.get("max_price")<(Integer)keyMap.get("min_price"))
+				throw new InvalidRequestException("MAXPRICE_MUST_BE_HIGHER_THAN_MINPRICE");
+										}	
+		if(keyMap.get("max_price")!=null) {
+			maxPrice= new SearchValue(SearchValue.LESS, new BigDecimal((Integer)keyMap.get("max_price")));
+			priceFilter.put("price", maxPrice);
+			result=EntityResultTools.dofilter(result, priceFilter);
+			priceFilter.remove("price");				
+		}
+		
+		if(keyMap.get("min_price")!=null) {
+			minPrice= new SearchValue(SearchValue.MORE,new BigDecimal((Integer)keyMap.get("min_price")));
+			priceFilter.put("price", minPrice);
+			result=EntityResultTools.dofilter(result, priceFilter);
+			priceFilter.remove("price");				
+		}			
+		return result;
+	}
+	
+	
+	
 
 	/**
 	 * Checks if the given fdayes
@@ -355,6 +403,8 @@ public class BookingService implements IBookingService {
 		}
 	}
 
+
+	
 	/**
 	 * 
 	 * Builds a Basic expression to search the occupied rooms on a date range
