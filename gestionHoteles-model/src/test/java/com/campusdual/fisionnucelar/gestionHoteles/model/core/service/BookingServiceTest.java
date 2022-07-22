@@ -852,5 +852,170 @@ public class BookingServiceTest {
 			assertEquals("INCORRECT_REQUEST", updateResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 		}
+		
+		@Test
+		@DisplayName("cancel an extra with succesfully")
+		void test_cancel_booking_extra() {
+			Map<String,Object> keyMap = new HashMap<String,Object>();
+			keyMap.put("id_booking", 2);
+			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking"));
+			Map<String,Object> attrMap = new HashMap<String,Object>();
+			attrMap.put("id_booking_extra", 2);
+			attrMap.put("quantity", 2);
+			List<String> columnsExtraBooking = new ArrayList<>();
+			columnsExtraBooking.add("id_booking_extra");
+			columnsExtraBooking.add("bke_booking");
+			columnsExtraBooking.add("bke_name");
+			columnsExtraBooking.add("bke_quantity");
+			columnsExtraBooking.add("bke_unit_price");
+			columnsExtraBooking.add("bke_total_price");
+			columnsExtraBooking.add("bke_enjoyed");
+			columnsExtraBooking.add("bk_extras_price");
+			EntityResult bookingExtraResult = new EntityResultMapImpl(columnsExtraBooking);
+			bookingExtraResult.addRecord(new HashMap<String, Object>() {{
+				put("id_bookingextra", 2);
+				put("bke_booking", 2); 
+				put("bke_name", "Niñero"); 
+				put("bke_quantity", 2); 
+				put("bke_unit_price", new BigDecimal(200)); 
+				put("bke_total_price", new BigDecimal(2000)); 
+				put("bke_enjoyed", 0); 
+				put("bk_extras_price", new BigDecimal(200)); }});
+			EntityResult updateResult = new EntityResultMapImpl();
+			updateResult.setCode(0);
+			when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(updateResult);
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
+			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(bookingExtraResult);
+			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
+			assertEquals("SUCCESSFULLY_ADDED", dischargeResult.getMessage());
+			assertEquals(EntityResult.OPERATION_SUCCESSFUL, dischargeResult.getCode());
+			
+		}
+
+		@Test
+		@DisplayName("cancel an extra fail due not enough available extras to cancel")
+		void test_cancel_booking_fail_due_not_available() {
+			Map<String,Object> keyMap = new HashMap<String,Object>();
+			keyMap.put("id_booking", 2);
+			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking"));
+			Map<String,Object> attrMap = new HashMap<String,Object>();
+			attrMap.put("id_booking_extra", 2);
+			attrMap.put("quantity", 2);
+			List<String> columnsExtraBooking = new ArrayList<>();
+			columnsExtraBooking.add("id_booking_extra");
+			columnsExtraBooking.add("bke_booking");
+			columnsExtraBooking.add("bke_name");
+			columnsExtraBooking.add("bke_quantity");
+			columnsExtraBooking.add("bke_unit_price");
+			columnsExtraBooking.add("bke_total_price");
+			columnsExtraBooking.add("bke_enjoyed");
+			columnsExtraBooking.add("bk_extras_price");
+			EntityResult bookingExtraResult = new EntityResultMapImpl(columnsExtraBooking);
+			bookingExtraResult.addRecord(new HashMap<String, Object>() {{
+				put("id_bookingextra", 2);
+				put("bke_booking", 2); 
+				put("bke_name", "Niñero"); 
+				put("bke_quantity", 2); 
+				put("bke_unit_price", new BigDecimal(200)); 
+				put("bke_total_price", new BigDecimal(2000)); 
+				put("bke_enjoyed", 2); 
+				put("bk_extras_price", new BigDecimal(200)); }});
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
+			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(bookingExtraResult);
+			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
+			assertEquals("NOT_ENOUGH_PENDING_EXTRAS_TO_CANCEL", dischargeResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
+			
+		}	
+		@Test
+		@DisplayName("cancel an extra fail due booking not exists")
+		void test_cancel_booking_fail_due_booking_not_exists() {
+			Map<String,Object> keyMap = new HashMap<String,Object>();
+			keyMap.put("id_booking", 2);
+			EntityResult bookingResult = new EntityResultMapImpl();
+			Map<String,Object> attrMap = new HashMap<String,Object>();
+			attrMap.put("id_booking_extra", 2);
+			attrMap.put("quantity", 2);
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
+			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
+			assertEquals("BOOKING_EXTRA_DOESN'T_EXISTS", dischargeResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
+			
+		}
+	
+		@Test
+		@DisplayName("cancel an extra without quantity")
+		void test_cancel_booking_without_quantity() {
+			Map<String,Object> keyMap = new HashMap<String,Object>();
+			keyMap.put("id_booking", 2);
+			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking_extra"));
+			Map<String,Object> attrMap = new HashMap<String,Object>();
+			attrMap.put("id_booking_extra", 2);
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
+			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
+			assertEquals("QUANTITY_FIELD_REQUIRED", dischargeResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
+			
+		}
+		@Test
+		@DisplayName("cancel an extra without id_booking_extra")
+		void test_cancel_booking_without_id_booking_extra() {
+			Map<String,Object> keyMap = new HashMap<String,Object>();
+			Map<String,Object> attrMap = new HashMap<String,Object>();
+			attrMap.put("id_booking_extra", 2);
+			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
+			assertEquals("ID_EXTRA_BOOKING_REQUIRED", dischargeResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
+			
+		}
+		@Test
+		@DisplayName("cancel an extra with empty request")
+		void test_cancel_booking_with_empty_request() {
+			Map<String,Object> keyMap = new HashMap<String,Object>();
+			keyMap.put("id_booking", 2);
+			Map<String,Object> attrMap = new HashMap<String,Object>();
+			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking_extra"));
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
+			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
+			assertEquals("EMPTY_REQUEST", dischargeResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
+		}
+		
+		@Test
+		@DisplayName("cancel an extra with string_as_quantity")
+		void test_cancel_booking_with_string_as_quantity() {
+			Map<String,Object> keyMap = new HashMap<String,Object>();
+			keyMap.put("id_booking", 2);
+			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking"));
+			Map<String,Object> attrMap = new HashMap<String,Object>();
+			attrMap.put("id_booking_extra", 2);
+			attrMap.put("quantity", "sss");
+			List<String> columnsExtraBooking = new ArrayList<>();
+			columnsExtraBooking.add("id_booking_extra");
+			columnsExtraBooking.add("bke_booking");
+			columnsExtraBooking.add("bke_name");
+			columnsExtraBooking.add("bke_quantity");
+			columnsExtraBooking.add("bke_unit_price");
+			columnsExtraBooking.add("bke_total_price");
+			columnsExtraBooking.add("bke_enjoyed");
+			columnsExtraBooking.add("bk_extras_price");
+			EntityResult bookingExtraResult = new EntityResultMapImpl(columnsExtraBooking);
+			bookingExtraResult.addRecord(new HashMap<String, Object>() {{
+				put("id_bookingextra", 2);
+				put("bke_booking", 2); 
+				put("bke_name", "Niñero"); 
+				put("bke_quantity", 2); 
+				put("bke_unit_price", new BigDecimal(200)); 
+				put("bke_total_price", new BigDecimal(2000)); 
+				put("bke_enjoyed", 0); 
+				put("bk_extras_price", new BigDecimal(200)); }});
+			EntityResult updateResult = new EntityResultMapImpl();
+			updateResult.setCode(0);
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
+			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(bookingExtraResult);
+			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
+			assertEquals("INCORRECT_REQUEST", dischargeResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
+		}
 	}
 }
