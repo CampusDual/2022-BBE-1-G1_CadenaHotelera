@@ -2,7 +2,7 @@ package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
-
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -1018,4 +1018,220 @@ public class BookingServiceTest {
 			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
 		}
 	}
+	
+	@Nested
+	@DisplayName("Test for available rooms in a given date")
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	public class availableRoomsQuery {
+    @Test
+    @DisplayName("Obtain all avaliable rooms for a given hotel")
+    void test_availableroomsQuery_success() throws ParseException {
+    	//given
+    	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
+    	Date startDate = formatter.parse("2022-30-08");
+    	Date endDate = formatter.parse("2022-15-09");
+    	Map<String,Object> filter = new HashMap<>();
+    	filter.put("bk_check_in", "2022-30-08");
+    	filter.put("bk_check_out", "2022-15-09");
+    	filter.put("id_hotel", 2);
+    	List<String> roomColumns = new ArrayList<>();
+    	roomColumns.add("rm_number");
+    	EntityResult availableRooms = new EntityResultMapImpl(roomColumns);
+    	availableRooms.addRecord(new HashMap<String, Object>() {{
+	        put("id_hotel", 2);
+	        put("rm_number",401);
+	        put("htl_name","FN As Pontes");
+	        put("id_booking",38);
+	        }});
+    	Map<String,Object> hotelFilter = new HashMap<>();
+    	hotelFilter.put("id_hotel", 2);
+		List<String> columns = new ArrayList<>();
+		columns.add("rm_number");
+		EntityResult queryResult = new EntityResultMapImpl(columns);
+		when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+		filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+				bookingService.buildExpressionToSearchRooms(startDate, endDate));
+	
+		 lenient().when(daoHelper.query(bookingDao, filter,columns,"AVAILABLE_ROOMS", 	new ISQLQueryAdapter() {
+			@Override
+			public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
+					Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
+					String queryId) {
+				return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
+						sqlStatement.getValues());
+			}})).thenReturn(availableRooms);
+        try (MockedStatic<EntityResultTools> utilities = Mockito.mockStatic(EntityResultTools.class)) {
+        	
+        	utilities.when(()->EntityResultTools.dofilter(any(), anyMap())).thenReturn(availableRooms);
+        	EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
+        	
+        	assertEquals(401, roomResult.getRecordValues(0).get("rm_number"));
+        	assertEquals(EntityResult.OPERATION_SUCCESSFUL, roomResult.getCode());
+        }
+        }
+        @Test
+        @DisplayName("Obtain all avaliable rooms for a given hotel with minimun an maximun price")
+        void test_availableroomsQuery_per_price_success() throws ParseException {
+        	//given
+        	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
+        	Date startDate = formatter.parse("2022-30-08");
+        	Date endDate = formatter.parse("2022-15-09");
+        	Map<String,Object> filter = new HashMap<>();
+        	filter.put("bk_check_in", "2022-30-08");
+        	filter.put("bk_check_out", "2022-15-09");
+        	filter.put("id_hotel", 2);
+        	filter.put("min_price", 100);
+        	filter.put("mx_price", 300);
+        	List<String> roomColumns = new ArrayList<>();
+        	roomColumns.add("rm_number");
+        	EntityResult availableRooms = new EntityResultMapImpl(roomColumns);
+        	availableRooms.addRecord(new HashMap<String, Object>() {{
+        		put("id_hotel", 2);
+        		put("rm_number",401);
+        		put("htl_name","FN As Pontes");
+        		put("id_booking",38);
+        	}});
+        	Map<String,Object> hotelFilter = new HashMap<>();
+        	hotelFilter.put("id_hotel", 2);
+        	List<String> columns = new ArrayList<>();
+        	columns.add("rm_number");
+        	EntityResult queryResult = new EntityResultMapImpl(columns);
+        	when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+        	filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+        			bookingService.buildExpressionToSearchRooms(startDate, endDate));
+        	
+        	lenient().when(daoHelper.query(bookingDao, filter,columns,"AVAILABLE_ROOMS", 	new ISQLQueryAdapter() {
+        		@Override
+        		public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
+        				Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
+        				String queryId) {
+        			return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
+        					sqlStatement.getValues());
+        		}})).thenReturn(availableRooms);
+        	try (MockedStatic<EntityResultTools> utilities = Mockito.mockStatic(EntityResultTools.class)) {
+        		
+        		utilities.when(()->EntityResultTools.dofilter(any(), anyMap())).thenReturn(availableRooms);
+        		utilities.when(()->EntityResultTools.dofilter(any(), anyMap())).thenReturn(availableRooms);
+        		EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
+        		
+        		assertEquals(401, roomResult.getRecordValues(0).get("rm_number"));
+        		assertEquals(EntityResult.OPERATION_SUCCESSFUL, roomResult.getCode());
+        	}
+        }
+        @Test
+        @DisplayName("Obtain all avaliable rooms for a given hotel with minimun an maximun price as strings")
+        void test_availableroomsQuery_per_price_fail_due_string_as_price() throws ParseException {
+        	//given
+        	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
+        	Date startDate = formatter.parse("2022-30-08");
+        	Date endDate = formatter.parse("2022-15-09");
+        	Map<String,Object> filter = new HashMap<>();
+        	filter.put("bk_check_in", "2022-30-08");
+        	filter.put("bk_check_out", "2022-15-09");
+        	filter.put("id_hotel", 2);
+        	filter.put("min_price","SSSS");
+        	filter.put("mx_price","sss");
+        	List<String> roomColumns = new ArrayList<>();
+        	roomColumns.add("rm_number");
+        	EntityResult availableRooms = new EntityResultMapImpl(roomColumns);
+        	availableRooms.addRecord(new HashMap<String, Object>() {{
+        		put("id_hotel", 2);
+        		put("rm_number",401);
+        		put("htl_name","FN As Pontes");
+        		put("id_booking",38);
+        	}});
+        	Map<String,Object> hotelFilter = new HashMap<>();
+        	hotelFilter.put("id_hotel", 2);
+        	List<String> columns = new ArrayList<>();
+        	columns.add("rm_number");
+        	EntityResult queryResult = new EntityResultMapImpl(columns);
+        	when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+        	filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+        			bookingService.buildExpressionToSearchRooms(startDate, endDate));
+        	
+        	lenient().when(daoHelper.query(bookingDao, filter,columns,"AVAILABLE_ROOMS", 	new ISQLQueryAdapter() {
+        		@Override
+        		public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
+        				Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
+        				String queryId) {
+        			return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
+        					sqlStatement.getValues());
+        		}})).thenReturn(availableRooms);
+        		EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
+        		assertEquals("INCORRECT_REQUEST", roomResult.getMessage());
+        		assertEquals(EntityResult.OPERATION_WRONG, roomResult.getCode());
+        	
+        }
+        @Test
+        @DisplayName("Obtain all avaliable rooms for a given hotel with minimun an maximun price as strings")
+        void test_availableroomsQuery_per_price_fail_due_max_price_lower_min_price() throws ParseException {
+        	//given
+        	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
+        	Date startDate = formatter.parse("2022-30-08");
+        	Date endDate = formatter.parse("2022-15-09");
+        	Map<String,Object> filter = new HashMap<>();
+        	filter.put("bk_check_in", "2022-30-08");
+        	filter.put("bk_check_out", "2022-15-09");
+        	filter.put("id_hotel", 2);
+        	filter.put("min_price",200);
+        	filter.put("max_price",100);
+        	List<String> roomColumns = new ArrayList<>();
+        	roomColumns.add("rm_number");
+        	EntityResult availableRooms = new EntityResultMapImpl(roomColumns);
+        	availableRooms.addRecord(new HashMap<String, Object>() {{
+        		put("id_hotel", 2);
+        		put("rm_number",401);
+        		put("htl_name","FN As Pontes");
+        		put("id_booking",38);
+        	}});
+        	Map<String,Object> hotelFilter = new HashMap<>();
+        	hotelFilter.put("id_hotel", 2);
+        	List<String> columns = new ArrayList<>();
+        	columns.add("rm_number");
+        	EntityResult queryResult = new EntityResultMapImpl(columns);
+        	when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+        	filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+        			bookingService.buildExpressionToSearchRooms(startDate, endDate));
+        	
+        	lenient().when(daoHelper.query(bookingDao, filter,columns,"AVAILABLE_ROOMS", 	new ISQLQueryAdapter() {
+        		@Override
+        		public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
+        				Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
+        				String queryId) {
+        			return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
+        					sqlStatement.getValues());
+        		}})).thenReturn(availableRooms);
+        	EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
+        	assertEquals("MAXPRICE_MUST_BE_HIGHER_THAN_MINPRICE", roomResult.getMessage());
+        	assertEquals(EntityResult.OPERATION_WRONG, roomResult.getCode());
+        	
+        }
+        @Test
+        @DisplayName("Available rooms request with empty fields")
+        void test_availableroomsQuery_emptyRequest() throws ParseException {
+        	Map<String,Object> filter = new HashMap<>();
+        	List<String> columns = new ArrayList<>();
+        	EntityResult queryResult = bookingService.availableroomsQuery(filter, columns);
+        	assertEquals("CHECK_IN_CHECK_OUT_AND HOTEL_NEEDED", queryResult.getMessage());	
+        	assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());	
+    }
+
+		@Test
+		@DisplayName("Available rooms request with invalid dates")
+		void test_availableroomsQuery_invalid_dates() throws ParseException {
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("bk_check_in", "invalid");
+			filter.put("bk_check_out", "invalid");
+			filter.put("id_hotel", 2);
+			List<String> columns = new ArrayList<>();
+			columns.add("rm_number");
+			EntityResult queryResult = new EntityResultMapImpl(columns);
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+			EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
+			assertEquals("Unparseable date: \"invalid\"", roomResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, roomResult.getCode());
+		}
+
+	}
+
 }
