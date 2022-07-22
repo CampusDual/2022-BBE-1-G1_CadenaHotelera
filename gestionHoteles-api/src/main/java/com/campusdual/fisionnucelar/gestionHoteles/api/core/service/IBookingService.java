@@ -38,5 +38,6 @@ public interface IBookingService {
 	
 	public EntityResult cancelbookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException;
+	
 
 }

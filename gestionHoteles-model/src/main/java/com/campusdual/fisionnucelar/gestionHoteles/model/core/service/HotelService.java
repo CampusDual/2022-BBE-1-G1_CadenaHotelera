@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,13 +17,19 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.ontimize.jee.common.db.SQLStatementBuilder.SQLStatement;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
+import com.ontimize.jee.common.gui.SearchValue;
+import com.ontimize.jee.common.tools.EntityResultTools;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
+import com.ontimize.jee.server.dao.IOntimizeDaoSupport;
+import com.ontimize.jee.server.dao.ISQLQueryAdapter;
 
 /**
  * This class builds the operations over the hotels table
@@ -61,11 +68,82 @@ public class HotelService implements IHotelService {
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
+
 			searchResult = this.daoHelper.query(this.hotelDao, keyMap, attrList);
+
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
+			e.printStackTrace();
+		}
+		return searchResult;
+	}
+
+	
+	
+	
+	
+
+	
+	/**
+	 * It searchs hotels with a variable list of services especified by the user
+	 * 
+	 * @param keyMap the services required
+	 * @param attrList the hotels fields to retrieve
+	 * @return the hotels that have all the requested services
+	 * 
+	 * @exception	NoResultsException 		when there are no hotels with the requested services
+	 * 
+	 * @exception	EmptyRequestException	when it doesn't receives services to filter
+	 * 
+	 * @exception	ClassCastException		when it doesn't receives an integer array 
+	 * 
+	 * @throws OntimizeJEERuntimeException
+	 */
+	
+	
+	
+	@Override
+	public EntityResult hotelsbyservicesQuery(Map<String, Object> keyMap, List<String> attrList)
+			throws OntimizeJEERuntimeException {
+		EntityResult searchResult = new EntityResultMapImpl();
+		try {
+			if (keyMap.get("services") == null) {
+				throw new EmptyRequestException("SERVICES_REQUIRED");
+			}
+
+			List<Integer> servicesRequired = (List<Integer>) keyMap.get("services");
+
+			StringBuilder sqlSentence = new StringBuilder(" WHERE ID_HOTEL IN ");
+
+			for (int i = 0; i < servicesRequired.size(); i++) {
+				if (i == 0) {
+					sqlSentence.append(
+							"(SELECT SVH_HOTEL FROM SERVICES_HOTEL WHERE SVH_SERVICE=" + servicesRequired.get(i) + ")");
+				} else {
+					sqlSentence.append(" AND ID_HOTEL IN (SELECT SVH_HOTEL FROM SERVICES_HOTEL WHERE SVH_SERVICE="
+							+ servicesRequired.get(i) + ")");
+				}
+			}
+			keyMap.remove("services");
+
+			searchResult = this.daoHelper.query(this.hotelDao, keyMap, attrList, "HOTELS_BY_SERVICES",
+					new ISQLQueryAdapter() {
+						@Override
+						public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao,
+								Map<?, ?> keysValues, Map<?, ?> validKeysValues, List<?> attributes,
+								List<?> validAttributes, List<?> sort, String queryId) {
+							return new SQLStatement(sqlStatement.getSQLStatement().concat(sqlSentence.toString()),
+									sqlStatement.getValues());
+						}
+					});
+
+			control.checkResults(searchResult);
+		} catch (NoResultsException | EmptyRequestException e) {
+			control.setErrorMessage(searchResult, e.getMessage());
+		} catch (ClassCastException e) {
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -148,6 +226,22 @@ public class HotelService implements IHotelService {
 			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
 		return existingHotel.isEmpty();
 
+	}
+
+	private EntityResult filterHotelsByServices(EntityResult result, Map<String, Object> keyMap)
+			throws InvalidRequestException {
+		SearchValue requiredServices;
+		Map<String, Object> servicesFilter = new HashMap<>();
+
+		List<Object> values = (List<Object>) keyMap.get("services");
+
+//		values.add(2);
+//		values.add(3);	
+//		requiredServices= new SearchValue(SearchValue.IN, values);		
+//		servicesFilter.put("svh_service", requiredServices);	
+//		result=EntityResultTools.dofilter(result, servicesFilter);
+
+		return result;
 	}
 
 	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {

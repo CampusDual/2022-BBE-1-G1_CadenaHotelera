@@ -37,6 +37,8 @@
   </Query>
   
 
+  
+
    <Query id="CHECK_ROOM_DISPONIBILITY">
    <Sentence>
    <![CDATA[

@@ -6,7 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DuplicateKeyException;
+
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,6 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingExtr
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingExtraDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -112,36 +111,5 @@ public class BookingExtraService implements IBookingExtraService{
 		return insertResult;
 	}
 
-	/**
-	 * NOT FUNCIONAL
-	 * 
-	 * 
-	 * Updates a existing register on the service table.
-	 * 
-	 * @since 08/07/2022
-	 * @param The fields to be updated
-	
-	 * @exception EmptyRequestException   when the params are empty
-	 * 
-	 * @exception RecordNotFoundException when receives a non existing service to
-	 *                                    update
-	 * 
-	 * @return A message with the operation result
-	 */
-	@Override
-	public EntityResult bookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
-			throws OntimizeJEERuntimeException {
-//		EntityResult updateResult = new EntityResultMapImpl();
-//		try {
-//			checkIfDataIsEmpty(attrMap);
-//			checkIfServiceExists(keyMap);
-//			updateResult = this.daoHelper.update(this.bookingExtraDao, attrMap, keyMap);
-//			updateResult.setMessage("SUCCESSFUL_UPDATE");
-//
-//		}  catch (RecordNotFoundException | EmptyRequestException e) {
-//			control.setErrorMessage(updateResult, e.getMessage());
-//		}
-		return null;
-	}
 
 }

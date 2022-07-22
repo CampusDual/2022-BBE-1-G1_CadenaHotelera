@@ -48,6 +48,8 @@ import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.common.gui.SearchValue;
 import com.ontimize.jee.common.tools.EntityResultTools;
+import com.ontimize.jee.common.tools.ertools.IAggregateFunction;
+import com.ontimize.jee.common.tools.ertools.IPartialAggregateValue;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 import com.ontimize.jee.server.dao.IOntimizeDaoSupport;
 import com.ontimize.jee.server.dao.ISQLQueryAdapter;
@@ -217,9 +219,9 @@ public class BookingService implements IBookingService {
 		EntityResult resultsByHotel = new EntityResultMapImpl();
 		try {
 			checkAvailableRoomsFields(keyMap);
-			resultsByHotel = searchAvailableRooms(keyMap, attrList);
 			checkIfHotelExists(keyMap);
-
+			resultsByHotel = searchAvailableRooms(keyMap, attrList);	
+			
 		} catch (AllFieldsRequiredException | InvalidDateException | RecordNotFoundException|InvalidRequestException|ParseException e) {
 			control.setErrorMessage(resultsByHotel, e.getMessage());
 		}  catch (BadSqlGrammarException|ClassCastException e) {
@@ -275,6 +277,9 @@ public class BookingService implements IBookingService {
 		return result;
 	}
 
+
+	
+	
 	/**
 	 * Checks if rm_hotel exists in a request
 	 * 
@@ -285,7 +290,6 @@ public class BookingService implements IBookingService {
 		if (keyMap.get("rm_hotel") == null) {
 			throw new RecordNotFoundException("RM_HOTEL_NEEDED");
 		}
-
 	}
 
 	/**
@@ -335,7 +339,7 @@ public class BookingService implements IBookingService {
 			}
 		});
 		
-		result=filterBookingByPrice(result, keyMap);
+		result=filterBookingByPrice(result, keyMap);		
 				
 		Map<String, Object> hotelFilter = new HashMap<>();
 		hotelFilter.put(hotelId, keyMap.get(hotelId));
@@ -343,7 +347,9 @@ public class BookingService implements IBookingService {
 		if (keyMap.get(roomType) != null)
 			hotelFilter.put(roomType, keyMap.get(roomType));
 								
-		return EntityResultTools.dofilter(result, hotelFilter);	
+		result=EntityResultTools.dofilter(result, hotelFilter);	
+		
+		return result;
 		
 	}
 	
@@ -382,6 +388,8 @@ public class BookingService implements IBookingService {
 		}			
 		return result;
 	}
+	
+
 	
 	
 	

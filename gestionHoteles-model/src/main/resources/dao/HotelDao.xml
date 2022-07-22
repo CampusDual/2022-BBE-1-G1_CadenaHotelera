@@ -12,4 +12,20 @@
   <Column>id_hotel</Column>
  </UpdateKeys>
  <GeneratedKey>id_hotel</GeneratedKey>
+   <Queries>
+
+ <Query id="HOTELS_BY_SERVICE">
+
+   <Sentence>
+   <![CDATA[
+     SELECT
+      #COLUMNS#
+     FROM
+      ROOMS HOTELS H JOIN SERVICES_HOTEL SH 
+      ON H.ID_HOTEL=SH.SVH_HOTEL
+   ]]>
+   </Sentence>
+  </Query>
+ 
+ </Queries>
 </JdbcEntitySetup>
