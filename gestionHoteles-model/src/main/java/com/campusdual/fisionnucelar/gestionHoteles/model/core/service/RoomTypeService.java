@@ -75,8 +75,10 @@ public class RoomTypeService implements IRoomTypeService {
 			searchResult = daoHelper.query(roomTypeDao, keyMap, attrList);
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
+			log.error("unable to retrieve a room type. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve a room type. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -105,12 +107,16 @@ public class RoomTypeService implements IRoomTypeService {
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCESSFUL_INSERTION");
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to insert a room type. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, "PRICE_MUST_BE_NUMERIC");
 		} catch (DuplicateKeyException e) {
+			log.error("unable to insert a room type. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, "ROOM_TYPE_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
+			log.error("unable to insert a room type. Request : {} ",attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (AllFieldsRequiredException e) {
+			log.error("unable to insert a room type. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
@@ -142,14 +148,19 @@ public class RoomTypeService implements IRoomTypeService {
 
 			updateResult.setMessage("SUCESSFUL_UPDATE");
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to update a room type. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "PRICE_MUST_BE_NUMERIC");
 		} catch (DuplicateKeyException e) {
+			log.error("unable to update a room type. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "ROOM_TYPE_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
+			log.error("unable to update a room type. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (EmptyRequestException e) {
+			log.error("unable to update a room type. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}catch (DataIntegrityViolationException e) {
+			log.error("unable to update a room type. Request : {} {} ",keyMap,attrMap, e);
 			control.setMessageFromException(updateResult, e.getMessage());}
 		return updateResult;
 	}

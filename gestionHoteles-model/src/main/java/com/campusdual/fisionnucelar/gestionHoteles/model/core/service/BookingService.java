@@ -157,6 +157,7 @@ public class BookingService implements IBookingService {
 
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
+			log.error("unable to retrieve bookings by client. Request : {} {}",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
 			log.error("unable to retrieve bookings by client. Request : {} {}",keyMap,attrList, e);
@@ -188,8 +189,10 @@ public class BookingService implements IBookingService {
 			searchResult = daoHelper.query(bookingDao, keyMap, attrList);
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
+			log.error("unable to retrieve bookings. Request : {} {}",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve bookings. Request : {} {}",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;

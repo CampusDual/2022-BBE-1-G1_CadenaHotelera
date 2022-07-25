@@ -83,8 +83,10 @@ public class ExtraHotelService implements IExtraHotelService {
 			control.checkResults(searchResult);
 
 		} catch (NoResultsException e) {
+			log.error("unable to retrieve an extra hotel. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve an extra hotel. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -115,12 +117,16 @@ public class ExtraHotelService implements IExtraHotelService {
 			insertResult = this.daoHelper.insert(this.extraHotelDao, attrMap);
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
+			log.error("unable to insert an extra hotel. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, "DUPLICATED_EXTRAS_IN_HOTEL");
 		} catch (EmptyRequestException e) {
+			log.error("unable to insert an extra hotel. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DataIntegrityViolationException e) {
+			log.error("unable to insert an extra hotel. Request : {} ",attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to insert an extra hotel. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, "PRICE_MUST_BE_NUMERIC");
 		}
 		return insertResult;
@@ -166,12 +172,16 @@ public class ExtraHotelService implements IExtraHotelService {
 			updateResult = this.daoHelper.update(this.extraHotelDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {
+			log.error("unable to update an extra hotel. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "DUPLICATED_EXTRA_IN_HOTEL");
 		} catch (DataIntegrityViolationException e) {
+			log.error("unable to update an extra hotel. Request : {} {} ",keyMap,attrMap, e);
 			control.setMessageFromException(updateResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to update an extra hotel. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "PRICE_MUST_BE_NUMERIC");
 		} catch (RecordNotFoundException | IncorrectBooleanException | EmptyRequestException e) {
+			log.error("unable to update an extra hotel. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;

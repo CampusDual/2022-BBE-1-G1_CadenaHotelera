@@ -86,6 +86,7 @@ public class ClientService implements IClientService {
 		} catch (NoResultsException e) {
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve clients. Request : {} {}",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -111,10 +112,13 @@ public class ClientService implements IClientService {
 			}
 			insertResult = this.daoHelper.insert(this.clientDao, attrMap);
 		} catch (InvalidEmailException e) {
+			log.error("unable to insert a client. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DuplicateKeyException e) {
+			log.error("unable to insert a client. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, "EMAIL_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
+			log.error("unable to insert a client. Request : {} ",attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		}
 
@@ -151,10 +155,13 @@ public class ClientService implements IClientService {
 				updateResult.setMessage("SUCCESSFUL_UPDATE");
 			}
 		} catch (InvalidEmailException e) {
+			log.error("unable to update a client. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (RecordNotFoundException e) {
+			log.error("unable to update a client. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "CLIENT_DOESN'T_EXISTS");
 		} catch (EmptyRequestException e) {
+			log.error("unable to update a client. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;

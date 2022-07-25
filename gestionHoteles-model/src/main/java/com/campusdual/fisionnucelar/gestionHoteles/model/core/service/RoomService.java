@@ -84,8 +84,10 @@ public class RoomService implements IRoomService {
 			searchResult = daoHelper.query(roomDao, keyMap, attrList);
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
+			log.error("unable to retrieve a room. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		}catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve a room. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -118,10 +120,13 @@ public class RoomService implements IRoomService {
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 			
 		} catch (DuplicateKeyException e) {
+			log.error("unable to insert a room. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
+			log.error("unable to insert a room. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (AllFieldsRequiredException e) {
+			log.error("unable to insert a room. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 
@@ -154,10 +159,13 @@ public class RoomService implements IRoomService {
 			updateResult = this.daoHelper.update(this.roomDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {
+			log.error("unable to update a room. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "ROOM_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
+			log.error("unable to update a room. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}catch (EmptyRequestException e) {
+			log.error("unable to update a room. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;

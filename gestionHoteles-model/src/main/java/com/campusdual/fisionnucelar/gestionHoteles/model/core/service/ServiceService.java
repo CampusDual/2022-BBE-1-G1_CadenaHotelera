@@ -78,6 +78,7 @@ public class ServiceService implements IServiceService {
 		} catch (NoResultsException e) {
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve a service. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -106,10 +107,13 @@ public class ServiceService implements IServiceService {
 				throw new EmptyRequestException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
+			log.error("unable to insert a service. Request : {}  ",attrMap, e);
 			control.setErrorMessage(insertResult, "SERVICE_NAME_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
+			log.error("unable to insert a service. Request : {}  ",attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (EmptyRequestException e) {
+			log.error("unable to insert a service. Request : {}  ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
@@ -140,8 +144,10 @@ public class ServiceService implements IServiceService {
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 
 		} catch (DuplicateKeyException e) {
+			log.error("unable to update a service. Request : {}  {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "SERVICE_NAME_ALREADY_EXISTS");
 		} catch (RecordNotFoundException | EmptyRequestException e) {
+			log.error("unable to update a service. Request : {}  {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;

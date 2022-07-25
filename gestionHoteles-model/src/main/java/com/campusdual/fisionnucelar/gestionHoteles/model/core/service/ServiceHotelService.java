@@ -82,8 +82,10 @@ public class ServiceHotelService implements IServicesHotelService {
 			searchResult = daoHelper.query(serviceHotelDao, keyMap, attrList);
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
+			log.error("unable to retrieve a hotel service. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve a hotel service. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -119,10 +121,13 @@ public class ServiceHotelService implements IServicesHotelService {
 
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
+			log.error("unable to insert a hotel service. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, "DUPLICATED_SERVICES_IN_HOTEL");
 		} catch (EmptyRequestException e) {
+			log.error("unable to insert a hotel service. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DataIntegrityViolationException e) {
+			log.error("unable to insert a hotel service. Request : {} ",attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		}
 		return insertResult;
@@ -165,10 +170,13 @@ public class ServiceHotelService implements IServicesHotelService {
 			updateResult = this.daoHelper.update(this.serviceHotelDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {
+			log.error("unable to update a hotel service. Request : {}  {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "DUPLICATED_SERVICES_IN_HOTEL");
 		} catch (DataIntegrityViolationException e) {
+			log.error("unable to update a hotel service. Request : {}  {} ",keyMap,attrMap, e);
 			control.setMessageFromException(updateResult, e.getMessage());
 		} catch (RecordNotFoundException | IncorrectBooleanException | EmptyRequestException e) {
+			log.error("unable to update a hotel service. Request : {}  {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 

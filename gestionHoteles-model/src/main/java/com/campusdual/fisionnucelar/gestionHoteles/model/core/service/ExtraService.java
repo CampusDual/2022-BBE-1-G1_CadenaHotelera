@@ -72,8 +72,10 @@ public class ExtraService implements IExtraService{
 			control.checkResults(searchResult);
 			
 		}catch (NoResultsException e) {
+			log.error("unable to retrieve an extra. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve an extra. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}		
 	
@@ -100,10 +102,13 @@ public class ExtraService implements IExtraService{
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		}catch (DuplicateKeyException e) {
+			log.error("unable to insert an extra. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, "EXTRA_NAME_ALREADY_EXISTS");
 		}catch (DataIntegrityViolationException e) {
+			log.error("unable to insert an extra. Request : {} ",attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (AllFieldsRequiredException e) {
+			log.error("unable to insert an extra. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 	return insertResult;
@@ -131,10 +136,13 @@ public class ExtraService implements IExtraService{
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 				
 		}catch (DuplicateKeyException e) {
+			log.error("unable to update an extra. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "EXTRA_NAME_ALREADY_EXISTS");
 		}catch (RecordNotFoundException e) {
+			log.error("unable to update an extra. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}catch (EmptyRequestException e) {
+			log.error("unable to update an extra. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;

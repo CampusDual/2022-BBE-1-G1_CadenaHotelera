@@ -76,8 +76,10 @@ public class BookingExtraService implements IBookingExtraService{
 			
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
+			log.error("unable to retrieve a booking extra .Request {} {} ",keyMap, attrList,e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve a booking extra .Request {} {} ",keyMap, attrList,e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -109,9 +111,10 @@ public class BookingExtraService implements IBookingExtraService{
 				throw new EmptyRequestException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCESSFUL_INSERTION");
 		}  catch (DataIntegrityViolationException e) {
-			log.error("unable to save booking extra", e);
+			log.error("unable to save booking extra .Request {} ", attrMap,e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (EmptyRequestException e) {
+			log.error("unable to save booking extra .Request {} ", attrMap,e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;

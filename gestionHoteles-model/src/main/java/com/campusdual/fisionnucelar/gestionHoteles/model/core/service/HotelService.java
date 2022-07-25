@@ -80,8 +80,10 @@ public class HotelService implements IHotelService {
 
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
+			log.error("unable to retrieve a hotel. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve a hotel. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 			e.printStackTrace();
 		}
@@ -149,8 +151,10 @@ public class HotelService implements IHotelService {
 
 			control.checkResults(searchResult);
 		} catch (NoResultsException | EmptyRequestException e) {
+			log.error("unable to retrieve a hotel filtered by services. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (ClassCastException e) {
+			log.error("unable to retrieve a hotel filtered by services. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -178,12 +182,16 @@ public class HotelService implements IHotelService {
 			insertResult.setMessage("SUCESSFUL_INSERTION");
 
 		} catch (InvalidEmailException e) {
+			log.error("unable to insert an hotel. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DuplicateKeyException e) {
+			log.error("unable to insert an hotel. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
+			log.error("unable to insert an hotel. Request : {} ",attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (AllFieldsRequiredException e) {
+			log.error("unable to insert an hotel. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
@@ -211,12 +219,16 @@ public class HotelService implements IHotelService {
 			updateResult = this.daoHelper.update(this.hotelDao, attrMap, keyMap);
 			updateResult.setMessage("SUCESSFUL_UPDATE");
 		} catch (InvalidEmailException e) {
+			log.error("unable to update an hotel. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (DuplicateKeyException e) {
+			log.error("unable to update an hotel. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
+			log.error("unable to update an hotel. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (EmptyRequestException e) {
+			log.error("unable to update an hotel. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
