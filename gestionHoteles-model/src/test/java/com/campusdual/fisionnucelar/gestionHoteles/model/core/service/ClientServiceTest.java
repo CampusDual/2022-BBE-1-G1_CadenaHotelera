@@ -95,16 +95,7 @@ public class ClientServiceTest {
 			assertEquals("EMAIL_ALREADY_EXISTS", resultFail.getMessage());
 			verify(daoHelper, times(2)).insert(any(), anyMap());
 		}
-		@Test
-		@DisplayName("Fail trying to insert without any fields")
-		void hotel_insert_without_any_fields() {
-			Map<String, Object> attrMap = new HashMap<>();
-			EntityResult insertResult = new EntityResultMapImpl();
-			when(daoHelper.insert(clientDao, attrMap)).thenThrow(DataIntegrityViolationException.class);
-			insertResult = clientService.clientInsert(attrMap);
-			assertEquals(EntityResult.OPERATION_WRONG, insertResult.getCode());
-			assertEquals("DNI_NAME_AND_EMAIL_REQUIRED", insertResult.getMessage());
-		}
+
         @Test
         @DisplayName("Fail trying to insert duplicated email")
         void client_insert_duplicated_mail() {

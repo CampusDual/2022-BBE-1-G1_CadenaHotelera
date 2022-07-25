@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,6 +26,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.Incorrec
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
@@ -46,10 +49,16 @@ public class ExtraHotelService implements IExtraHotelService {
 	private DefaultOntimizeDaoHelper daoHelper;
 
 	private Control control;
+	
+	private Validator dataValidator;
+	
+	private Logger log;
 
 	public ExtraHotelService() {
 		super();
 		this.control = new Control();
+		this.dataValidator=new Validator();
+		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
 	/**
@@ -102,7 +111,7 @@ public class ExtraHotelService implements IExtraHotelService {
 	public EntityResult extrahotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
-			checkIfDataIsEmpty(attrMap);
+			dataValidator.checkIfMapIsEmpty(attrMap);
 			insertResult = this.daoHelper.insert(this.extraHotelDao, attrMap);
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
@@ -147,7 +156,7 @@ public class ExtraHotelService implements IExtraHotelService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfDataIsEmpty(attrMap);
+			dataValidator.checkIfMapIsEmpty(attrMap);
 			checkIfExtraHotelExists(keyMap);
 
 			if (attrMap.containsKey("exh_active")) {
@@ -186,18 +195,6 @@ public class ExtraHotelService implements IExtraHotelService {
 		return existingExtrasHotel.isEmpty();
 	}
 
-	/**
-	 * Throws an exception if the params introduce by the users are empty
-	 * 
-	 * @param attrMap The params of the user
-	 * @exception EmptyRequestException if the params are empty
-	 */
-
-	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.isEmpty()) {
-			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
-		}
-	}
 
 	/**
 	 * Checks if the user has introduced a valid value for the exh_active field
@@ -212,25 +209,3 @@ public class ExtraHotelService implements IExtraHotelService {
 		}
 	}
 }
-//	private boolean checkIfExtraExists(Map<String, Object> attrMap) {
-//		List<String> attrList = new ArrayList<>();
-//		attrList.add("id_extra");
-//		Map<String, Object> keyMap = new HashMap<>();
-//		keyMap.put("id_extra", attrMap.get("exh_extra"));
-//		EntityResult existingExtra = daoHelper.query(extraDao, keyMap, attrList);
-//		if (existingExtra.isEmpty())
-//			throw new RecordNotFoundException("EXTRA_DOESN'T_EXISTS");
-//		return existingExtra.isEmpty();
-//	}
-//	
-//	private boolean checkIfHotelExists(Map<String, Object> attrMap) {
-//		List<String> attrList = new ArrayList<>();
-//		attrList.add("id_hotel");
-//		Map<String, Object> keyMap = new HashMap<>();
-//		keyMap.put("id_hotel", attrMap.get("exh_hotel"));
-//		EntityResult existingHotel = daoHelper.query(hotelDao, keyMap, attrList);
-//		if (existingHotel.isEmpty())
-//			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
-//		return existingHotel.isEmpty();
-//	}
-//}

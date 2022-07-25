@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.math.BigDecimal;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -30,14 +31,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.BadSqlGrammarException;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.db.SQLStatementBuilder;
 import com.ontimize.jee.common.db.SQLStatementBuilder.SQLStatement;
 import com.ontimize.jee.common.dto.*;
@@ -60,6 +61,7 @@ public class BookingServiceTest {
 	private ExtraHotelDao extraHotelDao;
 	@Mock
 	DefaultOntimizeDaoHelper daoHelper;
+	
 
 	@BeforeEach
 	void setUp() {
@@ -178,27 +180,13 @@ public class BookingServiceTest {
 			void search_bookings_by_client_success() {
 				Map<String, Object> filter = new HashMap<>();
 				filter.put("bk_client", 10);
-				List<String> columns = new ArrayList<>();
-				columns.add("id_booking");
-				columns.add("bk_check_in");
-				columns.add("bk_check_out");
-				columns.add("bk_room");
-				columns.add("bk_price");
-				EntityResult clientBookings = new EntityResultMapImpl(columns);
+				List<String> columns = getGenericColumns();
+				EntityResult clientBookings = getGenericBookingER();
 				Calendar calendar = Calendar.getInstance();
 				calendar.set(2022, 10, 10);
 				Date checkIn = calendar.getTime();
 				calendar.set(2022, 11, 11);
 				Date checkOut = calendar.getTime();
-				clientBookings.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_booking", 2);
-						put("bk_room", 2);
-						put("bk_check_in", checkIn);
-						put("bk_check_out", checkOut);
-						put("bk_price", 100);
-					}
-				});
 				when(daoHelper.query(bookingDao, filter, columns, "CLIENT_BOOKINGS")).thenReturn(clientBookings);
 				EntityResult queryResult = bookingService.clientbookingsQuery(filter, columns);
 				assertEquals(EntityResult.OPERATION_SUCCESSFUL, queryResult.getCode());
@@ -211,27 +199,13 @@ public class BookingServiceTest {
 			void search_active_bookings_by_client_success() {
 				Map<String, Object> filter = new HashMap<>();
 				filter.put("bk_client", 10);
-				List<String> columns = new ArrayList<>();
-				columns.add("id_booking");
-				columns.add("bk_check_in");
-				columns.add("bk_check_out");
-				columns.add("bk_room");
-				columns.add("bk_price");
-				EntityResult clientBookings = new EntityResultMapImpl(columns);
+				List<String> columns = getGenericColumns();
+				EntityResult clientBookings = getGenericBookingER();
 				Calendar calendar = Calendar.getInstance();
 				calendar.set(2022, 10, 10);
 				Date checkIn = calendar.getTime();
 				calendar.set(2022, 11, 11);
 				Date checkOut = calendar.getTime();
-				clientBookings.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_booking", 2);
-						put("bk_room", 2);
-						put("bk_check_in", checkIn);
-						put("bk_check_out", checkOut);
-						put("bk_price", 100);
-					}
-				});
 				when(daoHelper.query(bookingDao, filter, columns, "CLIENT_ACTIVE_BOOKINGS")).thenReturn(clientBookings);
 				EntityResult queryResult = bookingService.clientactivebookingsQuery(filter, columns);
 				assertEquals(EntityResult.OPERATION_SUCCESSFUL, queryResult.getCode());
@@ -244,12 +218,7 @@ public class BookingServiceTest {
 			void search_active_bookings_by_client_no_results() {
 				Map<String, Object> filter = new HashMap<>();
 				filter.put("bk_client", 10);
-				List<String> columns = new ArrayList<>();
-				columns.add("id_booking");
-				columns.add("bk_check_in");
-				columns.add("bk_check_out");
-				columns.add("bk_room");
-				columns.add("bk_price");
+				List<String> columns = getGenericColumns();
 				EntityResult clientBookings = new EntityResultMapImpl();
 				when(daoHelper.query(bookingDao, filter, columns, "CLIENT_ACTIVE_BOOKINGS")).thenReturn(clientBookings);
 				EntityResult queryResult = bookingService.clientactivebookingsQuery(filter, columns);
@@ -263,12 +232,7 @@ public class BookingServiceTest {
 			void search_bookings_by_client_no_results() {
 				Map<String, Object> filter = new HashMap<>();
 				filter.put("bk_client", 10);
-				List<String> columns = new ArrayList<>();
-				columns.add("id_booking");
-				columns.add("bk_check_in");
-				columns.add("bk_check_out");
-				columns.add("bk_room");
-				columns.add("bk_price");
+				List<String> columns = getGenericColumns();
 				EntityResult clientBookings = new EntityResultMapImpl();
 				when(daoHelper.query(bookingDao, filter, columns, "CLIENT_BOOKINGS")).thenReturn(clientBookings);
 				EntityResult queryResult = bookingService.clientbookingsQuery(filter, columns);
@@ -370,14 +334,8 @@ public class BookingServiceTest {
 			  @Test
 		      @DisplayName("insert booking succesfully")
 		      void test_booking_insert_success()  {
-				  Map<String,Object> dataToInsert = new HashMap<>();
-				  dataToInsert.put("bk_check_in", new Date(2022,10,03));
-				  dataToInsert.put("bk_check_out", new Date(2022,10,22));
-				  dataToInsert.put("bk_room", 2);
-				  dataToInsert.put("bk_client", 2);
-				  EntityResult insertResult = new EntityResultMapImpl();
-				  insertResult.addRecord(new HashMap<String, Object>() {{
-		    	  put("id_booking", 2); }});
+				  Map<String,Object> dataToInsert = getDataToInsert();
+				  EntityResult insertResult = getGenericBookingER();
 				  EntityResult disponibilityResult = new EntityResultMapImpl();
 				  EntityResult clientResult = new EntityResultMapImpl();
 				  clientResult.addRecord(new HashMap<String, Object>() {{
@@ -415,33 +373,12 @@ public class BookingServiceTest {
 			@Test
 			@DisplayName("insert booking fails due client is not active")
 			void test_booking_insert_not_active_client() {
-				Map<String, Object> dataToInsert = new HashMap<>();
-				dataToInsert.put("bk_check_in", new Date(2022, 10, 03));
-				dataToInsert.put("bk_check_out", new Date(2022, 10, 22));
-				dataToInsert.put("bk_room", 2);
-				dataToInsert.put("bk_client", 2);
-				EntityResult insertResult = new EntityResultMapImpl();
-				insertResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_booking", 2);
-					}
-				});
+				Map<String, Object> dataToInsert = getDataToInsert();
+				EntityResult insertResult = getGenericBookingER();
 				EntityResult disponibilityResult = new EntityResultMapImpl();
 				EntityResult clientResult = new EntityResultMapImpl();
-				EntityResult activeClientResult = new EntityResultMapImpl();
-				activeClientResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_client", 2);
-						put("cl_leaving_date", new Date());
-
-					}
-				});
-				EntityResult roomResult = new EntityResultMapImpl();
-				roomResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_room", 2);
-					}
-				});
+				EntityResult activeClientResult = getClientResult();
+				EntityResult roomResult = getRoomResult();
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(activeClientResult);
 				EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
 				assertEquals("CLIENT_IS_NOT_ACTIVE", queryResult.getMessage());
@@ -452,33 +389,12 @@ public class BookingServiceTest {
 			@Test
 			@DisplayName("insert booking fails due room is occupied")
 			void test_booking_insert_occupied_room() {
-				Map<String, Object> dataToInsert = new HashMap<>();
-				dataToInsert.put("bk_check_in", new Date(2022, 10, 03));
-				dataToInsert.put("bk_check_out", new Date(2022, 10, 22));
-				dataToInsert.put("bk_room", 2);
-				dataToInsert.put("bk_client", 2);
-				EntityResult insertResult = new EntityResultMapImpl();
-				insertResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_booking", 2);
-					}
-				});
-				EntityResult disponibilityResult = new EntityResultMapImpl();
-				disponibilityResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_room", 2);
-						put("rm_number", 401);
-
-					}
-				});
+				Map<String, Object> dataToInsert = getDataToInsert();
+				EntityResult insertResult = getGenericBookingER();
+				EntityResult disponibilityResult = getRoomResult();
 				EntityResult clientResult = new EntityResultMapImpl();
 				EntityResult activeClientResult = new EntityResultMapImpl();
-				EntityResult roomResult = new EntityResultMapImpl();
-				roomResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_room", 2);
-					}
-				});
+				EntityResult roomResult = getRoomResult();
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(activeClientResult);
 				when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(disponibilityResult);
 				EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
@@ -501,28 +417,11 @@ public class BookingServiceTest {
 				dataToInsert.put("bk_check_out", checkOut);
 				dataToInsert.put("bk_room", 2);
 				dataToInsert.put("bk_client", 2);
-				EntityResult insertResult = new EntityResultMapImpl();
-				insertResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_booking", 2);
-					}
-				});
-				EntityResult disponibilityResult = new EntityResultMapImpl();
-				disponibilityResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_room", 2);
-						put("rm_number", 401);
-
-					}
-				});
+				EntityResult insertResult = getGenericBookingER();
+				EntityResult disponibilityResult = getRoomResult();
 				EntityResult clientResult = new EntityResultMapImpl();
 				EntityResult activeClientResult = new EntityResultMapImpl();
-				EntityResult roomResult = new EntityResultMapImpl();
-				roomResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_room", 2);
-					}
-				});
+				EntityResult roomResult = getRoomResult();
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(activeClientResult);
 				EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
 				assertEquals("CHECK_IN_MUST_BE_BEFORE_CHECK_OUT", queryResult.getMessage());
@@ -544,28 +443,11 @@ public class BookingServiceTest {
 				dataToInsert.put("bk_check_out", checkOut);
 				dataToInsert.put("bk_room", 2);
 				dataToInsert.put("bk_client", 2);
-				EntityResult insertResult = new EntityResultMapImpl();
-				insertResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_booking", 2);
-					}
-				});
-				EntityResult disponibilityResult = new EntityResultMapImpl();
-				disponibilityResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_room", 2);
-						put("rm_number", 401);
-
-					}
-				});
+				EntityResult insertResult = getGenericBookingER();
+				EntityResult disponibilityResult = getRoomResult();
 				EntityResult clientResult = new EntityResultMapImpl();
 				EntityResult activeClientResult = new EntityResultMapImpl();
-				EntityResult roomResult = new EntityResultMapImpl();
-				roomResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_room", 2);
-					}
-				});
+				EntityResult roomResult = getRoomResult();
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(activeClientResult);
 				EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
 				assertEquals("CHECK_IN_MUST_BE_EQUAL_OR_AFTER_CURRENT_DATE", queryResult.getMessage());
@@ -576,33 +458,16 @@ public class BookingServiceTest {
 			@Test
 			@DisplayName("insert booking with invalid dates")
 			void test_booking_insert_with_dates_with_invalid_dates() {
-				Map<String, Object> dataToInsert = new HashMap<>();
-				dataToInsert.put("bk_check_in", "invalid");
-				dataToInsert.put("bk_check_out", "invalid");
-				dataToInsert.put("bk_room", 2);
-				dataToInsert.put("bk_client", 2);
-				EntityResult insertResult = new EntityResultMapImpl();
-				insertResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_booking", 2);
-					}
-				});
-				EntityResult disponibilityResult = new EntityResultMapImpl();
-				disponibilityResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_room", 2);
-						put("rm_number", 401);
-
-					}
-				});
+				  Map<String,Object> dataToInsert = new HashMap<>();
+				  dataToInsert.put("bk_check_in", "invalid");
+				  dataToInsert.put("bk_check_out", "invalid");
+				  dataToInsert.put("bk_room", 2);
+				  dataToInsert.put("bk_client", 2);
+				EntityResult insertResult = getGenericBookingER();
+				EntityResult disponibilityResult = getRoomResult();
 				EntityResult clientResult = new EntityResultMapImpl();
 				EntityResult activeClientResult = new EntityResultMapImpl();
-				EntityResult roomResult = new EntityResultMapImpl();
-				roomResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_room", 2);
-					}
-				});
+				EntityResult roomResult = getRoomResult();
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(activeClientResult);
 				EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
 				assertEquals("CHECK_IN_AND_CHECK_OUT_MUST_BE_DATES", queryResult.getMessage());
@@ -630,27 +495,11 @@ public class BookingServiceTest {
 			@Test
 			@DisplayName("update booking succesfully")
 			void test_booking_update_success() {
-				Map<String, Object> attrMap = new HashMap<>();
-				Calendar calendar = Calendar.getInstance();
-				calendar.set(2023, 9, 10);
-				Date checkIn = calendar.getTime();
-				calendar.set(2023, 10, 11);
-				Date checkOut = calendar.getTime();
-				attrMap.put("bk_room", 2);
-				attrMap.put("bk_client", 2);
-				attrMap.put("bk_check_in", checkIn);
-				attrMap.put("bk_check_out", checkOut);
-				attrMap.put("bk_price", 100);
-				Map<String, Object> keyMap = new HashMap<>();
-				keyMap.put("id_booking", 50);
+				Map<String, Object> attrMap = getGenericAttrMap();
+				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult result = new EntityResultMapImpl();
 				result.setCode(0);
-				EntityResult queryResult = new EntityResultMapImpl();
-				queryResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_booking", 2);
-					}
-				});
+				EntityResult queryResult = getGenericBookingER();
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
 				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);
 				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
@@ -674,14 +523,8 @@ public class BookingServiceTest {
 			@DisplayName("update booking without body request")
 			void test_booking_update_empty_without_body_request() {
 				Map<String, Object> attrMap = new HashMap<>();
-				Map<String, Object> keyMap = new HashMap<>();
-				keyMap.put("id_booking", 50);
-				EntityResult bookingQuery = new EntityResultMapImpl();
-				bookingQuery.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_booking", 2);
-					}
-				});
+				Map<String, Object> keyMap = getBookingKeyMap();
+				EntityResult bookingQuery = getGenericBookingER();
 				EntityResult queryResult = new EntityResultMapImpl();
 				queryResult.setCode(1);
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
@@ -699,14 +542,8 @@ public class BookingServiceTest {
 			@Test
 			@DisplayName("delete booking succesfully")
 			void test_booking_delete_success() {
-				Map<String, Object> keyMap = new HashMap<>();
-				keyMap.put("id_booking", 50);
-				EntityResult bookingQuery = new EntityResultMapImpl();
-				bookingQuery.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_booking", 2);
-					}
-				});
+				Map<String, Object> keyMap = getBookingKeyMap();
+				EntityResult bookingQuery = getGenericBookingER();
 				EntityResult queryResult = new EntityResultMapImpl();
 				queryResult.setCode(0);
 				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
@@ -729,8 +566,7 @@ public class BookingServiceTest {
 			@Test
 			@DisplayName("delete booking with a booking that doesn´t exists")
 			void test_booking_delete_booking_not_exists() {
-				Map<String, Object> keyMap = new HashMap<>();
-				keyMap.put("id_booking", 50);
+				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult bookingQuery = new EntityResultMapImpl();
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
 				EntityResult deleteResult = bookingService.bookingDelete(keyMap);
@@ -752,8 +588,7 @@ public class BookingServiceTest {
 			attrMap.put("id_extras_hotel", 1);
 			attrMap.put("quantity", 2);
 
-			Map<String, Object> keyMap = new HashMap<>();
-			keyMap.put("id_booking", 2);
+			Map<String, Object> keyMap = getBookingKeyMap();
 
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("bk_extras_price"));
 			bookingResult.addRecord(new HashMap<String, Object>() {
@@ -809,8 +644,7 @@ public class BookingServiceTest {
 			attrMap.put("id_extras_hotel", 1);
 			attrMap.put("quantity", 2);
 
-			Map<String, Object> keyMap = new HashMap<>();
-			keyMap.put("id_booking", 2);
+			Map<String, Object> keyMap = getBookingKeyMap();
 
 			EntityResult bookingResult = new EntityResultMapImpl();
 
@@ -827,8 +661,7 @@ public class BookingServiceTest {
 			attrMap.put("id_extras_hotel", 1);
 			attrMap.put("quantity", "ss");
 
-			Map<String, Object> keyMap = new HashMap<>();
-			keyMap.put("id_booking", 2);
+			Map<String, Object> keyMap = getBookingKeyMap();
 
 			EntityResult bookingResult = new EntityResultMapImpl();
 			bookingResult.addRecord(new HashMap<String, Object>() {
@@ -856,31 +689,11 @@ public class BookingServiceTest {
 		@Test
 		@DisplayName("cancel an extra with succesfully")
 		void test_cancel_booking_extra() {
-			Map<String,Object> keyMap = new HashMap<String,Object>();
-			keyMap.put("id_booking", 2);
+			Map<String,Object> keyMap = getBookingKeyMap();
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking"));
-			Map<String,Object> attrMap = new HashMap<String,Object>();
-			attrMap.put("id_booking_extra", 2);
-			attrMap.put("quantity", 2);
-			List<String> columnsExtraBooking = new ArrayList<>();
-			columnsExtraBooking.add("id_booking_extra");
-			columnsExtraBooking.add("bke_booking");
-			columnsExtraBooking.add("bke_name");
-			columnsExtraBooking.add("bke_quantity");
-			columnsExtraBooking.add("bke_unit_price");
-			columnsExtraBooking.add("bke_total_price");
-			columnsExtraBooking.add("bke_enjoyed");
-			columnsExtraBooking.add("bk_extras_price");
-			EntityResult bookingExtraResult = new EntityResultMapImpl(columnsExtraBooking);
-			bookingExtraResult.addRecord(new HashMap<String, Object>() {{
-				put("id_bookingextra", 2);
-				put("bke_booking", 2); 
-				put("bke_name", "Niñero"); 
-				put("bke_quantity", 2); 
-				put("bke_unit_price", new BigDecimal(200)); 
-				put("bke_total_price", new BigDecimal(2000)); 
-				put("bke_enjoyed", 0); 
-				put("bk_extras_price", new BigDecimal(200)); }});
+			Map<String,Object> attrMap = getBKExtraAttrMap();
+			List<String> columnsExtraBooking = getExtraBookingColumns();
+			EntityResult bookingExtraResult = getBookingExtraResult();
 			EntityResult updateResult = new EntityResultMapImpl();
 			updateResult.setCode(0);
 			when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(updateResult);
@@ -895,22 +708,13 @@ public class BookingServiceTest {
 		@Test
 		@DisplayName("cancel an extra fail due not enough available extras to cancel")
 		void test_cancel_booking_fail_due_not_available() {
-			Map<String,Object> keyMap = new HashMap<String,Object>();
-			keyMap.put("id_booking", 2);
+			EntityResult updateResult = new EntityResultMapImpl();
+			updateResult.setCode(EntityResult.OPERATION_WRONG);
+			Map<String,Object> keyMap = getBookingKeyMap();
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking"));
-			Map<String,Object> attrMap = new HashMap<String,Object>();
-			attrMap.put("id_booking_extra", 2);
-			attrMap.put("quantity", 2);
-			List<String> columnsExtraBooking = new ArrayList<>();
-			columnsExtraBooking.add("id_booking_extra");
-			columnsExtraBooking.add("bke_booking");
-			columnsExtraBooking.add("bke_name");
-			columnsExtraBooking.add("bke_quantity");
-			columnsExtraBooking.add("bke_unit_price");
-			columnsExtraBooking.add("bke_total_price");
-			columnsExtraBooking.add("bke_enjoyed");
-			columnsExtraBooking.add("bk_extras_price");
-			EntityResult bookingExtraResult = new EntityResultMapImpl(columnsExtraBooking);
+			Map<String,Object> attrMap = getBKExtraAttrMap();
+			List<String> columnsExtraBooking = getExtraBookingColumns();
+			EntityResult bookingExtraResult = new EntityResultMapImpl();
 			bookingExtraResult.addRecord(new HashMap<String, Object>() {{
 				put("id_bookingextra", 2);
 				put("bke_booking", 2); 
@@ -930,13 +734,10 @@ public class BookingServiceTest {
 		@Test
 		@DisplayName("cancel an extra fail due booking not exists")
 		void test_cancel_booking_fail_due_booking_not_exists() {
-			Map<String,Object> keyMap = new HashMap<String,Object>();
-			keyMap.put("id_booking", 2);
+			Map<String,Object> keyMap = getBookingKeyMap();
 			EntityResult bookingResult = new EntityResultMapImpl();
-			Map<String,Object> attrMap = new HashMap<String,Object>();
-			attrMap.put("id_booking_extra", 2);
-			attrMap.put("quantity", 2);
-			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
+			Map<String,Object> attrMap = getBKExtraAttrMap();
+;			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("BOOKING_EXTRA_DOESN'T_EXISTS", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
@@ -946,8 +747,7 @@ public class BookingServiceTest {
 		@Test
 		@DisplayName("cancel an extra without quantity")
 		void test_cancel_booking_without_quantity() {
-			Map<String,Object> keyMap = new HashMap<String,Object>();
-			keyMap.put("id_booking", 2);
+			Map<String,Object> keyMap = getBookingKeyMap();
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking_extra"));
 			Map<String,Object> attrMap = new HashMap<String,Object>();
 			attrMap.put("id_booking_extra", 2);
@@ -972,7 +772,7 @@ public class BookingServiceTest {
 		@DisplayName("cancel an extra with empty request")
 		void test_cancel_booking_with_empty_request() {
 			Map<String,Object> keyMap = new HashMap<String,Object>();
-			keyMap.put("id_booking", 2);
+			keyMap.put("id_booking_extra", 2);
 			Map<String,Object> attrMap = new HashMap<String,Object>();
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking_extra"));
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
@@ -990,25 +790,8 @@ public class BookingServiceTest {
 			Map<String,Object> attrMap = new HashMap<String,Object>();
 			attrMap.put("id_booking_extra", 2);
 			attrMap.put("quantity", "sss");
-			List<String> columnsExtraBooking = new ArrayList<>();
-			columnsExtraBooking.add("id_booking_extra");
-			columnsExtraBooking.add("bke_booking");
-			columnsExtraBooking.add("bke_name");
-			columnsExtraBooking.add("bke_quantity");
-			columnsExtraBooking.add("bke_unit_price");
-			columnsExtraBooking.add("bke_total_price");
-			columnsExtraBooking.add("bke_enjoyed");
-			columnsExtraBooking.add("bk_extras_price");
-			EntityResult bookingExtraResult = new EntityResultMapImpl(columnsExtraBooking);
-			bookingExtraResult.addRecord(new HashMap<String, Object>() {{
-				put("id_bookingextra", 2);
-				put("bke_booking", 2); 
-				put("bke_name", "Niñero"); 
-				put("bke_quantity", 2); 
-				put("bke_unit_price", new BigDecimal(200)); 
-				put("bke_total_price", new BigDecimal(2000)); 
-				put("bke_enjoyed", 0); 
-				put("bk_extras_price", new BigDecimal(200)); }});
+			List<String> columnsExtraBooking = getExtraBookingColumns();
+			EntityResult bookingExtraResult = getBookingExtraResult();
 			EntityResult updateResult = new EntityResultMapImpl();
 			updateResult.setCode(0);
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
@@ -1030,19 +813,10 @@ public class BookingServiceTest {
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
     	Date startDate = formatter.parse("2022-30-08");
     	Date endDate = formatter.parse("2022-15-09");
-    	Map<String,Object> filter = new HashMap<>();
-    	filter.put("bk_check_in", "2022-30-08");
-    	filter.put("bk_check_out", "2022-15-09");
-    	filter.put("id_hotel", 2);
+    	Map<String,Object> filter = getAvRoomsFilter();
     	List<String> roomColumns = new ArrayList<>();
     	roomColumns.add("rm_number");
-    	EntityResult availableRooms = new EntityResultMapImpl(roomColumns);
-    	availableRooms.addRecord(new HashMap<String, Object>() {{
-	        put("id_hotel", 2);
-	        put("rm_number",401);
-	        put("htl_name","FN As Pontes");
-	        put("id_booking",38);
-	        }});
+    	EntityResult availableRooms = getAvRoomsER();
     	Map<String,Object> hotelFilter = new HashMap<>();
     	hotelFilter.put("id_hotel", 2);
 		List<String> columns = new ArrayList<>();
@@ -1084,13 +858,7 @@ public class BookingServiceTest {
         	filter.put("mx_price", 300);
         	List<String> roomColumns = new ArrayList<>();
         	roomColumns.add("rm_number");
-        	EntityResult availableRooms = new EntityResultMapImpl(roomColumns);
-        	availableRooms.addRecord(new HashMap<String, Object>() {{
-        		put("id_hotel", 2);
-        		put("rm_number",401);
-        		put("htl_name","FN As Pontes");
-        		put("id_booking",38);
-        	}});
+        	EntityResult availableRooms = getAvRoomsER();
         	Map<String,Object> hotelFilter = new HashMap<>();
         	hotelFilter.put("id_hotel", 2);
         	List<String> columns = new ArrayList<>();
@@ -1133,13 +901,7 @@ public class BookingServiceTest {
         	filter.put("mx_price","sss");
         	List<String> roomColumns = new ArrayList<>();
         	roomColumns.add("rm_number");
-        	EntityResult availableRooms = new EntityResultMapImpl(roomColumns);
-        	availableRooms.addRecord(new HashMap<String, Object>() {{
-        		put("id_hotel", 2);
-        		put("rm_number",401);
-        		put("htl_name","FN As Pontes");
-        		put("id_booking",38);
-        	}});
+        	EntityResult availableRooms = getAvRoomsER();
         	Map<String,Object> hotelFilter = new HashMap<>();
         	hotelFilter.put("id_hotel", 2);
         	List<String> columns = new ArrayList<>();
@@ -1163,7 +925,7 @@ public class BookingServiceTest {
         	
         }
         @Test
-        @DisplayName("Obtain all avaliable rooms for a given hotel with minimun an maximun price as strings")
+        @DisplayName("Obtain all avaliable rooms for a given hotel with invalid minimun an maximun price")
         void test_availableroomsQuery_per_price_fail_due_max_price_lower_min_price() throws ParseException {
         	//given
         	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
@@ -1177,13 +939,7 @@ public class BookingServiceTest {
         	filter.put("max_price",100);
         	List<String> roomColumns = new ArrayList<>();
         	roomColumns.add("rm_number");
-        	EntityResult availableRooms = new EntityResultMapImpl(roomColumns);
-        	availableRooms.addRecord(new HashMap<String, Object>() {{
-        		put("id_hotel", 2);
-        		put("rm_number",401);
-        		put("htl_name","FN As Pontes");
-        		put("id_booking",38);
-        	}});
+        	EntityResult availableRooms = getAvRoomsER();
         	Map<String,Object> hotelFilter = new HashMap<>();
         	hotelFilter.put("id_hotel", 2);
         	List<String> columns = new ArrayList<>();

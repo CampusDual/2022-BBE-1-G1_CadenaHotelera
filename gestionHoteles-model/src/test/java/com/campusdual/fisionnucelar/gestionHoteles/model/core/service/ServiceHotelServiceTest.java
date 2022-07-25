@@ -318,7 +318,7 @@ public class ServiceHotelServiceTest {
 			Map<String, Object> dataToUpdate = new HashMap<>();
 			EntityResult updateResult = serviceHotelService.servicehotelUpdate(dataToUpdate, filter);
 			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
-			assertEquals("ANY_FIELDS_REQUIRED", updateResult.getMessage());
+			assertEquals("EMPTY_REQUEST", updateResult.getMessage());
 		}
 
 		@Test

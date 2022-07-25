@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -19,6 +21,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyReq
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
@@ -40,10 +43,14 @@ public class ExtraService implements IExtraService{
 	private DefaultOntimizeDaoHelper daoHelper;
 	
 	private Control control;
+	private Validator dataValidator;
+	private Logger log;
 
 	public ExtraService() {
 		super();
 		this.control = new Control();
+		this.dataValidator=new Validator();
+		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 	/**
      * 
@@ -95,7 +102,7 @@ public class ExtraService implements IExtraService{
 		}catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "EXTRA_NAME_ALREADY_EXISTS");
 		}catch (DataIntegrityViolationException e) {
-			control.setErrorMessage(insertResult, "EXTRA_NAME_REQUIRED");
+			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (AllFieldsRequiredException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
@@ -118,7 +125,7 @@ public class ExtraService implements IExtraService{
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfDataIsEmpty(attrMap);
+			dataValidator.checkIfMapIsEmpty(attrMap);
 			checkIfExtraExists(keyMap);
 			updateResult = this.daoHelper.update(this.extraDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
@@ -153,19 +160,4 @@ public class ExtraService implements IExtraService{
 		return existingExtras.isEmpty();
 	}
 	
-	/**
-	   * 
-	   * In update, check all fields are introduced
-	   * 
-	   * @since 09/07/2022
-	   * @param The field to introduce
-	   * @return If fields don´t introduce, it catch a exception with a own message
-	   * @exception EmptyRequestException when it doesn´t introduce any field 
-	   */
-
-	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.get("ex_name") == null && attrMap.get("ex_description") == null) {
-			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
-		}
-	}
 }

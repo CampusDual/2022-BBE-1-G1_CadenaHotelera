@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.aspectj.lang.reflect.CatchClauseSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,6 +27,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidE
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
@@ -52,12 +55,16 @@ public class ClientService implements IClientService {
 
 	@Autowired
 	private IBookingService bookingService;
-
+	
+	private Logger log;
 	private Control control;
+	Validator dataValidator;
 
 	public ClientService() {
 		super();
 		this.control = new Control();
+		this.dataValidator=new Validator();
+		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
 	/**
@@ -108,7 +115,7 @@ public class ClientService implements IClientService {
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "EMAIL_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
-			control.setErrorMessage(insertResult, "DNI_NAME_AND_EMAIL_REQUIRED");
+			control.setMessageFromException(insertResult, e.getMessage());
 		}
 
 		return insertResult;
@@ -129,7 +136,7 @@ public class ClientService implements IClientService {
 		
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfDataIsEmpty(attrMap);
+			dataValidator.checkIfMapIsEmpty(attrMap);
 			checkIfClientExists(keyMap);
 			attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			
@@ -200,11 +207,6 @@ public class ClientService implements IClientService {
 		return existingClients.isEmpty();
 	}
 
-	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.isEmpty()) {
-			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
-		}
-	}
 
 	/**
 	 * 

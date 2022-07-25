@@ -1,6 +1,8 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.util.List;
+
+
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,8 @@ import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * This class listens the incoming requests related with the bookingExtra table
  * 
@@ -29,8 +33,7 @@ import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 @Service("BookingExtraService")
 @Lazy
 public class BookingExtraService implements IBookingExtraService{
-
-	
+	private Logger log;
 	@Autowired
 	private BookingExtraDao bookingExtraDao;
 
@@ -45,6 +48,7 @@ public class BookingExtraService implements IBookingExtraService{
 	public BookingExtraService() {
 		super();
 		this.control = new Control();
+		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
 	
@@ -69,6 +73,7 @@ public class BookingExtraService implements IBookingExtraService{
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
 			searchResult = this.daoHelper.query(this.bookingExtraDao, keyMap, attrList);
+			
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
 			control.setErrorMessage(searchResult, e.getMessage());
@@ -104,6 +109,7 @@ public class BookingExtraService implements IBookingExtraService{
 				throw new EmptyRequestException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCESSFUL_INSERTION");
 		}  catch (DataIntegrityViolationException e) {
+			log.error("unable to save booking extra", e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (EmptyRequestException e) {
 			control.setErrorMessage(insertResult, e.getMessage());

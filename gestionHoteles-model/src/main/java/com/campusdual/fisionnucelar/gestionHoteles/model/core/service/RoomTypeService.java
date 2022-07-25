@@ -5,6 +5,8 @@ import java.util.List;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -19,6 +21,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyReq
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
@@ -41,10 +44,15 @@ public class RoomTypeService implements IRoomTypeService {
 	private DefaultOntimizeDaoHelper daoHelper;
 
 	private Control control;
+	private Validator validator;
+	private Logger log;
 
 	public RoomTypeService() {
 		super();
 		this.control = new Control();
+		this.validator=new Validator();
+		this.log = LoggerFactory.getLogger(this.getClass());
+		
 	}
 
 	/**
@@ -101,7 +109,7 @@ public class RoomTypeService implements IRoomTypeService {
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "ROOM_TYPE_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
-			control.setErrorMessage(insertResult, "ALL_FIELDS_REQUIRED");
+			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (AllFieldsRequiredException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
@@ -127,7 +135,7 @@ public class RoomTypeService implements IRoomTypeService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfDataIsEmpty(attrMap);
+			validator.checkIfMapIsEmpty(attrMap);
 			checkIfRoomTypeExists(keyMap);
 		
 			updateResult = this.daoHelper.update(this.roomTypeDao, attrMap, keyMap);
@@ -141,7 +149,8 @@ public class RoomTypeService implements IRoomTypeService {
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (EmptyRequestException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
-		}
+		}catch (DataIntegrityViolationException e) {
+			control.setMessageFromException(updateResult, e.getMessage());}
 		return updateResult;
 	}
 
@@ -168,21 +177,5 @@ public class RoomTypeService implements IRoomTypeService {
 	}
 
 		
-	
-	/**
-	   * 
-	   * In update, check all fields are introduced
-	   * 
-	   * @since 27/06/2022
-	   * @param The field to introduce
-	   * @return If fields don´t introduce, it catch a exception with a own message
-	   * @exception EmptyRequestException when it doesn´t introduce any field 
-	   */
-	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.get("rmt_name") == null && attrMap.get("rmt_capacity") == null
-				&& attrMap.get("rmt_price") == null) {
-			throw new EmptyRequestException("EMPTY_REQUEST");
-		}
-	}
 
 }

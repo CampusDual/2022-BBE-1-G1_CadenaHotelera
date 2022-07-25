@@ -241,7 +241,7 @@ public class ExtraHotelServiceTest {
 			Map<String, Object> dataToInsert = new HashMap<>();
 			EntityResult entityResult = extraHotelService.extrahotelInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			assertEquals("ANY_FIELDS_REQUIRED", entityResult.getMessage());
+			assertEquals("EMPTY_REQUEST", entityResult.getMessage());
 		}
 
 	
@@ -319,7 +319,7 @@ public class ExtraHotelServiceTest {
 			Map<String, Object> dataToUpdate = new HashMap<>();
 			EntityResult updateResult = extraHotelService.extrahotelUpdate(dataToUpdate, filter);
 			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
-			assertEquals("ANY_FIELDS_REQUIRED", updateResult.getMessage());
+			assertEquals("EMPTY_REQUEST", updateResult.getMessage());
 		}
 
 		@Test

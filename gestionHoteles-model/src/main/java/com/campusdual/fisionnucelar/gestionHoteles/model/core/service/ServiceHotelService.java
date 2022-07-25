@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,6 +26,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.Incorrec
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
@@ -46,10 +49,14 @@ public class ServiceHotelService implements IServicesHotelService {
 	private DefaultOntimizeDaoHelper daoHelper;
 
 	private Control control;
+	private Validator validator;
+	private Logger log;
 
 	public ServiceHotelService() {
 		super();
 		this.control = new Control();
+		this.validator = new Validator();
+		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
 	/**
@@ -151,7 +158,7 @@ public class ServiceHotelService implements IServicesHotelService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfDataIsEmpty(attrMap);
+			validator.checkIfMapIsEmpty(attrMap);
 			checkIfServiceHotelExists(keyMap);
 			if (attrMap.containsKey("svh_active"))
 				checkCorrectBoolean(attrMap);
@@ -199,20 +206,6 @@ public class ServiceHotelService implements IServicesHotelService {
 	private void checkCorrectBoolean(Map<String, Object> attrMap) throws IncorrectBooleanException {
 		if ((int) attrMap.get("svh_active") > 1 || (int) attrMap.get("svh_active") < 0) {
 			throw new IncorrectBooleanException("SVH_ACTIVE_MUST_BE_1_OR_0");
-		}
-	}
-
-	
-	/**
-	 * Throws an exception if the params introduce by the users are empty
-	 * 
-	 * @param attrMap The params of the user
-	 * @exception EmptyRequestException if the params are empty
-	 */
-
-	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.isEmpty()) {
-			throw new EmptyRequestException("ANY_FIELDS_REQUIRED");
 		}
 	}
 

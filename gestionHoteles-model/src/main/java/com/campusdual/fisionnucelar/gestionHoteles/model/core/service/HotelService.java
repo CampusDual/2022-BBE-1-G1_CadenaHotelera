@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -21,6 +23,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidR
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.db.SQLStatementBuilder.SQLStatement;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -48,10 +51,14 @@ public class HotelService implements IHotelService {
 	private DefaultOntimizeDaoHelper daoHelper;
 
 	private Control control;
+	private Validator dataValidator;
+	private Logger log;
 
 	public HotelService() {
 		super();
 		this.control = new Control();
+		this.dataValidator=new Validator();
+		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
 	/**
@@ -175,7 +182,7 @@ public class HotelService implements IHotelService {
 		} catch (DuplicateKeyException e) {
 			control.setErrorMessage(insertResult, "HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
-			control.setErrorMessage(insertResult, "HOTEL_NAME_AND_EMAIL_REQUIRED");
+			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (AllFieldsRequiredException e) {
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
@@ -196,7 +203,7 @@ public class HotelService implements IHotelService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfDataIsEmpty(attrMap);
+			dataValidator.checkIfMapIsEmpty(attrMap);
 			checkIfHotelExists(keyMap);
 			if (attrMap.get("htl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
@@ -242,13 +249,6 @@ public class HotelService implements IHotelService {
 //		result=EntityResultTools.dofilter(result, servicesFilter);
 
 		return result;
-	}
-
-	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.get("htl_address") == null && attrMap.get("htl_name") == null && attrMap.get("htl_email") == null
-				&& attrMap.get("htl_phone") == null) {
-			throw new EmptyRequestException("EMPTY_REQUEST");
-		}
 	}
 
 }

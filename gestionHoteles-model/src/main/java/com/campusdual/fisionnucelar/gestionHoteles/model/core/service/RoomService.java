@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -21,6 +23,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyReq
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
@@ -36,12 +39,9 @@ import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 @Service("RoomService")
 @Lazy
 public class RoomService implements IRoomService {
-
-	public RoomService() {
-		super();
-		this.control = new Control();
-	}
-
+	
+	private Logger log;
+	
 	private Control control;
 
 	@Autowired
@@ -55,6 +55,16 @@ public class RoomService implements IRoomService {
 
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
+	Validator validator;
+	
+	public RoomService() {
+		super();
+		this.control = new Control();
+		this.validator=new Validator();
+		this.log = LoggerFactory.getLogger(this.getClass());
+	}
+
+
 
 	/**
 	 * 
@@ -134,7 +144,7 @@ public class RoomService implements IRoomService {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
 			checkIfRoomExists(keyMap);
-			checkIfDataIsEmpty(attrMap);
+			validator.checkIfMapIsEmpty(attrMap);
 			if (attrMap.containsKey("rm_hotel")) {
 				checkIfHotelExists(attrMap);
 			}
@@ -187,11 +197,5 @@ public class RoomService implements IRoomService {
 		return existingRoomType.isEmpty();
 	}
 
-	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.get("rm_room_type") == null && attrMap.get("rm_hotel") == null
-				&& attrMap.get("rm_number") == null) {
-			throw new EmptyRequestException("EMPTY_REQUEST");
-		}
-	}
 
 }

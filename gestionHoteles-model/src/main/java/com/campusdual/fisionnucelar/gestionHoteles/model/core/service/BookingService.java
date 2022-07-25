@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.math.BigDecimal;
+
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -38,6 +39,8 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotEnoug
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.OccupiedRoomException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.db.SQLStatementBuilder;
 import com.ontimize.jee.common.db.SQLStatementBuilder.BasicExpression;
 import com.ontimize.jee.common.db.SQLStatementBuilder.BasicField;
@@ -53,6 +56,8 @@ import com.ontimize.jee.common.tools.ertools.IPartialAggregateValue;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 import com.ontimize.jee.server.dao.IOntimizeDaoSupport;
 import com.ontimize.jee.server.dao.ISQLQueryAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class builds the operations over the bookings table
@@ -70,7 +75,7 @@ public class BookingService implements IBookingService {
 	private BookingDao bookingDao;
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
-
+	private Logger log;
 	private Control control;
 
 	@Autowired
@@ -87,10 +92,16 @@ public class BookingService implements IBookingService {
 
 	@Autowired
 	private ExtraHotelDao extraHotelDao;
+	
+	Validator validator;
+	Validator dataValidator;
 
 	public BookingService() {
 		super();
 		this.control = new Control();
+		this.validator=new Validator();
+		this.dataValidator=new Validator();
+		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
 	/**
@@ -148,6 +159,7 @@ public class BookingService implements IBookingService {
 		} catch (NoResultsException e) {
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve bookings by client. Request : {} {}",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -223,8 +235,10 @@ public class BookingService implements IBookingService {
 			resultsByHotel = searchAvailableRooms(keyMap, attrList);	
 			
 		} catch (AllFieldsRequiredException | InvalidDateException | RecordNotFoundException|InvalidRequestException|ParseException e) {
+			log.error("unable to retrieve available rooms. Request : {} {}",keyMap,attrList, e);
 			control.setErrorMessage(resultsByHotel, e.getMessage());
 		}  catch (BadSqlGrammarException|ClassCastException e) {
+			log.error("unable to retrieve available rooms. Request : {} {}",keyMap,attrList, e);
 			control.setErrorMessage(resultsByHotel, "INCORRECT_REQUEST");
 		}
 		return resultsByHotel;
@@ -270,8 +284,10 @@ public class BookingService implements IBookingService {
 			result = daoHelper.query(bookingDao, keyMap, attrList, "TODAY_CHECKOUTS");
 			control.checkResults(result);
 		} catch (RecordNotFoundException|EmptyRequestException|NoResultsException e) {
+			log.error("unable to retrieve today checkouts. Request : {} {}",keyMap,attrList, e);
 			control.setErrorMessage(result, e.getMessage());
 		}  catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve today checkouts. Request : {} {}",keyMap,attrList, e);
 			control.setErrorMessage(result, "INCORRECT_REQUEST");		
 		}
 		return result;
@@ -491,14 +507,17 @@ public class BookingService implements IBookingService {
 				throw new AllFieldsRequiredException("FIELDS_MUST_BE_PROVIDED");
 			}
 		} catch (DuplicateKeyException e) {
+			log.error("unable to save booking. Request : {}",attrMap, e);
 			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
+			log.error("unable to save booking. Request : {}",attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (ClassCastException e) {
-			e.printStackTrace();
+			log.error("unable to save booking. Request : {}",attrMap, e);
 			control.setMessageFromException(insertResult, "CHECK_IN_AND_CHECK_OUT_MUST_BE_DATES");
 		} catch (AllFieldsRequiredException | RecordNotFoundException | OccupiedRoomException | ParseException
 				| InvalidDateException | EmptyRequestException e) {
+			log.error("unable to save booking. Request : {}",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
@@ -563,14 +582,17 @@ public class BookingService implements IBookingService {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
 			checkIfBookingExists(keyMap);
-			checkDataUpdateExtraPrice(attrMap);
+			dataValidator.checkDataUpdateExtraPrice(attrMap);
 			updateResult = daoHelper.update(bookingDao, calculateAndInsertExtra(attrMap, keyMap), keyMap);
 			updateResult.setMessage("SUCCESSFULLY_ADDED");
 		} catch (RecordNotFoundException | EmptyRequestException e) {
+			log.error("unable to add an extra to a booking. Request : {} {}",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (ClassCastException | BadSqlGrammarException e) {
+			log.error("unable to add an extra to a booking. Request : {} {}",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "INCORRECT_REQUEST");
 		} catch (DataIntegrityViolationException e) {
+			log.error("unable to add an extra to a booking. Request : {} {}",keyMap,attrMap, e);
 			control.setMessageFromException(updateResult, e.getMessage());
 		}
 
@@ -607,7 +629,7 @@ public class BookingService implements IBookingService {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
 			checkIfExtraBookingExists(keyMap);
-			checkIfDataIsEmpty(attrMap);
+			dataValidator.checkIfMapIsEmpty(attrMap); 
 			if(attrMap.get("quantity")==null) {
 				throw new EmptyRequestException("QUANTITY_FIELD_REQUIRED");
 			}
@@ -655,7 +677,7 @@ public class BookingService implements IBookingService {
 		} catch (RecordNotFoundException |EmptyRequestException|NotEnoughExtrasException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (ClassCastException | BadSqlGrammarException e) {
-			control.setErrorMessage(updateResult, "INCORRECT_REQUEST");
+			log.error("unable to cancel an extra to a booking. Request : {} {}",keyMap,attrMap, e);
 		} 
 
 		return updateResult;
@@ -747,8 +769,10 @@ public class BookingService implements IBookingService {
 				updateResult.setMessage("SUCCESSFUL_UPDATE");
 			}
 		} catch (RecordNotFoundException e) {
+			log.error("unable to update a booking. Request : {} {}",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (DataIntegrityViolationException e) {
+			log.error("unable to update a booking. Request : {} {}",keyMap,attrMap, e);
 			control.setMessageFromException(updateResult, e.getMessage());
 		}
 		return updateResult;
@@ -821,20 +845,6 @@ public class BookingService implements IBookingService {
 			throw new OccupiedRoomException("OCCUPIED_ROOM");
 		}
 
-	}
-
-	/**
-	 * Checks if the user is providing id_extras_hotel and quantity parameters to
-	 * add an extra to the booking
-	 * 
-	 * @param attrMap id_extras_hotel and quantity
-	 * @exception EmptyRequestException sends a message to the user if he is not
-	 *                                  providing the two required parameters
-	 */
-	private void checkDataUpdateExtraPrice(Map<String, Object> attrMap) {
-		if (attrMap.get("id_extras_hotel") == null || attrMap.get("quantity") == null) {
-			throw new EmptyRequestException("ID_EXTRAS_AND_QUANTITY_REQUIRED");
-		}
 	}
 
 	/**
@@ -959,47 +969,8 @@ public class BookingService implements IBookingService {
 		return existingRoom.isEmpty();
 	}
 
-	/**
-	 * Checks if the fields neccesary to make requests at some methods in this
-	 * service has been provided by the user
-	 * 
-	 * @param attrMap the fields to be checked EmptyRequestException sends a message
-	 *                to the user if the request provided is empty
-	 */
 
-	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.isEmpty()) {
-			throw new EmptyRequestException("EMPTY_REQUEST");
-		}
-	}
 
-	/**
-	 * Checks if rm_hotel field provided by the user is empty
-	 * 
-	 * @param attrMap the foregign key rm_hotel
-	 * @exception EmptyRequestException sends a message to the user if he is not
-	 *                                  providing rm_hotel field for make the
-	 *                                  request
-	 */
-	private void checkHotelIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.get("rm_hotel") == null) {
-			throw new EmptyRequestException("HOTEL_NEEDED");
-		}
-	}
-
-	/**
-	 * checks if the given EntityResults is empty
-	 * 
-	 * @param result an EntityResult
-	 * @exception RecordNotFoundException sends a message to the user if the
-	 *                                    resultant query has not results
-	 */
-	private void checkIfEmpty(EntityResult result) {
-		if (result.isEmpty()) {
-			throw new RecordNotFoundException("WITHOUT_RESULTS");
-		}
-
-	}
 
 	private void checkIfHotelExists(Map<String, Object> attrMap) {
 		List<String> attrList = new ArrayList<>();

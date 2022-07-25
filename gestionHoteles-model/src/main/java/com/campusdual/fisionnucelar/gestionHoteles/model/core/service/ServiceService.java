@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -19,6 +21,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyReq
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
@@ -41,10 +44,14 @@ public class ServiceService implements IServiceService {
 	private DefaultOntimizeDaoHelper daoHelper;
 
 	private Control control;
+	private Validator validator;
+	private Logger log;
 
 	public ServiceService() {
 		super();
+		this.validator=new Validator();
 		this.control = new Control();
+		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
 	/**
@@ -127,7 +134,7 @@ public class ServiceService implements IServiceService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfDataIsEmpty(attrMap);
+			validator.checkIfMapIsEmpty(attrMap);
 			checkIfServiceExists(keyMap);
 			updateResult = this.daoHelper.update(this.serviceDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
@@ -157,18 +164,5 @@ public class ServiceService implements IServiceService {
 		if (existingServices.isEmpty())
 			throw new RecordNotFoundException("ERROR_SERVICE_NOT_FOUND");
 
-	}
-
-	/**
-	 * Throws an exception if the params introduce by the users are empty
-	 * 
-	 * @param attrMap The params of the user
-	 * @exception EmptyRequestException if the params are empty
-	 */
-
-	private void checkIfDataIsEmpty(Map<String, Object> attrMap) {
-		if (attrMap.isEmpty()) {
-			throw new EmptyRequestException("EMPTY_REQUEST");
-		}
 	}
 }
