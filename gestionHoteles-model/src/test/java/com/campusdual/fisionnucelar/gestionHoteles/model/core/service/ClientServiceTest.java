@@ -1,16 +1,27 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ClientTestData.getAllExtraData;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ClientTestData.getSpecificClientData;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ClientTestData.getGenericDataToInsertOrUpdate;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ClientTestData.getGenericInsertResult;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ClientTestData.getGenericFilter;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ClientTestData.getGenericAttrList;
+import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ClientTestData.getGenericQueryResult;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -18,14 +29,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.BadSqlGrammarException;
 
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
@@ -46,27 +61,117 @@ public class ClientServiceTest {
 	}
 
 	@Nested
+	@DisplayName("Test for Clients queries")
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+
+	public class ServiceQuery {
+
+		@Test
+		@DisplayName("Obtain all data from Extras table")
+		void when_queryOnlyWithAllColumns_return_allExtraData() {
+			doReturn(getAllExtraData()).when(daoHelper).query(any(), anyMap(), anyList());
+			EntityResult entityResult = clientService.clientQuery(new HashMap<>(), new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
+			assertEquals(3, entityResult.calculateRecordNumber());
+			verify(daoHelper).query(any(), anyMap(), anyList());
+		}
+	    @Test
+        @DisplayName("Query without results")
+        void query_without_results() {
+        	EntityResult queryResult = new EntityResultMapImpl();
+        	doReturn(queryResult).when(daoHelper).query(any(), anyMap(), anyList());
+        	EntityResult entityResult = clientService.clientQuery(new HashMap<>(), new ArrayList<>());
+        	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+        	assertEquals("NO_RESULTS", entityResult.getMessage());
+        	verify(daoHelper).query(any(), anyMap(), anyList());
+        }
+	    @Test
+        @DisplayName("Fail when sends a string in a number field")
+        void when_send_string_as_id_throws_exception() {
+        	Map<String,Object> filter = new HashMap<>();
+        	filter.put("id_client", "string");
+        	List<String> columns =new ArrayList<>();
+        	columns.add("ex_name");
+        	columns.add("ex_description");
+        	when(daoHelper.query(clientDao, filter, columns)).thenThrow(BadSqlGrammarException.class);
+        	EntityResult entityResult = clientService.clientQuery(filter, columns);
+        	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+        	assertEquals("INCORRECT_REQUEST", entityResult.getMessage());
+        	verify(daoHelper).query(any(), anyMap(), anyList());
+        }
+		
+	    @Test
+        @DisplayName("Obtain all data columns from Clients table when ID is -> 2")
+        void when_queryAllColumns_return_specificData() {
+            HashMap<String, Object> keyMap = new HashMap<>() {{
+                put("ID_CLIENT", 2);
+            }};
+            List<String> attrList = Arrays.asList("ID_CLIENT", "CL_NAME","CL_EMAIL","CL_NIF");
+            doReturn(getSpecificClientData(keyMap, attrList)).when(daoHelper).query(any(), anyMap(), anyList());
+            EntityResult entityResult = clientService.clientQuery(new HashMap<>(), new ArrayList<>());
+            assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
+            assertEquals(1, entityResult.calculateRecordNumber());
+            assertEquals(2, entityResult.getRecordValues(0).get(clientDao.ATTR_ID));
+            verify(daoHelper).query(any(), anyMap(), anyList());
+        }
+	    
+        @Test
+        @DisplayName("Obtain all data columns from Clients table when ID not exist")
+        void when_queryAllColumnsNotExisting_return_empty() {
+            HashMap<String, Object> keyMap = new HashMap<>() {{
+                put("ID_CLIENT", 5);
+            }};
+            List<String> attrList = Arrays.asList("ID_CLIENT", "CL_NAME","CL_EMAIL","CL_NIF");
+            when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificClientData(keyMap, attrList));
+            EntityResult entityResult = clientService.clientQuery(new HashMap<>(), new ArrayList<>());
+            assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
+            assertEquals(0, entityResult.calculateRecordNumber());
+            verify(daoHelper).query(any(), anyMap(), anyList());
+        }
+	    
+        @ParameterizedTest(name = "Obtain data with ID -> {0}")
+        @MethodSource("randomIDGenerator")
+        @DisplayName("Obtain all data columns from Extra table when ID is random")
+        void when_queryAllColumnsWithRandomValue_return_specificData(int random) {
+            HashMap<String, Object> keyMap = new HashMap<>() {{
+                put("ID_CLIENT", random);
+            }};
+            List<String> attrList = Arrays.asList("ID_CLIENT", "CL_NAME","CL_EMAIL","CL_NIF");
+            when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificClientData(keyMap, attrList));
+            EntityResult entityResult = clientService.clientQuery(new HashMap<>(), new ArrayList<>());
+            assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
+            assertEquals(1, entityResult.calculateRecordNumber());
+            assertEquals(random, entityResult.getRecordValues(0).get(clientDao.ATTR_ID));
+            verify(daoHelper).query(any(), anyMap(), anyList());
+        }
+
+
+        List<Integer> randomIDGenerator() {
+            List<Integer> list = new ArrayList<>();
+            for (int i = 0; i < 5; i++) {
+                list.add(ThreadLocalRandom.current().nextInt(0, 3));
+            }
+            return list;
+        }
+	    
+	}
+
+	@Nested
 	@DisplayName("Tests for Client inserts")
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	public class Client_Insert {
 		@Test
 		@DisplayName("Insert a client successfully")
 		void hotel_insert_success() {
-			Map<String, Object> dataToInsert = new HashMap<>();
-			dataToInsert.put("cl_nif", "98766789I");
-			dataToInsert.put("cl_email", "alfredoperez@outlook.com");
-			dataToInsert.put("cl_name", "Alfredo Pérez");
-			dataToInsert.put("cl_phone", "985446789");
-			EntityResult er = new EntityResultMapImpl(Arrays.asList("ID_CLIENT"));
-			er.addRecord(new HashMap<String, Object>() {{put("ID_CLIENT", 2);}});
-			er.setCode(EntityResult.OPERATION_SUCCESSFUL);
+			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
+			EntityResult er = getGenericInsertResult();
 			HashMap<String, Object> keyMap = new HashMap<>();
 			keyMap.put("ID_CLIENT", 2);
 			when(daoHelper.insert(clientDao, dataToInsert)).thenReturn(er);
+
 			EntityResult entityResult = clientService.clientInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			int recordIndex = entityResult.getRecordIndex(keyMap);
-			//assertEquals("INSERT_SUCCESSFULLY", entityResult.getMessage());
 			assertEquals(2, entityResult.getRecordValues(recordIndex).get("ID_CLIENT"));
 			verify(daoHelper).insert(clientDao, dataToInsert);
 
@@ -75,20 +180,15 @@ public class ClientServiceTest {
 		@Test
 		@DisplayName("Fail trying to insert duplicated email")
 		void hotel_insert_duplicated_mail() {
+			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
 			Map<String, Object> attrMap = new HashMap<>();
-			Map<String, Object> dataToInsert = new HashMap<>();
-			dataToInsert.put("cl_nif", "98766789I");
-			dataToInsert.put("cl_email", "alfredoperez@outlook.com");
-			dataToInsert.put("cl_name", "Alfredo Pérez");
-			dataToInsert.put("cl_phone", "985446789");
 			attrMap.put("0", dataToInsert);
-			List<String> columnList = Arrays.asList("ID_CLIENT");
-			EntityResult insertResult = new EntityResultMapImpl(columnList);
-			insertResult.addRecord(new HashMap<String, Object>() {{put("ID_CLIENT", 2);}});
+			// List<String> columnList = Arrays.asList("ID_CLIENT");
+			EntityResult insertResult = getGenericInsertResult();
+
 			when(daoHelper.insert(clientDao, dataToInsert)).thenReturn(insertResult);
 			EntityResult resultSuccess = clientService.clientInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, resultSuccess.getCode());
-			//assertEquals("SUCESSFUL_INSERTION", resultSuccess.getMessage());
 			when(daoHelper.insert(clientDao, dataToInsert)).thenThrow(DuplicateKeyException.class);
 			EntityResult resultFail = clientService.clientInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_WRONG, resultFail.getCode());
@@ -96,30 +196,75 @@ public class ClientServiceTest {
 			verify(daoHelper, times(2)).insert(any(), anyMap());
 		}
 
+
         @Test
         @DisplayName("Fail trying to insert duplicated email")
         void client_insert_duplicated_mail() {
         	Map<String, Object> dataToInsert = new HashMap<>();
 			dataToInsert.put("cl_nif", "98766789I");
 			dataToInsert.put("cl_email", "alfredoperez@outlook.com");
+			when(daoHelper.insert(clientDao, dataToInsert)).thenThrow(DataIntegrityViolationException.class);
+			EntityResult entityResult = clientService.clientInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("DNI_NAME_AND_EMAIL_REQUIRED", entityResult.getMessage());
+			verify(daoHelper).insert(any(), anyMap());
+		}
+
+		@Test
+		@DisplayName("Fail trying to insert without cl_name field")
+		void service_insert_without_email() {
+			Map<String, Object> dataToInsert = new HashMap<>();
+			dataToInsert.put("cl_nif", "98766789I");
+			dataToInsert.put("cl_name", "Alfredo Pérez");
+			when(daoHelper.insert(clientDao, dataToInsert)).thenThrow(DataIntegrityViolationException.class);
+			EntityResult entityResult = clientService.clientInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("DNI_NAME_AND_EMAIL_REQUIRED", entityResult.getMessage());
+			verify(daoHelper).insert(any(), anyMap());
+		}
+
+		@Test
+		@DisplayName("Fail trying to insert without cl_dni field")
+		void service_insert_without_dni() {
+			Map<String, Object> dataToInsert = new HashMap<>();
+			dataToInsert.put("cl_email", "alfredoperez@outlook.com");
+			dataToInsert.put("cl_name", "Alfredo Pérez");
+			when(daoHelper.insert(clientDao, dataToInsert)).thenThrow(DataIntegrityViolationException.class);
+			EntityResult entityResult = clientService.clientInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("DNI_NAME_AND_EMAIL_REQUIRED", entityResult.getMessage());
+			verify(daoHelper).insert(any(), anyMap());
+		}
+		@Test
+		@DisplayName("Fail trying to insert not valid email")
+		void hotel_insert_not_valid_mail() {
+			EntityResult insertResult = new EntityResultMapImpl();
+			insertResult.addRecord(new HashMap<String, Object>() {{
+		        put("ID_CLIENT", 2);}});
+			Map<String, Object> dataToInsert = new HashMap<>();
+			dataToInsert.put("cl_nif", "98766789I");
+			dataToInsert.put("cl_email", "alfredoperezoutlook.com");
 			dataToInsert.put("cl_name", "Alfredo Pérez");
 			dataToInsert.put("cl_phone", "985446789");
-        	List<String> columnList = Arrays.asList("ID_CLIENT");
-    		EntityResult insertResult = new EntityResultMapImpl(columnList);
-    	    insertResult.addRecord(new HashMap<String, Object>() {{
-    	        put("ID_CLIENT", 2);}});
-        	when(daoHelper.insert(clientDao, dataToInsert)).thenReturn(insertResult);
-        	EntityResult resultSuccess = clientService.clientInsert(dataToInsert);
-        	assertEquals(EntityResult.OPERATION_SUCCESSFUL, resultSuccess.getCode());
-        	//assertEquals("SUCESSFUL_INSERTION", resultSuccess.getMessage());
-        	when(daoHelper.insert(clientDao, dataToInsert)).thenThrow(DuplicateKeyException.class);
-        	EntityResult resultFail =clientService.clientInsert(dataToInsert);
-        	assertEquals(EntityResult.OPERATION_WRONG, resultFail.getCode());
-        	assertEquals("EMAIL_ALREADY_EXISTS", resultFail.getMessage());
-        	verify(daoHelper,times(2)).insert(any(), anyMap());
-        }
-	}
+			
+			EntityResult resultFail = clientService.clientInsert(dataToInsert);
+			assertEquals("INVALID_EMAIL", resultFail.getMessage());
 		
-	
-	
+		}
+		
+	}
+
+
+	@Nested
+	@DisplayName("Test for Extra updates")
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	public class ServiceUpdate {
+		@Test
+		@DisplayName("Extra update successful")
+		void hotel_update_success() {
+			//coger el codigo de este metodo
+			
+			
+		}
+	}
 }
