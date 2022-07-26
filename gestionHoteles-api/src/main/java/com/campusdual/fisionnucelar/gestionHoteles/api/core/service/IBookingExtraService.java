@@ -16,7 +16,9 @@ public interface IBookingExtraService {
 	 // BOOKING_EXTRA
 	 public EntityResult bookingextraQuery(Map<String, Object> keyMap, List<String> attrList) throws OntimizeJEERuntimeException;
 	 public EntityResult bookingextraInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException;
-	
+		public EntityResult markextraenjoyedUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
+				throws OntimizeJEERuntimeException;
+		
 	
 
 	}
