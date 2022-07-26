@@ -550,12 +550,26 @@ public class BookingServiceTest {
 				Map<String, Object> attrMap = getGenericAttrMap();
 				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult result = new EntityResultMapImpl();
-				EntityResult queryResult = getGenericBookingER();
-				queryResult.put("rmt_price",BigDecimal.valueOf(3));
+				EntityResult er = new EntityResultMapImpl();
+				er.addRecord(new HashMap<String, Object>() {
+					{
+						put("id_booking", 2);
+						put("bk_room", 2);
+						put("bk_check_in", "2000-11-11");
+						put("bk_check_out", "2000-12-12");
+						put("bk_price", 100);
+						put("rmt_price",new BigDecimal(3));
+					}
+				});
+	
+				
 				EntityResult emptyEr = new EntityResultMapImpl();
-				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(er);
 				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);
-
+				
+				
+				
+				
 				Mockito.doAnswer(new Answer() {
 					private int count = 0;
 
@@ -565,7 +579,7 @@ public class BookingServiceTest {
 						if (count == 1)
 							return emptyEr;
 						if (count == 2)
-							return queryResult;
+							return er;
 						return invocation;
 					}
 				}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());

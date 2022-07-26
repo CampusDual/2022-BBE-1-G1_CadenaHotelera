@@ -138,7 +138,7 @@ public class HotelService implements IHotelService {
 			}
 			keyMap.remove("services");
 
-			searchResult = this.daoHelper.query(this.hotelDao, keyMap, attrList, "HOTELS_BY_SERVICES",
+			searchResult = this.daoHelper.query(this.hotelDao, keyMap, attrList,"",
 					new ISQLQueryAdapter() {
 						@Override
 						public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao,
