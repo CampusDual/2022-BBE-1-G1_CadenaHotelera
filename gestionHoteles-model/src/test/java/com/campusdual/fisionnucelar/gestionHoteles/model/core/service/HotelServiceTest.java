@@ -188,19 +188,19 @@ public class HotelServiceTest {
         	assertEquals("HOTEL_NAME_OR_EMAIL_ALREADY_EXISTS", resultFail.getMessage());
         	verify(daoHelper,times(2)).insert(any(), anyMap());
         }
-//comentado porque el método que asina el mesaje lo hace en tiempo de ejecución
-//        @Test
-//        @DisplayName("Fail trying to insert without hotel name or email fields")
-//        void hotel_insert_without_mail_or_hotel_name() {
-//        	Map<String, Object> dataToInsert = new HashMap<>();
-//        	dataToInsert.put("htl_address", "Calle Uria, 98");
-//        	dataToInsert.put("htl_phone", "985446789");
-//        	when(daoHelper.insert(hotelDao, dataToInsert)).thenThrow(DataIntegrityViolationException.class);
-//        	EntityResult entityResult = hotelService.hotelInsert(dataToInsert);
-//        	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-//        	assertEquals("HOTEL_NAME_AND_EMAIL_REQUIRED", entityResult.getMessage());
-//        	verify(daoHelper).insert(any(), anyMap());
-//        }
+        
+        @Test
+        @DisplayName("Fail trying to insert without hotel name or email fields")
+        void hotel_insert_without_mail_or_hotel_name() {
+        	Map<String, Object> dataToInsert = new HashMap<>();
+        	dataToInsert.put("htl_address", "Calle Uria, 98");
+        	dataToInsert.put("htl_phone", "985446789");
+        	DataIntegrityViolationException DataIntegrityException=new DataIntegrityViolationException("RunTimeMessage");	
+        	when(daoHelper.insert(hotelDao, dataToInsert)).thenThrow(DataIntegrityException);
+        	EntityResult entityResult = hotelService.hotelInsert(dataToInsert);
+        	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+        	verify(daoHelper).insert(any(), anyMap());
+        }
         
 		@Test
 		@DisplayName("Fail trying to insert with invalid email")
