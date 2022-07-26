@@ -562,13 +562,10 @@ public class BookingServiceTest {
 					}
 				});
 	
-				
+			
 				EntityResult emptyEr = new EntityResultMapImpl();
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(er);
-				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);
-				
-				
-				
+				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);		
 				
 				Mockito.doAnswer(new Answer() {
 					private int count = 0;
