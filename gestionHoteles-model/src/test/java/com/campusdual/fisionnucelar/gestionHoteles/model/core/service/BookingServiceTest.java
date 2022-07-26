@@ -61,7 +61,6 @@ public class BookingServiceTest {
 	private ExtraHotelDao extraHotelDao;
 	@Mock
 	DefaultOntimizeDaoHelper daoHelper;
-	
 
 	@BeforeEach
 	void setUp() {
@@ -331,44 +330,50 @@ public class BookingServiceTest {
 		@DisplayName("Test booking insert")
 		@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 		public class test_booking_insert {
-			  @Test
-		      @DisplayName("insert booking succesfully")
-		      void test_booking_insert_success()  {
-				  Map<String,Object> dataToInsert = getDataToInsert();
-				  EntityResult insertResult = getGenericBookingER();
-				  EntityResult disponibilityResult = new EntityResultMapImpl();
-				  EntityResult clientResult = new EntityResultMapImpl();
-				  clientResult.addRecord(new HashMap<String, Object>() {{
-					  put("id_client", 2); }});
-				  EntityResult roomResult = new EntityResultMapImpl();
-				  roomResult.addRecord(new HashMap<String, Object>() {{
-					  put("id_room", 2);
-				  put("rmt_price", new BigDecimal(40)); }});
-				  EntityResult activeClientResult = new EntityResultMapImpl();
-		    	  when(daoHelper.insert(bookingDao, dataToInsert)).thenReturn(insertResult);
-		    	  when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(activeClientResult);
-		     	  Mockito.doAnswer(new Answer() {
-		    		    private int count = 0;
+			@Test
+			@DisplayName("insert booking succesfully")
+			void test_booking_insert_success() {
+				Map<String, Object> dataToInsert = getDataToInsert();
+				EntityResult insertResult = getGenericBookingER();
+				EntityResult disponibilityResult = new EntityResultMapImpl();
+				EntityResult clientResult = new EntityResultMapImpl();
+				clientResult.addRecord(new HashMap<String, Object>() {
+					{
+						put("id_client", 2);
+					}
+				});
+				EntityResult roomResult = new EntityResultMapImpl();
+				roomResult.addRecord(new HashMap<String, Object>() {
+					{
+						put("id_room", 2);
+						put("rmt_price", new BigDecimal(40));
+					}
+				});
+				EntityResult activeClientResult = new EntityResultMapImpl();
+				when(daoHelper.insert(bookingDao, dataToInsert)).thenReturn(insertResult);
+				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(activeClientResult);
+				Mockito.doAnswer(new Answer() {
+					private int count = 0;
 
-						@Override
-						public Object answer(InvocationOnMock invocation) throws Throwable {
-							count++;
-							if(count ==1)
+					@Override
+					public Object answer(InvocationOnMock invocation) throws Throwable {
+						count++;
+						if (count == 1)
 							return disponibilityResult;
-							if(count ==2)
-								return roomResult;
-							if(count ==3)
-								return roomResult;
-							return invocation;
-						}
-		    		}).when(daoHelper).query(any(), anyMap(), anyList(),anyString());
-    	  
-		    	  EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
-		      	  assertEquals("", queryResult.getMessage());	
-		      	  assertEquals(EntityResult.OPERATION_SUCCESSFUL, queryResult.getCode());
-		      	  assertEquals(2, queryResult.getRecordValues(0).get("id_booking"));
-				  
-			  }
+						if (count == 2)
+							return roomResult;
+						if (count == 3)
+							return roomResult;
+						return invocation;
+					}
+				}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
+
+				EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
+				assertEquals("", queryResult.getMessage());
+				assertEquals(EntityResult.OPERATION_SUCCESSFUL, queryResult.getCode());
+				assertEquals(2, queryResult.getRecordValues(0).get("id_booking"));
+
+			}
 
 			@Test
 			@DisplayName("insert booking fails due client is not active")
@@ -458,11 +463,11 @@ public class BookingServiceTest {
 			@Test
 			@DisplayName("insert booking with invalid dates")
 			void test_booking_insert_with_dates_with_invalid_dates() {
-				  Map<String,Object> dataToInsert = new HashMap<>();
-				  dataToInsert.put("bk_check_in", "invalid");
-				  dataToInsert.put("bk_check_out", "invalid");
-				  dataToInsert.put("bk_room", 2);
-				  dataToInsert.put("bk_client", 2);
+				Map<String, Object> dataToInsert = new HashMap<>();
+				dataToInsert.put("bk_check_in", "invalid");
+				dataToInsert.put("bk_check_out", "invalid");
+				dataToInsert.put("bk_room", 2);
+				dataToInsert.put("bk_client", 2);
 				EntityResult insertResult = getGenericBookingER();
 				EntityResult disponibilityResult = getRoomResult();
 				EntityResult clientResult = new EntityResultMapImpl();
@@ -503,6 +508,69 @@ public class BookingServiceTest {
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
 				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);
 				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
+				assertEquals("SUCCESSFUL_UPDATE", updateResult.getMessage());
+				assertEquals(EntityResult.OPERATION_SUCCESSFUL, updateResult.getCode());
+
+			}
+
+			@Test
+			@DisplayName("update booking without id_booking")
+			void test_booking_update_empty_without_id_booking() {
+				Map<String, Object> attrMap = new HashMap<>();
+				Map<String, Object> keyMap = new HashMap<>();
+				EntityResult queryResult = new EntityResultMapImpl();
+				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
+				assertEquals("ID_BOOKING_REQUIRED", updateResult.getMessage());
+				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+			}
+
+			@Test
+			@DisplayName("update booking without body request")
+			void test_booking_update_empty_without_body_request() {
+				Map<String, Object> attrMap = new HashMap<>();
+				Map<String, Object> keyMap = getBookingKeyMap();
+				EntityResult bookingQuery = getGenericBookingER();
+				EntityResult queryResult = new EntityResultMapImpl();
+				queryResult.setCode(1);
+				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
+				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
+				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
+				assertEquals("ERROR_WHILE_UPDATING", updateResult.getMessage());
+				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+			}
+		}
+
+		@Nested
+		@DisplayName("Test change dates update")
+		@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+		public class test_change_dates_update {
+			@Test
+			@DisplayName("update booking succesfully")
+			void test_booking_update_success() {
+				Map<String, Object> attrMap = getGenericAttrMap();
+				Map<String, Object> keyMap = getBookingKeyMap();
+				EntityResult result = new EntityResultMapImpl();
+				EntityResult queryResult = getGenericBookingER();
+				queryResult.put("rmt_price",BigDecimal.valueOf(3));
+				EntityResult emptyEr = new EntityResultMapImpl();
+				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);
+
+				Mockito.doAnswer(new Answer() {
+					private int count = 0;
+
+					@Override
+					public Object answer(InvocationOnMock invocation) throws Throwable {
+						count++;
+						if (count == 1)
+							return emptyEr;
+						if (count == 2)
+							return queryResult;
+						return invocation;
+					}
+				}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
+
+				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
 				assertEquals("SUCCESSFUL_UPDATE", updateResult.getMessage());
 				assertEquals(EntityResult.OPERATION_SUCCESSFUL, updateResult.getCode());
 
@@ -597,11 +665,11 @@ public class BookingServiceTest {
 				}
 			});
 
-			EntityResult extrasPriceResult = new EntityResultMapImpl(Arrays.asList("exh_price","exh_name"));
+			EntityResult extrasPriceResult = new EntityResultMapImpl(Arrays.asList("exh_price", "exh_name"));
 			extrasPriceResult.addRecord(new HashMap<String, Object>() {
 				{
 					put("exh_price", new BigDecimal(50));
-					put("exh_name","niñero");
+					put("exh_name", "niñero");
 				}
 			});
 
@@ -630,10 +698,10 @@ public class BookingServiceTest {
 					return invocation;
 				}
 			}).when(daoHelper).query(any(), anyMap(), anyList());
-			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(extrasPriceResult);
+			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(extrasPriceResult);
 			when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
 			EntityResult updateResult = bookingService.addbookingextraUpdate(attrMap, keyMap);
-			 assertEquals("SUCCESSFULLY_ADDED",updateResult.getMessage());
+			assertEquals("SUCCESSFULLY_ADDED", updateResult.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, updateResult.getCode());
 		}
 
@@ -678,31 +746,30 @@ public class BookingServiceTest {
 				}
 			});
 
-
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
-			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(extrasPriceResult);
+			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(extrasPriceResult);
 			EntityResult updateResult = bookingService.addbookingextraUpdate(attrMap, keyMap);
 			assertEquals("INCORRECT_REQUEST", updateResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 		}
-		
+
 		@Test
 		@DisplayName("cancel an extra with succesfully")
 		void test_cancel_booking_extra() {
-			Map<String,Object> keyMap = getBookingKeyMap();
+			Map<String, Object> keyMap = getBookingKeyMap();
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking"));
-			Map<String,Object> attrMap = getBKExtraAttrMap();
+			Map<String, Object> attrMap = getBKExtraAttrMap();
 			List<String> columnsExtraBooking = getExtraBookingColumns();
 			EntityResult bookingExtraResult = getBookingExtraResult();
 			EntityResult updateResult = new EntityResultMapImpl();
 			updateResult.setCode(0);
 			when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(updateResult);
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
-			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(bookingExtraResult);
+			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(bookingExtraResult);
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("SUCCESSFULLY_ADDED", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, dischargeResult.getCode());
-			
+
 		}
 
 		@Test
@@ -710,84 +777,91 @@ public class BookingServiceTest {
 		void test_cancel_booking_fail_due_not_available() {
 			EntityResult updateResult = new EntityResultMapImpl();
 			updateResult.setCode(EntityResult.OPERATION_WRONG);
-			Map<String,Object> keyMap = getBookingKeyMap();
+			Map<String, Object> keyMap = getBookingKeyMap();
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking"));
-			Map<String,Object> attrMap = getBKExtraAttrMap();
+			Map<String, Object> attrMap = getBKExtraAttrMap();
 			List<String> columnsExtraBooking = getExtraBookingColumns();
 			EntityResult bookingExtraResult = new EntityResultMapImpl();
-			bookingExtraResult.addRecord(new HashMap<String, Object>() {{
-				put("id_bookingextra", 2);
-				put("bke_booking", 2); 
-				put("bke_name", "Niñero"); 
-				put("bke_quantity", 2); 
-				put("bke_unit_price", new BigDecimal(200)); 
-				put("bke_total_price", new BigDecimal(2000)); 
-				put("bke_enjoyed", 2); 
-				put("bk_extras_price", new BigDecimal(200)); }});
+			bookingExtraResult.addRecord(new HashMap<String, Object>() {
+				{
+					put("id_bookingextra", 2);
+					put("bke_booking", 2);
+					put("bke_name", "Niñero");
+					put("bke_quantity", 2);
+					put("bke_unit_price", new BigDecimal(200));
+					put("bke_total_price", new BigDecimal(2000));
+					put("bke_enjoyed", 2);
+					put("bk_extras_price", new BigDecimal(200));
+				}
+			});
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
-			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(bookingExtraResult);
+			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(bookingExtraResult);
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("NOT_ENOUGH_PENDING_EXTRAS_TO_CANCEL", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
-			
-		}	
+
+		}
+
 		@Test
 		@DisplayName("cancel an extra fail due booking not exists")
 		void test_cancel_booking_fail_due_booking_not_exists() {
-			Map<String,Object> keyMap = getBookingKeyMap();
+			Map<String, Object> keyMap = getBookingKeyMap();
 			EntityResult bookingResult = new EntityResultMapImpl();
-			Map<String,Object> attrMap = getBKExtraAttrMap();
-;			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
+			Map<String, Object> attrMap = getBKExtraAttrMap();
+			;
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("BOOKING_EXTRA_DOESN'T_EXISTS", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
-			
+
 		}
-	
+
 		@Test
 		@DisplayName("cancel an extra without quantity")
 		void test_cancel_booking_without_quantity() {
-			Map<String,Object> keyMap = getBookingKeyMap();
+			Map<String, Object> keyMap = getBookingKeyMap();
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking_extra"));
-			Map<String,Object> attrMap = new HashMap<String,Object>();
+			Map<String, Object> attrMap = new HashMap<String, Object>();
 			attrMap.put("id_booking_extra", 2);
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("QUANTITY_FIELD_REQUIRED", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
-			
+
 		}
+
 		@Test
 		@DisplayName("cancel an extra without id_booking_extra")
 		void test_cancel_booking_without_id_booking_extra() {
-			Map<String,Object> keyMap = new HashMap<String,Object>();
-			Map<String,Object> attrMap = new HashMap<String,Object>();
+			Map<String, Object> keyMap = new HashMap<String, Object>();
+			Map<String, Object> attrMap = new HashMap<String, Object>();
 			attrMap.put("id_booking_extra", 2);
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("ID_EXTRA_BOOKING_REQUIRED", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
-			
+
 		}
+
 		@Test
 		@DisplayName("cancel an extra with empty request")
 		void test_cancel_booking_with_empty_request() {
-			Map<String,Object> keyMap = new HashMap<String,Object>();
+			Map<String, Object> keyMap = new HashMap<String, Object>();
 			keyMap.put("id_booking_extra", 2);
-			Map<String,Object> attrMap = new HashMap<String,Object>();
+			Map<String, Object> attrMap = new HashMap<String, Object>();
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking_extra"));
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("EMPTY_REQUEST", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
 		}
-		
+
 		@Test
 		@DisplayName("cancel an extra with string_as_quantity")
 		void test_cancel_booking_with_string_as_quantity() {
-			Map<String,Object> keyMap = new HashMap<String,Object>();
+			Map<String, Object> keyMap = new HashMap<String, Object>();
 			keyMap.put("id_booking", 2);
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking"));
-			Map<String,Object> attrMap = new HashMap<String,Object>();
+			Map<String, Object> attrMap = new HashMap<String, Object>();
 			attrMap.put("id_booking_extra", 2);
 			attrMap.put("quantity", "sss");
 			List<String> columnsExtraBooking = getExtraBookingColumns();
@@ -795,182 +869,190 @@ public class BookingServiceTest {
 			EntityResult updateResult = new EntityResultMapImpl();
 			updateResult.setCode(0);
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
-			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(bookingExtraResult);
+			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(bookingExtraResult);
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("INCORRECT_REQUEST", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
 		}
 	}
-	
+
 	@Nested
 	@DisplayName("Test for available rooms in a given date")
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	public class availableRoomsQuery {
-    @Test
-    @DisplayName("Obtain all avaliable rooms for a given hotel")
-    void test_availableroomsQuery_success() throws ParseException {
-    	//given
-    	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
-    	Date startDate = formatter.parse("2022-30-08");
-    	Date endDate = formatter.parse("2022-15-09");
-    	Map<String,Object> filter = getAvRoomsFilter();
-    	List<String> roomColumns = new ArrayList<>();
-    	roomColumns.add("rm_number");
-    	EntityResult availableRooms = getAvRoomsER();
-    	Map<String,Object> hotelFilter = new HashMap<>();
-    	hotelFilter.put("id_hotel", 2);
-		List<String> columns = new ArrayList<>();
-		columns.add("rm_number");
-		EntityResult queryResult = new EntityResultMapImpl(columns);
-		when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
-		filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
-				bookingService.buildExpressionToSearchRooms(startDate, endDate));
-	
-		 lenient().when(daoHelper.query(bookingDao, filter,columns,"AVAILABLE_ROOMS", 	new ISQLQueryAdapter() {
-			@Override
-			public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
-					Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
-					String queryId) {
-				return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
-						sqlStatement.getValues());
-			}})).thenReturn(availableRooms);
-        try (MockedStatic<EntityResultTools> utilities = Mockito.mockStatic(EntityResultTools.class)) {
-        	
-        	utilities.when(()->EntityResultTools.dofilter(any(), anyMap())).thenReturn(availableRooms);
-        	EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
-        	
-        	assertEquals(401, roomResult.getRecordValues(0).get("rm_number"));
-        	assertEquals(EntityResult.OPERATION_SUCCESSFUL, roomResult.getCode());
-        }
-        }
-        @Test
-        @DisplayName("Obtain all avaliable rooms for a given hotel with minimun an maximun price")
-        void test_availableroomsQuery_per_price_success() throws ParseException {
-        	//given
-        	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
-        	Date startDate = formatter.parse("2022-30-08");
-        	Date endDate = formatter.parse("2022-15-09");
-        	Map<String,Object> filter = new HashMap<>();
-        	filter.put("bk_check_in", "2022-30-08");
-        	filter.put("bk_check_out", "2022-15-09");
-        	filter.put("id_hotel", 2);
-        	filter.put("min_price", 100);
-        	filter.put("mx_price", 300);
-        	List<String> roomColumns = new ArrayList<>();
-        	roomColumns.add("rm_number");
-        	EntityResult availableRooms = getAvRoomsER();
-        	Map<String,Object> hotelFilter = new HashMap<>();
-        	hotelFilter.put("id_hotel", 2);
-        	List<String> columns = new ArrayList<>();
-        	columns.add("rm_number");
-        	EntityResult queryResult = new EntityResultMapImpl(columns);
-        	when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
-        	filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
-        			bookingService.buildExpressionToSearchRooms(startDate, endDate));
-        	
-        	lenient().when(daoHelper.query(bookingDao, filter,columns,"AVAILABLE_ROOMS", 	new ISQLQueryAdapter() {
-        		@Override
-        		public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
-        				Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
-        				String queryId) {
-        			return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
-        					sqlStatement.getValues());
-        		}})).thenReturn(availableRooms);
-        	try (MockedStatic<EntityResultTools> utilities = Mockito.mockStatic(EntityResultTools.class)) {
-        		
-        		utilities.when(()->EntityResultTools.dofilter(any(), anyMap())).thenReturn(availableRooms);
-        		utilities.when(()->EntityResultTools.dofilter(any(), anyMap())).thenReturn(availableRooms);
-        		EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
-        		
-        		assertEquals(401, roomResult.getRecordValues(0).get("rm_number"));
-        		assertEquals(EntityResult.OPERATION_SUCCESSFUL, roomResult.getCode());
-        	}
-        }
-        @Test
-        @DisplayName("Obtain all avaliable rooms for a given hotel with minimun an maximun price as strings")
-        void test_availableroomsQuery_per_price_fail_due_string_as_price() throws ParseException {
-        	//given
-        	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
-        	Date startDate = formatter.parse("2022-30-08");
-        	Date endDate = formatter.parse("2022-15-09");
-        	Map<String,Object> filter = new HashMap<>();
-        	filter.put("bk_check_in", "2022-30-08");
-        	filter.put("bk_check_out", "2022-15-09");
-        	filter.put("id_hotel", 2);
-        	filter.put("min_price","SSSS");
-        	filter.put("mx_price","sss");
-        	List<String> roomColumns = new ArrayList<>();
-        	roomColumns.add("rm_number");
-        	EntityResult availableRooms = getAvRoomsER();
-        	Map<String,Object> hotelFilter = new HashMap<>();
-        	hotelFilter.put("id_hotel", 2);
-        	List<String> columns = new ArrayList<>();
-        	columns.add("rm_number");
-        	EntityResult queryResult = new EntityResultMapImpl(columns);
-        	when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
-        	filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
-        			bookingService.buildExpressionToSearchRooms(startDate, endDate));
-        	
-        	lenient().when(daoHelper.query(bookingDao, filter,columns,"AVAILABLE_ROOMS", 	new ISQLQueryAdapter() {
-        		@Override
-        		public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
-        				Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
-        				String queryId) {
-        			return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
-        					sqlStatement.getValues());
-        		}})).thenReturn(availableRooms);
-        		EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
-        		assertEquals("INCORRECT_REQUEST", roomResult.getMessage());
-        		assertEquals(EntityResult.OPERATION_WRONG, roomResult.getCode());
-        	
-        }
-        @Test
-        @DisplayName("Obtain all avaliable rooms for a given hotel with invalid minimun an maximun price")
-        void test_availableroomsQuery_per_price_fail_due_max_price_lower_min_price() throws ParseException {
-        	//given
-        	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
-        	Date startDate = formatter.parse("2022-30-08");
-        	Date endDate = formatter.parse("2022-15-09");
-        	Map<String,Object> filter = new HashMap<>();
-        	filter.put("bk_check_in", "2022-30-08");
-        	filter.put("bk_check_out", "2022-15-09");
-        	filter.put("id_hotel", 2);
-        	filter.put("min_price",200);
-        	filter.put("max_price",100);
-        	List<String> roomColumns = new ArrayList<>();
-        	roomColumns.add("rm_number");
-        	EntityResult availableRooms = getAvRoomsER();
-        	Map<String,Object> hotelFilter = new HashMap<>();
-        	hotelFilter.put("id_hotel", 2);
-        	List<String> columns = new ArrayList<>();
-        	columns.add("rm_number");
-        	EntityResult queryResult = new EntityResultMapImpl(columns);
-        	when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
-        	filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
-        			bookingService.buildExpressionToSearchRooms(startDate, endDate));
-        	
-        	lenient().when(daoHelper.query(bookingDao, filter,columns,"AVAILABLE_ROOMS", 	new ISQLQueryAdapter() {
-        		@Override
-        		public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
-        				Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
-        				String queryId) {
-        			return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
-        					sqlStatement.getValues());
-        		}})).thenReturn(availableRooms);
-        	EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
-        	assertEquals("MAXPRICE_MUST_BE_HIGHER_THAN_MINPRICE", roomResult.getMessage());
-        	assertEquals(EntityResult.OPERATION_WRONG, roomResult.getCode());
-        	
-        }
-        @Test
-        @DisplayName("Available rooms request with empty fields")
-        void test_availableroomsQuery_emptyRequest() throws ParseException {
-        	Map<String,Object> filter = new HashMap<>();
-        	List<String> columns = new ArrayList<>();
-        	EntityResult queryResult = bookingService.availableroomsQuery(filter, columns);
-        	assertEquals("CHECK_IN_CHECK_OUT_AND HOTEL_NEEDED", queryResult.getMessage());	
-        	assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());	
-    }
+		@Test
+		@DisplayName("Obtain all avaliable rooms for a given hotel")
+		void test_availableroomsQuery_success() throws ParseException {
+			// given
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
+			Date startDate = formatter.parse("2022-30-08");
+			Date endDate = formatter.parse("2022-15-09");
+			Map<String, Object> filter = getAvRoomsFilter();
+			List<String> roomColumns = new ArrayList<>();
+			roomColumns.add("rm_number");
+			EntityResult availableRooms = getAvRoomsER();
+			Map<String, Object> hotelFilter = new HashMap<>();
+			hotelFilter.put("id_hotel", 2);
+			List<String> columns = new ArrayList<>();
+			columns.add("rm_number");
+			EntityResult queryResult = new EntityResultMapImpl(columns);
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+			filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+					bookingService.buildExpressionToSearchRooms(startDate, endDate));
+
+			lenient().when(daoHelper.query(bookingDao, filter, columns, "AVAILABLE_ROOMS", new ISQLQueryAdapter() {
+				@Override
+				public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
+						Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
+						String queryId) {
+					return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
+							sqlStatement.getValues());
+				}
+			})).thenReturn(availableRooms);
+			try (MockedStatic<EntityResultTools> utilities = Mockito.mockStatic(EntityResultTools.class)) {
+
+				utilities.when(() -> EntityResultTools.dofilter(any(), anyMap())).thenReturn(availableRooms);
+				EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
+
+				assertEquals(401, roomResult.getRecordValues(0).get("rm_number"));
+				assertEquals(EntityResult.OPERATION_SUCCESSFUL, roomResult.getCode());
+			}
+		}
+
+		@Test
+		@DisplayName("Obtain all avaliable rooms for a given hotel with minimun an maximun price")
+		void test_availableroomsQuery_per_price_success() throws ParseException {
+			// given
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
+			Date startDate = formatter.parse("2022-30-08");
+			Date endDate = formatter.parse("2022-15-09");
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("bk_check_in", "2022-30-08");
+			filter.put("bk_check_out", "2022-15-09");
+			filter.put("id_hotel", 2);
+			filter.put("min_price", 100);
+			filter.put("mx_price", 300);
+			List<String> roomColumns = new ArrayList<>();
+			roomColumns.add("rm_number");
+			EntityResult availableRooms = getAvRoomsER();
+			Map<String, Object> hotelFilter = new HashMap<>();
+			hotelFilter.put("id_hotel", 2);
+			List<String> columns = new ArrayList<>();
+			columns.add("rm_number");
+			EntityResult queryResult = new EntityResultMapImpl(columns);
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+			filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+					bookingService.buildExpressionToSearchRooms(startDate, endDate));
+
+			lenient().when(daoHelper.query(bookingDao, filter, columns, "AVAILABLE_ROOMS", new ISQLQueryAdapter() {
+				@Override
+				public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
+						Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
+						String queryId) {
+					return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
+							sqlStatement.getValues());
+				}
+			})).thenReturn(availableRooms);
+			try (MockedStatic<EntityResultTools> utilities = Mockito.mockStatic(EntityResultTools.class)) {
+
+				utilities.when(() -> EntityResultTools.dofilter(any(), anyMap())).thenReturn(availableRooms);
+				utilities.when(() -> EntityResultTools.dofilter(any(), anyMap())).thenReturn(availableRooms);
+				EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
+
+				assertEquals(401, roomResult.getRecordValues(0).get("rm_number"));
+				assertEquals(EntityResult.OPERATION_SUCCESSFUL, roomResult.getCode());
+			}
+		}
+
+		@Test
+		@DisplayName("Obtain all avaliable rooms for a given hotel with minimun an maximun price as strings")
+		void test_availableroomsQuery_per_price_fail_due_string_as_price() throws ParseException {
+			// given
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
+			Date startDate = formatter.parse("2022-30-08");
+			Date endDate = formatter.parse("2022-15-09");
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("bk_check_in", "2022-30-08");
+			filter.put("bk_check_out", "2022-15-09");
+			filter.put("id_hotel", 2);
+			filter.put("min_price", "SSSS");
+			filter.put("mx_price", "sss");
+			List<String> roomColumns = new ArrayList<>();
+			roomColumns.add("rm_number");
+			EntityResult availableRooms = getAvRoomsER();
+			Map<String, Object> hotelFilter = new HashMap<>();
+			hotelFilter.put("id_hotel", 2);
+			List<String> columns = new ArrayList<>();
+			columns.add("rm_number");
+			EntityResult queryResult = new EntityResultMapImpl(columns);
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+			filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+					bookingService.buildExpressionToSearchRooms(startDate, endDate));
+
+			lenient().when(daoHelper.query(bookingDao, filter, columns, "AVAILABLE_ROOMS", new ISQLQueryAdapter() {
+				@Override
+				public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
+						Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
+						String queryId) {
+					return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
+							sqlStatement.getValues());
+				}
+			})).thenReturn(availableRooms);
+			EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
+			assertEquals("INCORRECT_REQUEST", roomResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, roomResult.getCode());
+
+		}
+
+		@Test
+		@DisplayName("Obtain all avaliable rooms for a given hotel with invalid minimun an maximun price")
+		void test_availableroomsQuery_per_price_fail_due_max_price_lower_min_price() throws ParseException {
+			// given
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
+			Date startDate = formatter.parse("2022-30-08");
+			Date endDate = formatter.parse("2022-15-09");
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("bk_check_in", "2022-30-08");
+			filter.put("bk_check_out", "2022-15-09");
+			filter.put("id_hotel", 2);
+			filter.put("min_price", 200);
+			filter.put("max_price", 100);
+			List<String> roomColumns = new ArrayList<>();
+			roomColumns.add("rm_number");
+			EntityResult availableRooms = getAvRoomsER();
+			Map<String, Object> hotelFilter = new HashMap<>();
+			hotelFilter.put("id_hotel", 2);
+			List<String> columns = new ArrayList<>();
+			columns.add("rm_number");
+			EntityResult queryResult = new EntityResultMapImpl(columns);
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+			filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+					bookingService.buildExpressionToSearchRooms(startDate, endDate));
+
+			lenient().when(daoHelper.query(bookingDao, filter, columns, "AVAILABLE_ROOMS", new ISQLQueryAdapter() {
+				@Override
+				public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
+						Map<?, ?> validKeysValues, List<?> attributes, List<?> validAttributes, List<?> sort,
+						String queryId) {
+					return new SQLStatement(sqlStatement.getSQLStatement().replaceAll("#days#", Long.toString(9)),
+							sqlStatement.getValues());
+				}
+			})).thenReturn(availableRooms);
+			EntityResult roomResult = bookingService.availableroomsQuery(filter, columns);
+			assertEquals("MAXPRICE_MUST_BE_HIGHER_THAN_MINPRICE", roomResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, roomResult.getCode());
+
+		}
+
+		@Test
+		@DisplayName("Available rooms request with empty fields")
+		void test_availableroomsQuery_emptyRequest() throws ParseException {
+			Map<String, Object> filter = new HashMap<>();
+			List<String> columns = new ArrayList<>();
+			EntityResult queryResult = bookingService.availableroomsQuery(filter, columns);
+			assertEquals("CHECK_IN_CHECK_OUT_AND HOTEL_NEEDED", queryResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());
+		}
 
 		@Test
 		@DisplayName("Available rooms request with invalid dates")

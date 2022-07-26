@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.jdbc.SQLWarningException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,15 +93,15 @@ public class BookingService implements IBookingService {
 
 	@Autowired
 	private ExtraHotelDao extraHotelDao;
-	
+
 	Validator validator;
 	Validator dataValidator;
 
 	public BookingService() {
 		super();
 		this.control = new Control();
-		this.validator=new Validator();
-		this.dataValidator=new Validator();
+		this.validator = new Validator();
+		this.dataValidator = new Validator();
 		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
@@ -157,10 +158,10 @@ public class BookingService implements IBookingService {
 
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
-			log.error("unable to retrieve bookings by client. Request : {} {}",keyMap,attrList, e);
+			log.error("unable to retrieve bookings by client. Request : {} {}", keyMap, attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
-			log.error("unable to retrieve bookings by client. Request : {} {}",keyMap,attrList, e);
+			log.error("unable to retrieve bookings by client. Request : {} {}", keyMap, attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -189,10 +190,10 @@ public class BookingService implements IBookingService {
 			searchResult = daoHelper.query(bookingDao, keyMap, attrList);
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
-			log.error("unable to retrieve bookings. Request : {} {}",keyMap,attrList, e);
+			log.error("unable to retrieve bookings. Request : {} {}", keyMap, attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
-			log.error("unable to retrieve bookings. Request : {} {}",keyMap,attrList, e);
+			log.error("unable to retrieve bookings. Request : {} {}", keyMap, attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
@@ -216,14 +217,17 @@ public class BookingService implements IBookingService {
 	 * @exception BadSqlGrammarException     sends a message to the user when he
 	 *                                       send a string in a numeric field
 	 * 
-	 * @exception InvalidDateException		when the check in date is after the check out date
-	 * 										or the dates are before the current date
+	 * @exception InvalidDateException       when the check in date is after the
+	 *                                       check out date or the dates are before
+	 *                                       the current date
 	 * 
-	 * @exception InvalidRequestException	when the minprice is higher thant the maxprice
+	 * @exception InvalidRequestException    when the minprice is higher thant the
+	 *                                       maxprice
 	 * 
-	 * @exception RecordNotFoundException	when it receives an unexisting hotel
+	 * @exception RecordNotFoundException    when it receives an unexisting hotel
 	 * 
-	 * @exception ClassCastException		when it receives a String instead of an Numeric value
+	 * @exception ClassCastException         when it receives a String instead of an
+	 *                                       Numeric value
 	 * 
 	 * @return The available rooms filtered by hotel, with a calculated price for
 	 *         the selected dates
@@ -235,19 +239,19 @@ public class BookingService implements IBookingService {
 		try {
 			checkAvailableRoomsFields(keyMap);
 			checkIfHotelExists(keyMap);
-			resultsByHotel = searchAvailableRooms(keyMap, attrList);	
-			
-		} catch (AllFieldsRequiredException | InvalidDateException | RecordNotFoundException|InvalidRequestException|ParseException e) {
-			log.error("unable to retrieve available rooms. Request : {} {}",keyMap,attrList, e);
+			resultsByHotel = searchAvailableRooms(keyMap, attrList);
+
+		} catch (AllFieldsRequiredException | InvalidDateException | RecordNotFoundException | InvalidRequestException
+				| ParseException e) {
+			log.error("unable to retrieve available rooms. Request : {} {}", keyMap, attrList, e);
 			control.setErrorMessage(resultsByHotel, e.getMessage());
-		}  catch (BadSqlGrammarException|ClassCastException e) {
-			log.error("unable to retrieve available rooms. Request : {} {}",keyMap,attrList, e);
+		} catch (BadSqlGrammarException | ClassCastException e) {
+			log.error("unable to retrieve available rooms. Request : {} {}", keyMap, attrList, e);
 			control.setErrorMessage(resultsByHotel, "INCORRECT_REQUEST");
 		}
 		return resultsByHotel;
 	}
 
-	
 	/**
 	 * Checks if the user is providing all the fields required to execute a query to
 	 * obtain all available rooms in a given date
@@ -286,19 +290,16 @@ public class BookingService implements IBookingService {
 			checkIfHotel(keyMap);
 			result = daoHelper.query(bookingDao, keyMap, attrList, "TODAY_CHECKOUTS");
 			control.checkResults(result);
-		} catch (RecordNotFoundException|EmptyRequestException|NoResultsException e) {
-			log.error("unable to retrieve today checkouts. Request : {} {}",keyMap,attrList, e);
+		} catch (RecordNotFoundException | EmptyRequestException | NoResultsException e) {
+			log.error("unable to retrieve today checkouts. Request : {} {}", keyMap, attrList, e);
 			control.setErrorMessage(result, e.getMessage());
-		}  catch (BadSqlGrammarException e) {
-			log.error("unable to retrieve today checkouts. Request : {} {}",keyMap,attrList, e);
-			control.setErrorMessage(result, "INCORRECT_REQUEST");		
+		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve today checkouts. Request : {} {}", keyMap, attrList, e);
+			control.setErrorMessage(result, "INCORRECT_REQUEST");
 		}
 		return result;
 	}
 
-
-	
-	
 	/**
 	 * Checks if rm_hotel exists in a request
 	 * 
@@ -321,7 +322,8 @@ public class BookingService implements IBookingService {
 	 *            columns to send back to the user
 	 * @return The available rooms in a concrete hotel on a date range
 	 */
-	private EntityResult searchAvailableRooms(Map<String, Object> keyMap, List<String> attrList) throws ParseException,ClassCastException,InvalidRequestException {
+	private EntityResult searchAvailableRooms(Map<String, Object> keyMap, List<String> attrList)
+			throws ParseException, ClassCastException, InvalidRequestException {
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
 		EntityResult result;
 		final String checkIn = "bk_check_in";
@@ -347,7 +349,7 @@ public class BookingService implements IBookingService {
 		long diff = endDate.getTime() - startDate.getTime();
 		TimeUnit time = TimeUnit.DAYS;
 		long days = time.convert(diff, TimeUnit.MILLISECONDS);
-			
+
 		result = this.daoHelper.query(this.bookingDao, keyMap2, attrList, "AVAILABLE_ROOMS", new ISQLQueryAdapter() {
 			@Override
 			public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao, Map<?, ?> keysValues,
@@ -357,61 +359,56 @@ public class BookingService implements IBookingService {
 						sqlStatement.getValues());
 			}
 		});
-		
-		result=filterBookingByPrice(result, keyMap);		
-				
+
+		result = filterBookingByPrice(result, keyMap);
+
 		Map<String, Object> hotelFilter = new HashMap<>();
 		hotelFilter.put(hotelId, keyMap.get(hotelId));
-		
+
 		if (keyMap.get(roomType) != null)
 			hotelFilter.put(roomType, keyMap.get(roomType));
-								
-		result=EntityResultTools.dofilter(result, hotelFilter);	
-		
+
+		result = EntityResultTools.dofilter(result, hotelFilter);
+
 		return result;
-		
+
 	}
-	
-	
-	
+
 	/**
-	 * It filters the available rooms using a maxprice, a minprice or both introduced
-	 * by the user
+	 * It filters the available rooms using a maxprice, a minprice or both
+	 * introduced by the user
 	 * 
-	 * @param result	 the available rooms
-	 * @param keyMap	 the prices to filter 
-	 * @return			 the available rooms filtered by price
-	 * @throws InvalidRequestException		when the min price is higher than the max price
+	 * @param result the available rooms
+	 * @param keyMap the prices to filter
+	 * @return the available rooms filtered by price
+	 * @throws InvalidRequestException when the min price is higher than the max
+	 *                                 price
 	 */
-	private EntityResult filterBookingByPrice(EntityResult result,Map<String, Object>keyMap) throws InvalidRequestException {
+	private EntityResult filterBookingByPrice(EntityResult result, Map<String, Object> keyMap)
+			throws InvalidRequestException {
 		SearchValue maxPrice;
 		SearchValue minPrice;
 		Map<String, Object> priceFilter = new HashMap<>();
-			
-		if((keyMap.get("max_price")!=null)&&(keyMap.get("min_price")!=null)) {
-			if((Integer)keyMap.get("max_price")<(Integer)keyMap.get("min_price"))
+
+		if ((keyMap.get("max_price") != null) && (keyMap.get("min_price") != null)) {
+			if ((Integer) keyMap.get("max_price") < (Integer) keyMap.get("min_price"))
 				throw new InvalidRequestException("MAXPRICE_MUST_BE_HIGHER_THAN_MINPRICE");
-										}	
-		if(keyMap.get("max_price")!=null) {
-			maxPrice= new SearchValue(SearchValue.LESS, new BigDecimal((Integer)keyMap.get("max_price")));
-			priceFilter.put("price", maxPrice);
-			result=EntityResultTools.dofilter(result, priceFilter);
-			priceFilter.remove("price");				
 		}
-		
-		if(keyMap.get("min_price")!=null) {
-			minPrice= new SearchValue(SearchValue.MORE,new BigDecimal((Integer)keyMap.get("min_price")));
+		if (keyMap.get("max_price") != null) {
+			maxPrice = new SearchValue(SearchValue.LESS, new BigDecimal((Integer) keyMap.get("max_price")));
+			priceFilter.put("price", maxPrice);
+			result = EntityResultTools.dofilter(result, priceFilter);
+			priceFilter.remove("price");
+		}
+
+		if (keyMap.get("min_price") != null) {
+			minPrice = new SearchValue(SearchValue.MORE, new BigDecimal((Integer) keyMap.get("min_price")));
 			priceFilter.put("price", minPrice);
-			result=EntityResultTools.dofilter(result, priceFilter);
-			priceFilter.remove("price");				
-		}			
+			result = EntityResultTools.dofilter(result, priceFilter);
+			priceFilter.remove("price");
+		}
 		return result;
 	}
-	
-
-	
-	
-	
 
 	/**
 	 * Checks if the given fdayes
@@ -430,8 +427,6 @@ public class BookingService implements IBookingService {
 		}
 	}
 
-
-	
 	/**
 	 * 
 	 * Builds a Basic expression to search the occupied rooms on a date range
@@ -510,17 +505,17 @@ public class BookingService implements IBookingService {
 				throw new AllFieldsRequiredException("FIELDS_MUST_BE_PROVIDED");
 			}
 		} catch (DuplicateKeyException e) {
-			log.error("unable to save booking. Request : {}",attrMap, e);
+			log.error("unable to save booking. Request : {}", attrMap, e);
 			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
 		} catch (DataIntegrityViolationException e) {
-			log.error("unable to save booking. Request : {}",attrMap, e);
+			log.error("unable to save booking. Request : {}", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (ClassCastException e) {
-			log.error("unable to save booking. Request : {}",attrMap, e);
+			log.error("unable to save booking. Request : {}", attrMap, e);
 			control.setMessageFromException(insertResult, "CHECK_IN_AND_CHECK_OUT_MUST_BE_DATES");
 		} catch (AllFieldsRequiredException | RecordNotFoundException | OccupiedRoomException | ParseException
 				| InvalidDateException | EmptyRequestException e) {
-			log.error("unable to save booking. Request : {}",attrMap, e);
+			log.error("unable to save booking. Request : {}", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
@@ -536,7 +531,7 @@ public class BookingService implements IBookingService {
 
 	private void calculateBookingPrice(Map<String, Object> attrMap) {
 		if (attrMap.get("bk_room") == null)
-			throw new AllFieldsRequiredException("bk_room_field_needed");
+			throw new EmptyRequestException("bk_room_field_needed");
 
 		Map<String, Object> filter = new HashMap<String, Object>();
 		filter.put("id_room", attrMap.get("bk_room"));
@@ -559,8 +554,8 @@ public class BookingService implements IBookingService {
 	}
 
 	/**
-	 * Adds and extra to the given booking and updates the booking extras price. It also creates a detailed
-	 * register in the bookingExtra table
+	 * Adds and extra to the given booking and updates the booking extras price. It
+	 * also creates a detailed register in the bookingExtra table
 	 * 
 	 * @param the id of the booking, the id of the extra and an integer as a
 	 *            quantity
@@ -589,54 +584,59 @@ public class BookingService implements IBookingService {
 			updateResult = daoHelper.update(bookingDao, calculateAndInsertExtra(attrMap, keyMap), keyMap);
 			updateResult.setMessage("SUCCESSFULLY_ADDED");
 		} catch (RecordNotFoundException | EmptyRequestException e) {
-			log.error("unable to add an extra to a booking. Request : {} {}",keyMap,attrMap, e);
+			log.error("unable to add an extra to a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (ClassCastException | BadSqlGrammarException e) {
-			log.error("unable to add an extra to a booking. Request : {} {}",keyMap,attrMap, e);
+			log.error("unable to add an extra to a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, "INCORRECT_REQUEST");
 		} catch (DataIntegrityViolationException e) {
-			log.error("unable to add an extra to a booking. Request : {} {}",keyMap,attrMap, e);
+			log.error("unable to add an extra to a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setMessageFromException(updateResult, e.getMessage());
 		}
 
 		return updateResult;
 	}
 
-
 	/**
-	 * Cancels a variable quantity of extras associated with a concrete booking, updating
-	 * the booking extra price
+	 * Cancels a variable quantity of extras associated with a concrete booking,
+	 * updating the booking extra price
 	 * 
-	 * @param the id of the bookingExtra and an integer as the quantity of extras to cancel
+	 * @param the id of the bookingExtra and an integer as the quantity of extras to
+	 *            cancel
 	 * 
 	 * @return a confirmation message if the updates completes successfully or a
 	 *         message indicating the error
 	 * 
-	 * @exception NotEnoughExtrasException        when there aren't enough unenjoyed extras to cancel 
-	 * 											
-	 * @exception EmptyRequestException           when it doesn't receives the required fields
+	 * @exception NotEnoughExtrasException when there aren't enough unenjoyed extras
+	 *                                     to cancel
 	 * 
-	 * @exception RecordNotFoundException         when it receives an unexisting bookingExtra
+	 * @exception EmptyRequestException    when it doesn't receives the required
+	 *                                     fields
 	 * 
-	 * @exception ClassCastException sends 		  when it receives a String instead a number
+	 * @exception RecordNotFoundException  when it receives an unexisting
+	 *                                     bookingExtra
 	 * 
-	 * @exception BadSqlGrammarException		  when it receives an incorrect type for a field
+	 * @exception ClassCastException       sends when it receives a String instead a
+	 *                                     number
 	 * 
-	
+	 * @exception BadSqlGrammarException   when it receives an incorrect type for a
+	 *                                     field
+	 * 
+	 * 
 	 */
-	
-	@Override 
+
+	@Override
 	@Transactional
 	public EntityResult cancelbookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
 			checkIfExtraBookingExists(keyMap);
-			dataValidator.checkIfMapIsEmpty(attrMap); 
-			if(attrMap.get("quantity")==null) {
+			dataValidator.checkIfMapIsEmpty(attrMap);
+			if (attrMap.get("quantity") == null) {
 				throw new EmptyRequestException("QUANTITY_FIELD_REQUIRED");
 			}
-			
+
 			List<String> columnsExtraBooking = new ArrayList<>();
 			columnsExtraBooking.add("id_booking_extra");
 			columnsExtraBooking.add("bke_booking");
@@ -676,12 +676,12 @@ public class BookingService implements IBookingService {
 			bookingAttrMap.put("bk_extras_price", newBookingExtraPrice);
 			updateResult = daoHelper.update(bookingDao, bookingAttrMap, bookingKeymap);
 			updateResult.setMessage("SUCCESSFULLY_ADDED");
-			
-		} catch (RecordNotFoundException |EmptyRequestException|NotEnoughExtrasException e) {
+
+		} catch (RecordNotFoundException | EmptyRequestException | NotEnoughExtrasException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (ClassCastException | BadSqlGrammarException e) {
-			log.error("unable to cancel an extra to a booking. Request : {} {}",keyMap,attrMap, e);
-		} 
+			log.error("unable to cancel an extra to a booking. Request : {} {}", keyMap, attrMap, e);
+		}
 
 		return updateResult;
 
@@ -743,6 +743,75 @@ public class BookingService implements IBookingService {
 	}
 
 	/**
+	 * Changes the dates for a concrete booking
+	 * 
+	 * @param the id of the booking and the new dates
+	 * 
+	 * @return a confirmation message if the update completes successfully or a
+	 *         message indicating the error
+	 * 
+	 * 
+	 * @exception EmptyRequestException    when it doesn't receives the required
+	 *                                     fields
+	 * 
+	 * @exception RecordNotFoundException  when it receives an unexisting
+	 *                                     booking
+	 * 
+	 * @exception ParseException       		when it receives dates with an incorrect type
+	 * 
+	 * @exception InvalidDateException		when the received check in is before the current date or after
+	 * 										the received check-out
+	 * 
+	 * @exception SQLWarningException   	when it doesn't receives an id_booking
+	 * 
+	 * 
+	 */
+
+	@Override
+	public EntityResult changedatesUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
+			throws OntimizeJEERuntimeException {
+		Map<String, Object> mapLeavingDate = new HashMap<>();	
+		EntityResult updateResult = new EntityResultMapImpl();
+		EntityResult bookingResult = new EntityResultMapImpl();
+		try {
+			checkIfBookingExists(keyMap);
+			mapLeavingDate.put("bk_leaving_date", new Date(System.currentTimeMillis()));
+			daoHelper.update(bookingDao, mapLeavingDate, keyMap);
+
+			bookingResult = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_room"));
+			attrMap.put("bk_room", bookingResult.getRecordValues(0).get("bk_room"));
+			
+			checkDisponibility(attrMap);
+			calculateBookingPrice(attrMap);
+
+			attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
+			
+			updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
+			updateResult.setMessage("SUCCESSFUL_UPDATE");
+
+		} catch (RecordNotFoundException e) {
+			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
+			control.setErrorMessage(updateResult, e.getMessage());
+
+		} catch (InvalidDateException | EmptyRequestException e) {
+			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
+			control.setMessageFromException(updateResult, e.getMessage());
+		} catch (ParseException e) {
+			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
+			control.setErrorMessage(updateResult, "INVALID_DATE_FORMAT");
+		} finally {
+			try {
+				mapLeavingDate.put("bk_leaving_date", null);
+				daoHelper.update(bookingDao, mapLeavingDate, keyMap);
+			} catch (SQLWarningException e) {
+				log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
+				updateResult.setMessage("BOOKING_DOESN'T_EXISTS");
+			}
+		}
+		return updateResult;
+	}
+
+	/**
 	 * 
 	 * 
 	 * TO DO, NOT FUNCIONAL
@@ -772,10 +841,10 @@ public class BookingService implements IBookingService {
 				updateResult.setMessage("SUCCESSFUL_UPDATE");
 			}
 		} catch (RecordNotFoundException e) {
-			log.error("unable to update a booking. Request : {} {}",keyMap,attrMap, e);
+			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (DataIntegrityViolationException e) {
-			log.error("unable to update a booking. Request : {} {}",keyMap,attrMap, e);
+			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setMessageFromException(updateResult, e.getMessage());
 		}
 		return updateResult;
@@ -842,7 +911,7 @@ public class BookingService implements IBookingService {
 		filter.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
 				buildExpressionToSearchRooms(startDate, endDate));
 
-		result = this.daoHelper.query(this.bookingDao, filter, columns, "CHECK_ROOM_DISPONIBILITY");
+		result = daoHelper.query(bookingDao, filter, columns, "CHECK_ROOM_DISPONIBILITY");
 
 		if (!result.isEmpty()) {
 			throw new OccupiedRoomException("OCCUPIED_ROOM");
@@ -971,9 +1040,6 @@ public class BookingService implements IBookingService {
 			throw new RecordNotFoundException("ROOM_DOESN'T_EXISTS");
 		return existingRoom.isEmpty();
 	}
-
-
-
 
 	private void checkIfHotelExists(Map<String, Object> attrMap) {
 		List<String> attrList = new ArrayList<>();
