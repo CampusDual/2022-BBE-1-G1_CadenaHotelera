@@ -589,6 +589,36 @@ public class BookingServiceTest {
 				assertEquals(EntityResult.OPERATION_SUCCESSFUL, updateResult.getCode());
 
 			}
+			
+			@Test
+			@DisplayName("update booking fails due ocuppied rom in new dates")
+			void test_booking_update_fails_due_ocuppied_room() {
+				Map<String, Object> attrMap = getGenericAttrMap();
+				Map<String, Object> keyMap = getBookingKeyMap();
+				EntityResult result = new EntityResultMapImpl();
+				EntityResult er = new EntityResultMapImpl();
+				er.addRecord(new HashMap<String, Object>() {
+					{
+						put("id_booking", 2);
+						put("bk_room", 2);
+						put("bk_check_in", "2000-11-11");
+						put("bk_check_out", "2000-12-12");
+						put("bk_price", 100);
+						put("rmt_price",new BigDecimal(3));
+					}
+				});
+				
+				
+				EntityResult roomResult = new EntityResultMapImpl(Arrays.asList("id_room"));
+				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(er);
+				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(roomResult);
+				
+				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
+				assertEquals("OCCUPIED_ROOM", updateResult.getMessage());
+				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+				
+			}
 
 			@Test
 			@DisplayName("update booking without id_booking")
@@ -605,6 +635,21 @@ public class BookingServiceTest {
 			@DisplayName("update booking without body request")
 			void test_booking_update_empty_without_body_request() {
 				Map<String, Object> attrMap = new HashMap<>();
+				Map<String, Object> keyMap = getBookingKeyMap();
+				EntityResult bookingQuery = getGenericBookingER();
+				EntityResult queryResult = new EntityResultMapImpl();
+				queryResult.setCode(1);
+				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
+				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
+				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
+				assertEquals("ERROR_WHILE_UPDATING", updateResult.getMessage());
+				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+			}
+			@Test
+			@DisplayName("update booking without dates")
+			void test_booking_update_empty_without_dates() {
+				Map<String, Object> attrMap = new HashMap<>();
+				attrMap.put("bk_room", 2);
 				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult bookingQuery = getGenericBookingER();
 				EntityResult queryResult = new EntityResultMapImpl();
