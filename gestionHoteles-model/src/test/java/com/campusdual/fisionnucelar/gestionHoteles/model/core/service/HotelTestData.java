@@ -60,5 +60,12 @@ public static EntityResult getAllHotelData() {
 			put("HTL_NAME", Types.VARCHAR);
 		}});
     return er;
-}
+	}
+	
+	public static Map<String, Object> getGenericFilter() {
+		Map<String, Object> filter = new HashMap<>();
+    	filter.put("id_hotel", 32);
+		return filter;
+	}
+	
 }

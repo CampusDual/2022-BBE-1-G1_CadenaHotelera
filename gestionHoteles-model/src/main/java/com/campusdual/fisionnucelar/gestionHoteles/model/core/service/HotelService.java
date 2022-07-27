@@ -1,7 +1,6 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +18,6 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
@@ -28,8 +26,6 @@ import com.ontimize.jee.common.db.SQLStatementBuilder.SQLStatement;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
-import com.ontimize.jee.common.gui.SearchValue;
-import com.ontimize.jee.common.tools.EntityResultTools;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 import com.ontimize.jee.server.dao.IOntimizeDaoSupport;
 import com.ontimize.jee.server.dao.ISQLQueryAdapter;
@@ -75,9 +71,7 @@ public class HotelService implements IHotelService {
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
-
 			searchResult = this.daoHelper.query(this.hotelDao, keyMap, attrList);
-
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
 			log.error("unable to retrieve a hotel. Request : {} {} ",keyMap,attrList, e);
@@ -90,10 +84,6 @@ public class HotelService implements IHotelService {
 		return searchResult;
 	}
 
-	
-	
-	
-	
 
 	
 	/**
@@ -120,7 +110,7 @@ public class HotelService implements IHotelService {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
 			if (keyMap.get("services") == null) {
-				throw new EmptyRequestException("SERVICES_REQUIRED");
+				throw new EmptyRequestException("SERVICES_REQUIRED");				
 			}
 
 			List<Integer> servicesRequired = (List<Integer>) keyMap.get("services");
@@ -138,7 +128,7 @@ public class HotelService implements IHotelService {
 			}
 			keyMap.remove("services");
 
-			searchResult = this.daoHelper.query(this.hotelDao, keyMap, attrList,"",
+			searchResult = daoHelper.query(hotelDao, keyMap, attrList,"",
 					new ISQLQueryAdapter() {
 						@Override
 						public SQLStatement adaptQuery(SQLStatement sqlStatement, IOntimizeDaoSupport dao,
@@ -247,20 +237,5 @@ public class HotelService implements IHotelService {
 
 	}
 
-	private EntityResult filterHotelsByServices(EntityResult result, Map<String, Object> keyMap)
-			throws InvalidRequestException {
-		SearchValue requiredServices;
-		Map<String, Object> servicesFilter = new HashMap<>();
-
-		List<Object> values = (List<Object>) keyMap.get("services");
-
-//		values.add(2);
-//		values.add(3);	
-//		requiredServices= new SearchValue(SearchValue.IN, values);		
-//		servicesFilter.put("svh_service", requiredServices);	
-//		result=EntityResultTools.dofilter(result, servicesFilter);
-
-		return result;
-	}
 
 }
