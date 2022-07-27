@@ -2,7 +2,6 @@ package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.HotelTestData.*;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -43,7 +42,6 @@ public class HotelServiceTest {
 	@Mock
 	HotelDao hotelDao;
 
-	
 	@BeforeEach
 	void setUp() {
 		this.hotelService = new HotelService();
@@ -399,17 +397,17 @@ public class HotelServiceTest {
 			Map<String, Object> filter = new HashMap<>();
 			filter.put("id_hotel", 2);
 			filter.put("services", services);
-			
-			EntityResult searchResult = getAllHotelData();			
+
+			EntityResult searchResult = getAllHotelData();
 			when(daoHelper.query(any(), any(), any(), anyString(), any(ISQLQueryAdapter.class)))
 					.thenReturn(searchResult);
 			EntityResult hotelByServices = hotelService.hotelsbyservicesQuery(filter, Arrays.asList("id_hotel"));
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, hotelByServices.getCode());
 			assertEquals(3, hotelByServices.calculateRecordNumber());
-		}	
-			
+		}
+
 		@Test
-		@DisplayName("Search hotels by services succesful with no results")	
+		@DisplayName("Search hotels by services with no results")
 		void no_results() {
 			List<Integer> services = new ArrayList<>();
 			services.add(1);
@@ -418,48 +416,95 @@ public class HotelServiceTest {
 			Map<String, Object> filter = new HashMap<>();
 			filter.put("id_hotel", 2);
 			filter.put("services", services);
-			
-			EntityResult searchResult = new EntityResultMapImpl();		
+
+			EntityResult searchResult = new EntityResultMapImpl();
 			when(daoHelper.query(any(), any(), any(), anyString(), any(ISQLQueryAdapter.class)))
 					.thenReturn(searchResult);
 			EntityResult hotelByServices = hotelService.hotelsbyservicesQuery(filter, Arrays.asList("id_hotel"));
 			assertEquals(EntityResult.OPERATION_WRONG, searchResult.getCode());
 			assertEquals("NO_RESULTS", hotelByServices.getMessage());
-		}	
-		
+		}
+
 		@Test
-		@DisplayName("Search hotels by services succesful withouth introducing services")	
+		@DisplayName("Search hotels by services withouth introducing services")
 		void search_without_fields() {
-			Map<String, Object> filter = new HashMap<>();	
+			Map<String, Object> filter = new HashMap<>();
 			EntityResult hotelByServices = hotelService.hotelsbyservicesQuery(filter, Arrays.asList("id_hotel"));
 			assertEquals(EntityResult.OPERATION_WRONG, hotelByServices.getCode());
 			assertEquals("SERVICES_REQUIRED", hotelByServices.getMessage());
-		}	
-		
+		}
+
 		@Test
-		@DisplayName("Search hotels by services succesful introducing an incorrect type")	
+		@DisplayName("Search hotels by services introducing an incorrect type")
 		void search_with_incorrect_type() {
-			Integer services=3;
+			Integer services = 3;
 			Map<String, Object> filter = new HashMap<>();
 			filter.put("id_hotel", 2);
 			filter.put("services", services);
 			EntityResult hotelByServices = hotelService.hotelsbyservicesQuery(filter, Arrays.asList("id_hotel"));
 			assertEquals(EntityResult.OPERATION_WRONG, hotelByServices.getCode());
 			assertEquals("INCORRECT_REQUEST", hotelByServices.getMessage());
-		}	
-
-		
-		
+		}
 	}
-	
-	
-	
-	
 
-	
-	
-	
+	@Nested
+	@DisplayName("Test for Hotel searchs by location")
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	public class SearchByLocation {
+		@Test
+		@DisplayName("Search hotels by location succesful")
+		void search_success() {
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("longitude", 43.362343);
+			filter.put("latitude", -8.41154);
+			filter.put("radius", 200);
+			EntityResult searchResult = getHotelsWithLocation();
+			when(daoHelper.query(any(), any(), any())).thenReturn(searchResult);
+
+			EntityResult hotelByLocation = hotelService.searchbylocationQuery(filter,new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_SUCCESSFUL, hotelByLocation.getCode());
+			assertEquals(3, hotelByLocation.calculateRecordNumber());
+		}
+
+		@Test
+		@DisplayName("Search hotels by services with no results")
+		void no_results() {
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("longitude", 43.362343);
+			filter.put("latitude", -8.41154);
+			filter.put("radius", 1);
+			EntityResult searchResult = getHotelsWithLocation();
+			when(daoHelper.query(any(), any(), any())).thenReturn(searchResult);
+			EntityResult hotelByLocation = hotelService.searchbylocationQuery(filter,new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, hotelByLocation.getCode());
+			assertEquals(0, hotelByLocation.calculateRecordNumber());
+			assertEquals("NO_HOTELS_IN_REQUESTED_AREA", hotelByLocation.getMessage());
+		}
+
+		@Test
+		@DisplayName("Search hotels by location without introducing latitude,longitude or radius")
+		void search_without_fields() {
+			Map<String, Object> filter = new HashMap<>();
+			EntityResult hotelByLocation = hotelService.searchbylocationQuery(filter,new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, hotelByLocation.getCode());
+			assertEquals("LONGITUDE_LATITUDE_AND_RADIUS_REQUIRED", hotelByLocation.getMessage());
+		}
+
+		@Test
+		@DisplayName("Search hotels by location introducing an incorrect type")
+		void search_with_incorrect_type() {
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("longitude", "ssss");
+			filter.put("latitude","ssss");
+			filter.put("radius", 1);
+			EntityResult searchResult = getHotelsWithLocation();
+			when(daoHelper.query(any(), any(), any())).thenReturn(searchResult);
+			EntityResult hotelByLocation = hotelService.searchbylocationQuery(filter,new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, hotelByLocation.getCode());
+			assertEquals(0, hotelByLocation.calculateRecordNumber());
+			assertEquals("INCORRECT_TYPE", hotelByLocation.getMessage());
+		}
+
+	}
+
 }
-	
-	
-

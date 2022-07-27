@@ -1,6 +1,5 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
-import static org.mockito.ArgumentMatchers.intThat;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -28,6 +27,10 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResult
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.ApiKey;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.GooglePlaces;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.Place;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.PlacesResult;
 import com.ontimize.jee.common.db.SQLStatementBuilder.SQLStatement;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -226,25 +229,25 @@ public class HotelService implements IHotelService {
 		return updateResult;
 	}
 
-	
-	
-	
 	/**
-	 * It searchs hotels in an concrete area, using a latitude, a longitude and a radius
+	 * It searchs hotels in an concrete area, using a latitude, a longitude and a
+	 * radius
 	 * 
-	 * @param keyMap   the longitude, the latitude and the radius to the search
+	 * @param keyMap the longitude, the latitude and the radius to the search
 	 * @return the hotels in the requested area
 	 * 
-	 * @exception NoResultsException    when there are no hotels in the selected area
+	 * @exception NoResultsException    when there are no hotels in the selected
+	 *                                  area
 	 * 
-	 * @exception EmptyRequestException when it doesn't receives latitude, longitude or the radius
+	 * @exception EmptyRequestException when it doesn't receives latitude, longitude
+	 *                                  or the radius
 	 * 
 	 * @exception ClassCastException    when it receives an incorrect type
 	 * 
 	 * @throws OntimizeJEERuntimeException
 	 */
 	@Override
-	public EntityResult searchbylocationQuery(Map<String, Object> keyMap)
+	public EntityResult searchbylocationQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 
 		EntityResult hotelResult = daoHelper.query(hotelDao, new HashMap<>(),
@@ -278,10 +281,10 @@ public class HotelService implements IHotelService {
 				control.setErrorMessage(searchResult, "NO_HOTELS_IN_REQUESTED_AREA");
 			}
 		} catch (ClassCastException e) {
-			log.error("unable to search by location. Request : {} {} ", keyMap, e);
+			log.error("unable to search by location. Request : {} {} ", keyMap, attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_TYPE");
 		} catch (EmptyRequestException e) {
-			log.error("unable to search by location. Request : {} {} ", keyMap, e);
+			log.error("unable to search by location. Request : {} {} ", keyMap, attrList, e);
 			control.setMessageFromException(searchResult, e.getMessage());
 		}
 		return searchResult;
@@ -298,6 +301,61 @@ public class HotelService implements IHotelService {
 			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
 		return existingHotel.isEmpty();
 
+	}
+
+	
+
+	/**
+	 * It searchs hotels in an area using a city/region as reference. It recover
+	 * the longitude and latitude from google maps api
+	 * 
+	 * @param keyMap the location and the radius to the search
+	 * @return the hotels in the requested area
+	 * 
+	 * @exception EmptyRequestException when it doesn't receives the location or the radius
+	 * 
+	 * @exception ClassCastException    when it receives an incorrect type
+	 * 
+	 * @exception RecordNotFound		when it doesn't found any city or region with that matches the location param
+	 * 
+	 * @throws OntimizeJEERuntimeException
+	 */
+	@Override
+	public EntityResult searchbycityQuery(Map<String, Object> keyMap, List<String> attrList)
+			throws OntimizeJEERuntimeException {
+
+		EntityResult queryResult = new EntityResultMapImpl();
+		try {
+			if (keyMap.get("location") == null || keyMap.get("radius") == null) {
+				throw new EmptyRequestException("LOCATION_AND_RADIUS_REQUIRED");
+			}
+
+			Boolean found = false;
+			String placeName = (String) keyMap.get("location");
+			GooglePlaces googleSearch = new GooglePlaces(ApiKey.API_KEY);
+			keyMap.remove("location");
+			PlacesResult result = googleSearch.searchText(placeName);
+			for (Place place : result) {
+				if (place.getTypes().contains("political")) {
+					found = true;
+					keyMap.put("latitude", Double.valueOf(place.getGeometry().getLocation().getLat()));
+					keyMap.put("longitude", Double.valueOf(place.getGeometry().getLocation().getLng()));
+				}
+			}
+
+			if (found) {
+				queryResult = searchbylocationQuery(keyMap, new ArrayList<>());
+			} else {
+				throw new RecordNotFoundException("INVALID_CITY");
+			}
+		} catch (RecordNotFoundException | EmptyRequestException e) {
+			log.error("unable to search by city. Request : {} {} ", keyMap,attrList, e);
+			control.setErrorMessage(queryResult, e.getMessage());
+		} catch (ClassCastException e) {
+			log.error("unable to search by city. Request : {} {} ", keyMap,attrList, e);
+			control.setErrorMessage(queryResult, "INVALID_TYPE");
+		}
+		return queryResult;
 	}
 
 }
