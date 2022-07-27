@@ -115,7 +115,7 @@ public class ExtraServiceTest {
 	        }
 
 	        @Test
-	        @DisplayName("Obtain all data columns from Services table when ID not exist")
+	        @DisplayName("Obtain all data columns from Extra table when ID not exist")
 	        void when_queryAllColumnsNotExisting_return_empty() {
 	            HashMap<String, Object> keyMap = new HashMap<>() {{
 	                put("ID_EXTRA", 5);
@@ -177,7 +177,7 @@ public class ExtraServiceTest {
 	       
 	        @Test
 	        @DisplayName("Fail trying to insert duplicated name")
-	        void service_insert_duplicated_name() {
+	        void extra_insert_duplicated_name() {
 	        	Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
 	        	List<String> columnList = Arrays.asList("ID_EXTRA");
 	    		EntityResult insertResult = getGenericInsertResult();
@@ -194,22 +194,22 @@ public class ExtraServiceTest {
 	        	verify(daoHelper,times(2)).insert(any(), anyMap());
 	        }
 
-//Comentado porque el método que asigna el mensaje lo hace en tiempo de ejecución	        
-//	        @Test
-//	        @DisplayName("Fail trying to insert without ex_name field")
-//	        void service_insert_without_name() {
-//	        	Map<String, Object> dataToInsert = new HashMap<>();
-//	        	dataToInsert.put("ex_description", "Sala completamente equipada");
-//	        	when(daoHelper.insert(extraDao, dataToInsert)).thenThrow(DataIntegrityViolationException.class);
-//	        	EntityResult entityResult = extraService.extraInsert(dataToInsert);
-//	        	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-//	        	assertEquals("EXTRA_NAME_REQUIRED", entityResult.getMessage());
-//	        	verify(daoHelper).insert(any(), anyMap());
-//	        }     
-//			
+        
+	        @Test
+	        @DisplayName("Fail trying to insert without ex_name field")
+	        void extra_insert_without_name() {
+	        	Map<String, Object> dataToInsert = new HashMap<>();
+	        	dataToInsert.put("ex_description", "Sala completamente equipada");
+	        	DataIntegrityViolationException DataIntegrityException=new DataIntegrityViolationException("RunTimeMessage");		
+	    		when(daoHelper.insert(any(), anyMap())).thenThrow(DataIntegrityException);
+	        	EntityResult entityResult = extraService.extraInsert(dataToInsert);
+	        	assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+	        	verify(daoHelper).insert(any(), anyMap());
+	        }     
+			
 			@Test
 			@DisplayName("Fail trying to insert with no data")
-			void service_insert_withouth_data() {
+			void extra_insert_withouth_data() {
 				EntityResult insertResult = new EntityResultMapImpl();
 				Map<String, Object> dataToInsert = new HashMap<>();
 				when(daoHelper.insert(extraDao, dataToInsert)).thenReturn(insertResult);
@@ -222,10 +222,10 @@ public class ExtraServiceTest {
 	    @Nested
 	    @DisplayName("Test for Extra updates")
 	    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-	    public class ServiceUpdate {
+	    public class ExtraUpdate {
 	        @Test
 	        @DisplayName("Extra update successful")
-	        void hotel_update_success() {
+	        void extra_update_success() {
 	        	
 	        	Map<String, Object> filter = getGenericFilter();
 	        	Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
@@ -246,7 +246,7 @@ public class ExtraServiceTest {
 	        
 	        @Test
 	        @DisplayName("Fail trying to update a extra with a duplicated name")
-	        void service_fail_update_with_duplicated_name() {
+	        void extra_fail_update_with_duplicated_name() {
 	        	Map<String, Object> filter =getGenericFilter();
 	        	Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
 	        	List<String> attrList = new ArrayList<>();
@@ -262,7 +262,7 @@ public class ExtraServiceTest {
 	        }
 	        @Test
 	        @DisplayName("Fail trying to update a extra that doesn´t exists")
-	        void update_service_doesnt_exists() {
+	        void update_extra_doesnt_exists() {
 	        	Map<String, Object> filter = getGenericFilter();
 	        	Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
 	        	List<String> attrList = getGenericAttrList();
@@ -277,7 +277,7 @@ public class ExtraServiceTest {
 	        
 			@Test
 			@DisplayName("Fail trying to update without any fields")
-			void hotel_update_without_any_fields() {
+			void extra_update_without_any_fields() {
 				Map<String, Object> filter = getGenericFilter();
 				Map<String, Object> dataToUpdate = new HashMap<>();
 				EntityResult updateResult = extraService.extraUpdate(dataToUpdate,filter);
@@ -286,7 +286,7 @@ public class ExtraServiceTest {
 			}
 			@Test
 			@DisplayName("Fail trying to update without id_extra")
-			void hotel_update_without_id_hotel() {
+			void extra_update_without_id_hotel() {
 				Map<String, Object> filter = new HashMap<>();
 				Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
 				

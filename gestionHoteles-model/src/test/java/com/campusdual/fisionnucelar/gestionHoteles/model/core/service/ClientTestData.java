@@ -72,15 +72,14 @@ public class ClientTestData {
 		});
 		return er;
 	}
-	
+
 	
 	
 	public static Map<String, Object> getGenericDataToInsertOrUpdate() {
 		Map<String, Object> dataToInsert = new HashMap<>();
-		dataToInsert.put("cl_nif", "98766789I");
-		dataToInsert.put("cl_email", "alfredoperez@outlook.com");
 		dataToInsert.put("cl_name", "Alfredo Pérez");
-		dataToInsert.put("cl_phone", "985446789");
+		dataToInsert.put("cl_email", "alfredoperez@outlook.com");
+		dataToInsert.put("cl_nif", "98766789I");
 		return dataToInsert;
 	}
 
@@ -92,7 +91,7 @@ public class ClientTestData {
 	
 	public static Map<String, Object> getGenericFilter() {
 		Map<String, Object> filter = new HashMap<>();
-		filter.put("id_extra", 32);
+		filter.put("id_client", 32);
 		return filter;
 	}
 
@@ -103,7 +102,7 @@ public class ClientTestData {
 
 	public static List<String> getGenericAttrList() {
 		List<String> attrList = new ArrayList<>();
-		attrList.add("ID_CLIENT");
+		attrList.add("id_client");
 		return attrList;
 	}
 	

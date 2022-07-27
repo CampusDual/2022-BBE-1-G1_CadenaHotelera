@@ -681,6 +681,7 @@ public class BookingService implements IBookingService {
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (ClassCastException | BadSqlGrammarException e) {
 			log.error("unable to cancel an extra to a booking. Request : {} {}", keyMap, attrMap, e);
+			control.setErrorMessage(updateResult, "INCORRECT_REQUEST");
 		}
 
 		return updateResult;
@@ -793,9 +794,9 @@ public class BookingService implements IBookingService {
 			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 
-		} catch (InvalidDateException | EmptyRequestException e) {
+		} catch (InvalidDateException | OccupiedRoomException | EmptyRequestException e) {
 			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
-			control.setMessageFromException(updateResult, e.getMessage());
+			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (ParseException e) {
 			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, "INVALID_DATE_FORMAT");

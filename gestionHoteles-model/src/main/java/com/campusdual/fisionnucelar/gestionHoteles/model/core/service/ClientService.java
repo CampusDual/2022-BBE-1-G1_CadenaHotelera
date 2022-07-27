@@ -75,6 +75,8 @@ public class ClientService implements IClientService {
 	 * @param The filters and the fields of the query
 	 * @return The columns from the clients table especified in the params and a
 	 *         message with the operation result
+	 *@exception BadSqlGrammarException when it introduces a string instead of a numeric on id
+     *@exception NoResultsException when the query doesn´t return results   
 	 */
 	@Override
 	public EntityResult clientQuery(Map<String, Object> keyMap, List<String> attrList)
@@ -100,6 +102,9 @@ public class ClientService implements IClientService {
 	 * @since 27/06/2022
 	 * @param The fields of the new register
 	 * @return The id of the new register and a message with the operation result
+	 * @exception InvalidEmailException when it introduces a email client that it is invalid
+	 * @exception DuplicateKeyException when it introduces a email client that it exists
+	 * @exception DataIntegrityViolationException when it doesn´t introduce a not null field 
 	 */
 	@Override
 	public EntityResult clientInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
@@ -133,6 +138,10 @@ public class ClientService implements IClientService {
 	 * @since 27/06/2022
 	 * @param The fields to be updated
 	 * @return A message with the operation result
+	 * @exception InvalidEmailException when it introduces a email client that it is invalid
+	 * @exception DuplicateKeyException when it introduces a email client that it exists
+	 * @exception RecordNotFoundException when it doesn´t introduce a not null field 
+	 * @exception EmptyRequestException when it doesn´t introduce any field
 	 */
 	@Override
 	public EntityResult clientUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
@@ -149,17 +158,17 @@ public class ClientService implements IClientService {
 			}
 
 			updateResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
-			if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
-				updateResult.setMessage("ERROR_WHILE_UPDATING");
-			} else {
-				updateResult.setMessage("SUCCESSFUL_UPDATE");
-			}
+			updateResult.setMessage("SUCCESSFUL_UPDATE");
+			
 		} catch (InvalidEmailException e) {
 			log.error("unable to update a client. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
+		} catch (DuplicateKeyException e) {
+			log.error("unable to update a client. Request : {} ",attrMap, e);
+			control.setErrorMessage(updateResult, "EMAIL_ALREADY_EXISTS");
 		} catch (RecordNotFoundException e) {
 			log.error("unable to update a client. Request : {} {} ",keyMap,attrMap, e);
-			control.setErrorMessage(updateResult, "CLIENT_DOESN'T_EXISTS");
+			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (EmptyRequestException e) {
 			log.error("unable to update a client. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
@@ -175,6 +184,7 @@ public class ClientService implements IClientService {
 	 * @since 05/07/2022
 	 * @param The id of the client
 	 * @return A message with the operation result
+	 * @exception RecordNotFoundException when it doesn´t introduce a not null field 
 	 */
 	@Override
 	public EntityResult clientDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
