@@ -23,6 +23,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
@@ -306,20 +307,25 @@ public class HotelService implements IHotelService {
 	
 
 	/**
-	 * It searchs hotels in an area using a city/region as reference. It recover
-	 * the longitude and latitude from google maps api
+	 * It searchs hotels in an area using a city as reference. It recover
+	 * the longitude and latitude from google maps api. If can receive just the
+	 * location or also the region
 	 * 
-	 * @param keyMap the location and the radius to the search
+	 * @param keyMap the location and the radius to the search. Optional: the region of the location
 	 * @return the hotels in the requested area
 	 * 
 	 * @exception EmptyRequestException when it doesn't receives the location or the radius
 	 * 
 	 * @exception ClassCastException    when it receives an incorrect type
 	 * 
-	 * @exception RecordNotFound		when it doesn't found any city or region with that matches the location param
+	 * @exception RecordNotFoundException		when it doesn't found any city or region with that matches the location param
+	 * 
+	 * @exception InvalidRequestException	when it founds more than one location	
 	 * 
 	 * @throws OntimizeJEERuntimeException
 	 */
+	
+	
 	@Override
 	public EntityResult searchbycityQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
@@ -329,32 +335,41 @@ public class HotelService implements IHotelService {
 			if (keyMap.get("location") == null || keyMap.get("radius") == null) {
 				throw new EmptyRequestException("LOCATION_AND_RADIUS_REQUIRED");
 			}
-
-			Boolean found = false;
+			
+			int counter=0;
 			String placeName = (String) keyMap.get("location");
+					
+			if(keyMap.get("region")!=null) {
+				placeName = placeName + " "+ (String)keyMap.get("region");
+			}
+			
 			GooglePlaces googleSearch = new GooglePlaces(ApiKey.API_KEY);
 			keyMap.remove("location");
 			PlacesResult result = googleSearch.searchText(placeName);
+			
 			for (Place place : result) {
 				if (place.getTypes().contains("political")) {
-					found = true;
+					counter++;
 					keyMap.put("latitude", Double.valueOf(place.getGeometry().getLocation().getLat()));
 					keyMap.put("longitude", Double.valueOf(place.getGeometry().getLocation().getLng()));
 				}
-			}
-
-			if (found) {
+			}		
+			if (counter==1) {
 				queryResult = searchbylocationQuery(keyMap, new ArrayList<>());
-			} else {
-				throw new RecordNotFoundException("INVALID_CITY");
+			} else if(counter==0 && keyMap.get("region")==null){
+				throw new RecordNotFoundException("NO_RESULTS_TRY_ADDING_REGION");
+			}else if (counter==0) {
+				throw new RecordNotFoundException("NO_RESULTS");
+			}else {
+				throw new InvalidRequestException("TOO_MANY_COINCIDENCES_TRY_TO_ADD_REGION_OR_COUNTRY");
 			}
-		} catch (RecordNotFoundException | EmptyRequestException e) {
+		} catch (RecordNotFoundException | EmptyRequestException|InvalidRequestException e) {
 			log.error("unable to search by city. Request : {} {} ", keyMap,attrList, e);
 			control.setErrorMessage(queryResult, e.getMessage());
 		} catch (ClassCastException e) {
 			log.error("unable to search by city. Request : {} {} ", keyMap,attrList, e);
 			control.setErrorMessage(queryResult, "INVALID_TYPE");
-		}
+		} 
 		return queryResult;
 	}
 

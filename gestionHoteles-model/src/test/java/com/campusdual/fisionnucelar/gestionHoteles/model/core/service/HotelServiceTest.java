@@ -17,19 +17,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.BadSqlGrammarException;
 
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
-import com.ontimize.jee.common.db.SQLStatementBuilder.SQLStatement;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.GooglePlaces;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
-import com.ontimize.jee.server.dao.IOntimizeDaoSupport;
 import com.ontimize.jee.server.dao.ISQLQueryAdapter;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,10 +34,14 @@ public class HotelServiceTest {
 	@Mock
 	DefaultOntimizeDaoHelper daoHelper;
 
+	@Mock
+	GooglePlaces googleSearch;
+	
 	@InjectMocks
 	HotelService hotelService;
 	@Mock
 	HotelDao hotelDao;
+	
 
 	@BeforeEach
 	void setUp() {
@@ -504,7 +505,125 @@ public class HotelServiceTest {
 			assertEquals(0, hotelByLocation.calculateRecordNumber());
 			assertEquals("INCORRECT_TYPE", hotelByLocation.getMessage());
 		}
-
 	}
 
+	
+	@Nested
+	@DisplayName("Test for Hotel searchs by city")
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	public class SearchByCity {
+		@Test
+		@DisplayName("Search hotels by city succesful")
+		void search_success() {
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("location", "vigo");
+			filter.put("radius", 200);			
+			EntityResult searchResult = getHotelsWithLocation2();	
+						
+			when(daoHelper.query(any(), any(), any())).thenReturn(searchResult);						
+			
+			EntityResult hotelByCity = hotelService.searchbycityQuery(filter,new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_SUCCESSFUL, hotelByCity.getCode());
+			assertEquals(3, hotelByCity.calculateRecordNumber());
+		}
+		
+		
+		@Test
+		@DisplayName("Search hotels by city with no results")
+		void no_results() {	
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("location", "lisboa");
+			filter.put("radius", 200);		
+			EntityResult searchResult = getHotelsWithLocation2();	
+						
+			when(daoHelper.query(any(), any(), any())).thenReturn(searchResult);						
+			
+			EntityResult hotelByCity = hotelService.searchbycityQuery(filter,new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, hotelByCity.getCode());
+			assertEquals(0, hotelByCity.calculateRecordNumber());
+			assertEquals("NO_HOTELS_IN_REQUESTED_AREA", hotelByCity.getMessage());				
+		}
+		
+		
+		@Test
+		@DisplayName("Search hotels by city with no coincidences")
+		void no_results_without_region() {	
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("location", "springfield");
+			filter.put("radius", 200);
+				
+			EntityResult hotelByCity = hotelService.searchbycityQuery(filter,new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, hotelByCity.getCode());
+			assertEquals(0, hotelByCity.calculateRecordNumber());
+			assertEquals("NO_RESULTS_TRY_ADDING_REGION", hotelByCity.getMessage());				
+		}
+		
+		@Test
+		@DisplayName("Search hotels by city with no coincidences introducing region")
+		void no_results_with_region() {	
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("location", "springfield");
+			filter.put("radius", 200);
+			filter.put("region", "portugal");	
+			
+			EntityResult hotelByCity = hotelService.searchbycityQuery(filter,new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, hotelByCity.getCode());
+			assertEquals(0, hotelByCity.calculateRecordNumber());
+			assertEquals("NO_RESULTS", hotelByCity.getMessage());				
+		}
+		
+		
+		@Test
+		@DisplayName("Search hotels by city with too many coincidences")
+		void too_many_coincidences() {	
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("location", "aranda");
+			filter.put("radius", 200);
+			
+			EntityResult hotelByCity = hotelService.searchbycityQuery(filter,new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, hotelByCity.getCode());
+			assertEquals(0, hotelByCity.calculateRecordNumber());
+			assertEquals("TOO_MANY_COINCIDENCES_TRY_TO_ADD_REGION_OR_COUNTRY", hotelByCity.getMessage());				
+		}
+			
+		@Test
+		@DisplayName("Search hotels by city without introducing location or radius")
+		void search_without_fields() {
+			Map<String, Object> filter = new HashMap<>();
+			EntityResult hotelByLocation = hotelService.searchbycityQuery(filter,new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, hotelByLocation.getCode());
+			assertEquals("LOCATION_AND_RADIUS_REQUIRED", hotelByLocation.getMessage());
+		}
+
+		@Test
+		@DisplayName("Search hotels by location introducing an incorrect type")
+		void search_with_incorrect_type() {
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("location", 1);
+			filter.put("radius", "sss");
+			EntityResult searchResult = getHotelsWithLocation();
+			EntityResult hotelByLocation = hotelService.searchbycityQuery(filter,new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, hotelByLocation.getCode());
+			assertEquals(0, hotelByLocation.calculateRecordNumber());
+			assertEquals("INVALID_TYPE", hotelByLocation.getMessage());
+		}
+
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }
