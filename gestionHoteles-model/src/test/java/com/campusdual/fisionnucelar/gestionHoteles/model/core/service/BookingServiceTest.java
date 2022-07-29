@@ -493,60 +493,60 @@ public class BookingServiceTest {
 
 		}
 
-		@Nested
-		@DisplayName("Test booking update")
-		@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-		public class test_booking_update {
-			@Test
-			@DisplayName("update booking succesfully")
-			void test_booking_update_success() {
-				Map<String, Object> attrMap = getGenericAttrMap();
-				Map<String, Object> keyMap = getBookingKeyMap();
-				EntityResult result = new EntityResultMapImpl();
-				result.setCode(0);
-				EntityResult queryResult = getGenericBookingER();
-				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
-				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);
-				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
-				assertEquals("SUCCESSFUL_UPDATE", updateResult.getMessage());
-				assertEquals(EntityResult.OPERATION_SUCCESSFUL, updateResult.getCode());
-
-			}
-
-			@Test
-			@DisplayName("update booking without id_booking")
-			void test_booking_update_empty_without_id_booking() {
-				Map<String, Object> attrMap = new HashMap<>();
-				Map<String, Object> keyMap = new HashMap<>();
-				EntityResult queryResult = new EntityResultMapImpl();
-				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
-				assertEquals("ID_BOOKING_REQUIRED", updateResult.getMessage());
-				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
-			}
-
-			@Test
-			@DisplayName("update booking without body request")
-			void test_booking_update_empty_without_body_request() {
-				Map<String, Object> attrMap = new HashMap<>();
-				Map<String, Object> keyMap = getBookingKeyMap();
-				EntityResult bookingQuery = getGenericBookingER();
-				EntityResult queryResult = new EntityResultMapImpl();
-				queryResult.setCode(1);
-				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
-				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
-				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
-				assertEquals("ERROR_WHILE_UPDATING", updateResult.getMessage());
-				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
-			}
-		}
+//		@Nested
+//		@DisplayName("Test booking update")
+//		@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+//		public class test_booking_update {
+//			@Test
+//			@DisplayName("update booking succesfully")
+//			void test_booking_update_success() {
+//				Map<String, Object> attrMap = getGenericAttrMap();
+//				Map<String, Object> keyMap = getBookingKeyMap();
+//				EntityResult result = new EntityResultMapImpl();
+//				result.setCode(0);
+//				EntityResult queryResult = getGenericBookingER();
+//				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(queryResult);
+//				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);
+//				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
+//				assertEquals("SUCCESSFUL_UPDATE", updateResult.getMessage());
+//				assertEquals(EntityResult.OPERATION_SUCCESSFUL, updateResult.getCode());
+//
+//			}
+//
+//			@Test
+//			@DisplayName("update booking without id_booking")
+//			void test_booking_update_empty_without_id_booking() {
+//				Map<String, Object> attrMap = new HashMap<>();
+//				Map<String, Object> keyMap = new HashMap<>();
+//				EntityResult queryResult = new EntityResultMapImpl();
+//				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
+//				assertEquals("ID_BOOKING_REQUIRED", updateResult.getMessage());
+//				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+//			}
+//
+//			@Test
+//			@DisplayName("update booking without body request")
+//			void test_booking_update_empty_without_body_request() {
+//				Map<String, Object> attrMap = new HashMap<>();
+//				Map<String, Object> keyMap = getBookingKeyMap();
+//				EntityResult bookingQuery = getGenericBookingER();
+//				EntityResult queryResult = new EntityResultMapImpl();
+//				queryResult.setCode(1);
+//				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
+//				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
+//				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
+//				assertEquals("ERROR_WHILE_UPDATING", updateResult.getMessage());
+//				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+//			}
+//		}
 
 		@Nested
 		@DisplayName("Test change dates update")
 		@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 		public class test_change_dates_update {
 			@Test
-			@DisplayName("update booking succesfully")
-			void test_booking_update_success() {
+			@DisplayName("change dates succesfully")
+			void test_change_dates_success() {
 				Map<String, Object> attrMap = getGenericAttrMap();
 				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult result = new EntityResultMapImpl();
@@ -569,7 +569,6 @@ public class BookingServiceTest {
 				
 				Mockito.doAnswer(new Answer() {
 					private int count = 0;
-
 					@Override
 					public Object answer(InvocationOnMock invocation) throws Throwable {
 						count++;
@@ -588,8 +587,8 @@ public class BookingServiceTest {
 			}
 			
 			@Test
-			@DisplayName("update booking fails due ocuppied rom in new dates")
-			void test_booking_update_fails_due_ocuppied_room() {
+			@DisplayName("change dates fails due ocuppied rom in new dates")
+			void test_change_dates_fails_due_ocuppied_room() {
 				Map<String, Object> attrMap = getGenericAttrMap();
 				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult result = new EntityResultMapImpl();
@@ -618,45 +617,70 @@ public class BookingServiceTest {
 			}
 
 			@Test
-			@DisplayName("update booking without id_booking")
-			void test_booking_update_empty_without_id_booking() {
+			@DisplayName("change dates without id_booking")
+			void test_change_dates_empty_without_id_booking() {
 				Map<String, Object> attrMap = new HashMap<>();
 				Map<String, Object> keyMap = new HashMap<>();
 				EntityResult queryResult = new EntityResultMapImpl();
-				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
+				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
 				assertEquals("ID_BOOKING_REQUIRED", updateResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 			}
 
+
 			@Test
-			@DisplayName("update booking without body request")
-			void test_booking_update_empty_without_body_request() {
+			@DisplayName("change dates without body request")
+			void test_change_dates_empty_without_body_request() {
 				Map<String, Object> attrMap = new HashMap<>();
 				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult bookingQuery = getGenericBookingER();
-				EntityResult queryResult = new EntityResultMapImpl();
-				queryResult.setCode(1);
+				EntityResult queryResult = new EntityResultMapImpl();			
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
 				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
-				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
-				assertEquals("ERROR_WHILE_UPDATING", updateResult.getMessage());
+				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
+				assertEquals("CHECK_IN_AND_CHECK_OUT_REQUIRED", updateResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 			}
 			@Test
-			@DisplayName("update booking without dates")
-			void test_booking_update_empty_without_dates() {
+			@DisplayName("change dates without dates")
+			void test_change_dates_empty_without_dates() {
 				Map<String, Object> attrMap = new HashMap<>();
 				attrMap.put("bk_room", 2);
 				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult bookingQuery = getGenericBookingER();
 				EntityResult queryResult = new EntityResultMapImpl();
-				queryResult.setCode(1);
+				
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
 				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
-				EntityResult updateResult = bookingService.bookingUpdate(attrMap, keyMap);
-				assertEquals("ERROR_WHILE_UPDATING", updateResult.getMessage());
+				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
+				assertEquals("CHECK_IN_AND_CHECK_OUT_REQUIRED", updateResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 			}
+			
+			@Test
+			@DisplayName("change dates in an inactive booking")
+			void test_change_dates_inactive_booking() {
+				Map<String, Object> attrMap =getGenericAttrMap();
+				attrMap.put("bk_room", 2);
+				Map<String, Object> keyMap = getBookingKeyMap();
+				EntityResult bookingQuery = new EntityResultMapImpl();
+				bookingQuery.addRecord(new HashMap<String, Object>() {
+					{
+						put("id_booking", 2);	
+						put("bk_leaving_date", "2022-11-11");
+					
+					}
+				});
+	
+				EntityResult queryResult = new EntityResultMapImpl();								
+				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);	
+				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
+				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
+				assertEquals("BOOKING_ISN'T_ACTIVE", updateResult.getMessage());
+				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+			}
+			
+			
 		}
 
 		@Nested
@@ -778,6 +802,30 @@ public class BookingServiceTest {
 			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 		}
 
+		@Test
+		@DisplayName("update an extra with an inactive booking")
+		void test_booking_extra_inactive_booking() {
+			Map<String, Object> attrMap = new HashMap<>();
+			attrMap.put("id_extras_hotel", 1);
+			attrMap.put("quantity", 2);
+
+			Map<String, Object> keyMap = getBookingKeyMap();
+
+			EntityResult bookingResult = new EntityResultMapImpl();
+			bookingResult.addRecord(new HashMap<String, Object>() {{
+				put("id_booking", 2);
+				put("bk_leaving_date","2022-11-11");}}); 
+	
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
+			EntityResult updateResult = bookingService.addbookingextraUpdate(attrMap, keyMap);
+			assertEquals("BOOKING_ISN'T_ACTIVE", updateResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+		}
+
+		
+		
+		
+		
 		@Test
 		@DisplayName("update an extra with invalid data")
 		void test_booking_extra_booking_invalid_data() {

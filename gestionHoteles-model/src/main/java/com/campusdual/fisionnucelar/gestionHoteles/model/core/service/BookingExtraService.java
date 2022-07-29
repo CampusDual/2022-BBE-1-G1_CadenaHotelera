@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
+import com.ontimize.jee.common.security.PermissionsProviderSecured;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +75,7 @@ public class BookingExtraService implements IBookingExtraService{
 	 * 
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult bookingextraQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
@@ -108,6 +111,7 @@ public class BookingExtraService implements IBookingExtraService{
 	 */
 
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult bookingextraInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
@@ -123,6 +127,7 @@ public class BookingExtraService implements IBookingExtraService{
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
+		
 	}
 
 	
@@ -149,6 +154,7 @@ public class BookingExtraService implements IBookingExtraService{
 	
 	@Override
 	@Transactional
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult markextraenjoyedUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
@@ -192,6 +198,7 @@ public class BookingExtraService implements IBookingExtraService{
 
 	}
 
+	
 	private void checkIfExtraBookingExists(Map<String, Object> keyMap) {
 		if (keyMap.isEmpty()) {
 			throw new RecordNotFoundException("ID_BOOKING_EXTRA_REQUIRED");

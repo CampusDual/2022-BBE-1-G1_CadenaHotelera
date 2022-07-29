@@ -21,6 +21,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.SQLWarningException;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +52,7 @@ import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.common.gui.SearchValue;
+import com.ontimize.jee.common.security.PermissionsProviderSecured;
 import com.ontimize.jee.common.tools.EntityResultTools;
 import com.ontimize.jee.common.tools.ertools.IAggregateFunction;
 import com.ontimize.jee.common.tools.ertools.IPartialAggregateValue;
@@ -114,6 +116,7 @@ public class BookingService implements IBookingService {
 	 * @return The columns from the bookings table especified in the params and a
 	 *         message with the operation result
 	 */
+	@Secured({ PermissionsProviderSecured.SECURED })
 	@Override
 	public EntityResult clientbookingsQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
@@ -130,6 +133,7 @@ public class BookingService implements IBookingService {
 	 * @return The columns from the bookings table especified in the params and a
 	 *         message with the operation result
 	 */
+	@Secured({ PermissionsProviderSecured.SECURED })
 	@Override
 	public EntityResult clientactivebookingsQuery(Map<String, Object> keyMap, List<String> attrList) {
 		return searchBookingsByClient(keyMap, attrList, true);
@@ -150,6 +154,7 @@ public class BookingService implements IBookingService {
 	 * @return The columns from the bookings table especified in the params and a
 	 *         message with the operation result
 	 */
+
 	private EntityResult searchBookingsByClient(Map<String, Object> keyMap, List<String> attrList, boolean onlyActive) {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
@@ -183,6 +188,7 @@ public class BookingService implements IBookingService {
 	 *         message with the operation result
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult bookingQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
@@ -233,6 +239,7 @@ public class BookingService implements IBookingService {
 	 *         the selected dates
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult availableroomsQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult resultsByHotel = new EntityResultMapImpl();
@@ -283,6 +290,8 @@ public class BookingService implements IBookingService {
 	 *                                    execute an empty request
 	 * @return The rooms with the chek-out on the current date filtered by hotel
 	 */
+	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult todaycheckoutQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult result = new EntityResultMapImpl();
@@ -322,6 +331,7 @@ public class BookingService implements IBookingService {
 	 *            columns to send back to the user
 	 * @return The available rooms in a concrete hotel on a date range
 	 */
+	
 	private EntityResult searchAvailableRooms(Map<String, Object> keyMap, List<String> attrList)
 			throws ParseException, ClassCastException, InvalidRequestException {
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM");
@@ -486,6 +496,7 @@ public class BookingService implements IBookingService {
 	 * @return The id of the new register and a message with the operation result
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult bookingInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 
 		attrMap.put("bk_entry_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
@@ -575,11 +586,12 @@ public class BookingService implements IBookingService {
 	 */
 	@Override
 	@Transactional
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult addbookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfBookingExists(keyMap);
+			checkIfBookingActive(keyMap);
 			dataValidator.checkDataUpdateExtraPrice(attrMap);
 			updateResult = daoHelper.update(bookingDao, calculateAndInsertExtra(attrMap, keyMap), keyMap);
 			updateResult.setMessage("SUCCESSFULLY_ADDED");
@@ -627,6 +639,7 @@ public class BookingService implements IBookingService {
 
 	@Override
 	@Transactional
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult cancelbookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
@@ -769,13 +782,14 @@ public class BookingService implements IBookingService {
 	 */
 
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult changedatesUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		Map<String, Object> mapLeavingDate = new HashMap<>();	
 		EntityResult updateResult = new EntityResultMapImpl();
 		EntityResult bookingResult = new EntityResultMapImpl();
 		try {
-			checkIfBookingExists(keyMap);
+			checkIfBookingActive(keyMap);
 			mapLeavingDate.put("bk_leaving_date", new Date(System.currentTimeMillis()));
 			daoHelper.update(bookingDao, mapLeavingDate, keyMap);
 
@@ -812,44 +826,43 @@ public class BookingService implements IBookingService {
 		return updateResult;
 	}
 
-	/**
-	 * 
-	 * 
-	 * TO DO, NOT FUNCIONAL
-	 * 
-	 * @since 27/06/2022
-	 * @param The fields to be updated
-	 * @return A message with the operation result
-	 * @exception RecordNotFoundException         sends a message to the user if the
-	 *                                            id_booking not exists
-	 * @exception DataIntegrityViolationException sends a message to the user if he
-	 *                                            is trying to insert a null or
-	 *                                            inexistent foreign key
-	 */
-	@Override
-	public EntityResult bookingUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
-			throws OntimizeJEERuntimeException {
-
-		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
-		EntityResult updateResult = new EntityResultMapImpl();
-		try {
-			checkIfBookingExists(keyMap);
-
-			updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
-			if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
-				updateResult.setMessage("ERROR_WHILE_UPDATING");
-			} else {
-				updateResult.setMessage("SUCCESSFUL_UPDATE");
-			}
-		} catch (RecordNotFoundException e) {
-			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
-			control.setErrorMessage(updateResult, e.getMessage());
-		} catch (DataIntegrityViolationException e) {
-			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
-			control.setMessageFromException(updateResult, e.getMessage());
-		}
-		return updateResult;
-	}
+//	/**
+//	 * 
+//	 * 
+//	 * TO DO, NOT FUNCIONAL
+//	 * 
+//	 * @since 27/06/2022
+//	 * @param The fields to be updated
+//	 * @return A message with the operation result
+//	 * @exception RecordNotFoundException         sends a message to the user if the
+//	 *                                            id_booking not exists
+//	 * @exception DataIntegrityViolationException sends a message to the user if he
+//	 *                                            is trying to insert a null or
+//	 *                                            inexistent foreign key
+//	 */
+//	@Override
+//	public EntityResult bookingUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
+//			throws OntimizeJEERuntimeException {
+//
+//		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
+//		EntityResult updateResult = new EntityResultMapImpl();
+//		try {
+//			checkIfBookingExists(keyMap);
+//			updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
+//			if (updateResult.getCode() != EntityResult.OPERATION_SUCCESSFUL) {
+//				updateResult.setMessage("ERROR_WHILE_UPDATING");
+//			} else {
+//				updateResult.setMessage("SUCCESSFUL_UPDATE");
+//			}
+//		} catch (RecordNotFoundException e) {
+//			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
+//			control.setErrorMessage(updateResult, e.getMessage());
+//		} catch (DataIntegrityViolationException e) {
+//			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
+//			control.setMessageFromException(updateResult, e.getMessage());
+//		}
+//		return updateResult;
+//	}
 
 	/**
 	 * 
@@ -862,6 +875,7 @@ public class BookingService implements IBookingService {
 	 *                                    id_booking not exists
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult bookingDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
 		Map<Object, Object> attrMap = new HashMap<>();
 		attrMap.put("bk_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
@@ -933,11 +947,25 @@ public class BookingService implements IBookingService {
 		if (keyMap.isEmpty()) {
 			throw new RecordNotFoundException("ID_BOOKING_REQUIRED");
 		}
-		List<String> attrList = new ArrayList<>();
-		attrList.add("id_booking");
-		EntityResult existingBooking = this.daoHelper.query(bookingDao, keyMap, attrList);
+		EntityResult existingBooking = this.daoHelper.query(bookingDao, keyMap, Arrays.asList("id_booking","bke_leaving_date"));
 		if (existingBooking.isEmpty())
 			throw new RecordNotFoundException("BOOKING_DOESN'T_EXISTS");
+		return existingBooking.isEmpty();
+
+	}
+	
+	
+	private boolean checkIfBookingActive(Map<String, Object> keyMap) {				
+		if (keyMap.isEmpty()) {
+			throw new RecordNotFoundException("ID_BOOKING_REQUIRED");
+		}
+		EntityResult existingBooking = this.daoHelper.query(bookingDao, keyMap, Arrays.asList("id_booking","bke_leaving_date"));
+		if (existingBooking.isEmpty())
+			throw new RecordNotFoundException("BOOKING_DOESN'T_EXISTS");
+		
+		if(existingBooking.getRecordValues(0).get("bk_leaving_date")!=null) {
+			throw new RecordNotFoundException("BOOKING_ISN'T_ACTIVE");
+		}		
 		return existingBooking.isEmpty();
 
 	}

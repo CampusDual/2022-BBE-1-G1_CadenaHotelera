@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingService;
@@ -31,6 +32,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validato
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
+import com.ontimize.jee.common.security.PermissionsProviderSecured;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 
 /**
@@ -79,6 +81,7 @@ public class ClientService implements IClientService {
      *@exception NoResultsException when the query doesn´t return results   
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult clientQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
@@ -107,6 +110,7 @@ public class ClientService implements IClientService {
 	 * @exception DataIntegrityViolationException when it doesn´t introduce a not null field 
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult clientInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		attrMap.put("cl_entry_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
@@ -144,6 +148,7 @@ public class ClientService implements IClientService {
 	 * @exception EmptyRequestException when it doesn´t introduce any field
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult clientUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		
@@ -187,6 +192,7 @@ public class ClientService implements IClientService {
 	 * @exception RecordNotFoundException when it doesn´t introduce a not null field 
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult clientDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
 		Map<Object, Object> attrMap = new HashMap<>();
 		attrMap.put("cl_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));

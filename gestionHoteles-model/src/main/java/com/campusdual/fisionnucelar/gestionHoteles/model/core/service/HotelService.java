@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelService;
@@ -36,6 +37,7 @@ import com.ontimize.jee.common.db.SQLStatementBuilder.SQLStatement;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
+import com.ontimize.jee.common.security.PermissionsProviderSecured;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 import com.ontimize.jee.server.dao.IOntimizeDaoSupport;
 import com.ontimize.jee.server.dao.ISQLQueryAdapter;
@@ -77,6 +79,7 @@ public class HotelService implements IHotelService {
 	 *         message with the operation result
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult hotelQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
@@ -112,6 +115,7 @@ public class HotelService implements IHotelService {
 	 */
 
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult hotelsbyservicesQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
@@ -166,6 +170,7 @@ public class HotelService implements IHotelService {
 	 * @return The id of the new hotel and a message with the operation result
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult hotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
@@ -203,6 +208,7 @@ public class HotelService implements IHotelService {
 	 * @return A message with the operation result
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult hotelUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
@@ -248,6 +254,7 @@ public class HotelService implements IHotelService {
 	 * @throws OntimizeJEERuntimeException
 	 */
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult searchbylocationQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 
@@ -327,6 +334,7 @@ public class HotelService implements IHotelService {
 	
 	
 	@Override
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult searchbycityQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 
