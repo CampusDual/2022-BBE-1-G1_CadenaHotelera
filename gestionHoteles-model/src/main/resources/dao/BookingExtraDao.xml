@@ -12,4 +12,19 @@
   <Column>id_booking_extra</Column>
  </UpdateKeys>
  <GeneratedKey>id_booking_extra</GeneratedKey>
+ <Queries>
+  
+ <Query id="BOOKINGEXTRA_DATA">
+   <Sentence>
+   <![CDATA[
+  SELECT #COLUMNS#
+	FROM BOOKING_EXTRA BE INNER JOIN BOOKINGS B ON BE.BKE_BOOKING=B.ID_BOOKING  #WHERE#
+   ]]>
+   </Sentence>
+  </Query>
+ 
+ </Queries>
+ 
 </JdbcEntitySetup>
+
+
