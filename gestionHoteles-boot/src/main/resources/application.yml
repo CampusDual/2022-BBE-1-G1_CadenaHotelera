@@ -27,7 +27,7 @@ ontimize:
          upper-like: true
    security:
       mode: default
-      ignore-paths: /app/**
+      ignore-paths: /app/**, /bookings/availablerooms/search
       role-information-service:
          role-repository: UserRoleDao
          role-name-column: ROLENAME
@@ -48,6 +48,7 @@ ontimize:
             - USERBLOCKED
             - LASTPASSWORDUPDATE
             - FIRSTLOGIN
+            - IDENTIFIER
       user-role-information-service:
          user-role-repository: UserRoleDao
          query-id: userRole
