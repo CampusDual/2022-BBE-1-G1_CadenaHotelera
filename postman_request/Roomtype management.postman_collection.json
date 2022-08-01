@@ -112,7 +112,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n   \"data\": {\r\n        \"rmt_name\": \"Triple\",\r\n        \"rmt_capacity\": 3,\r\n        \"rmt_price\": 65\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_room_type\": 4,\r\n        \"rmt_name\": 12,\r\n        \"rmt_capacity\": 4,\r\n        \"rmt_price\": 3\r\n    }\r\n}",
+					"raw": "{\r\n   \"data\": {\r\n        \"rmt_name\": \"Suite\",\r\n        \"rmt_capacity\": 3,\r\n        \"rmt_price\": \"SS\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_room_type\": 4,\r\n        \"rmt_name\": 12,\r\n        \"rmt_capacity\": 4,\r\n        \"rmt_price\": 3\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -155,7 +155,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"id_room_type\" : 3\r\n },\r\n    \"data\": {\r\n        \"rmt_price\": 68\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_room_type\": 4,\r\n        \"rmt_name\": 12,\r\n        \"rmt_capacity\": 4,\r\n        \"rmt_price\": 3\r\n    }\r\n}",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_room_type\" : 2\r\n },\r\n    \"data\": {\r\n        \"rmt_price\": 140\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_room_type\": 4,\r\n        \"rmt_name\": 12,\r\n        \"rmt_capacity\": 4,\r\n        \"rmt_price\": 3\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

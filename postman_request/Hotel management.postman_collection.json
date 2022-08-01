@@ -68,7 +68,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n     \"id_hotel\": 2\r\n    },\r\n    \"columns\": [\"id_hotel\",\"htl_name\",\"htl_phone\",\"htl_email\"]\r\n}",
+					"raw": "{\r\n    \"filter\": {\r\n     \"services\":[1,2,3]\r\n    },\r\n    \"columns\": [\"id_hotel\",\"htl_name\",\"htl_phone\",\"htl_email\"]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -84,6 +84,138 @@
 					"path": [
 						"hotels",
 						"hotel",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search hotels by services",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"services\":[5,6]\r\n    },\r\n    \"columns\": [\"id_hotel\",\"htl_name\",\"htl_phone\",\"htl_email\"]\r\n} ",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hotels/hotelsbyservices/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"hotelsbyservices",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search hotels by location",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"latitude\": 42.2406,\r\n     \"longitude\": -8.720727,\r\n     \"radius\":50\r\n    }\r\n} \r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hotels/searchbylocation/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"searchbylocation",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search hotels by city",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"location\":\"vigo\",\r\n     \"radius\":10\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hotels/searchbycity/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"searchbycity",
 						"search"
 					]
 				}
@@ -155,7 +287,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"id_hotel\" : 2\r\n },\r\n    \"data\": {\r\n        \"htl_email\": \"emailcambiado@fnhotels.com\"\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_hotel\": 4,\r\n        \"htl_name\": 12,\r\n        \"htl_address\": 12,\r\n        \"htl_phone\": 12,\r\n        \"htl_email\": 12\r\n    }\r\n}",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_hotel\" : 3\r\n },\r\n    \"data\": {\r\n        \"htl_email\": \"emailnevo@fnhotels.com\"\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_hotel\": 4,\r\n        \"htl_name\": 12,\r\n        \"htl_address\": 12,\r\n        \"htl_phone\": 12,\r\n        \"htl_email\": 12\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

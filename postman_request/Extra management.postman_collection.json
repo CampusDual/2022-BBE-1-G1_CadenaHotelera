@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "28cdb6e2-bb7f-4018-878e-470b5cb19c03",
+		"_postman_id": "b6afd833-069f-4324-b67d-4e4da2ab33a1",
 		"name": "Extra management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "21017428"
+		"_exporter_id": "20964318"
 	},
 	"item": [
 		{
@@ -112,7 +112,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n   \"data\": {\r\n        \"ex_name\": \"Catering\",\r\n        \"ex_description\": \"Servicio que ofrece un menú adecuado para el cliente en tus celebraciones o reuniones\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_extra\": 4,\r\n        \"ex_name\": 12,\r\n        \"ex_description\": 12\r\n    }\r\n}",
+					"raw": "{\r\n   \"data\": {\r\n        \"ex_name\": \"Catering plus\",\r\n        \"ex_description\": \"Servicio que ofrece un menú adecuado para el cliente en tus celebraciones o reuniones\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_extra\": 4,\r\n        \"ex_name\": 12,\r\n        \"ex_description\": 12\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -155,7 +155,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"id_extra\" : 2\r\n },\r\n    \"data\": {\r\n        \"ex_name\": \"Niñera\"\r\n    },\r\n     \"sqltypes\": {\r\n       \"id_extra\": 4,\r\n        \"ex_name\": 12,\r\n        \"ex_description\": 12\r\n    }\r\n}",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_extra\" : 3\r\n },\r\n    \"data\": {\r\n        \"ex_name\": \"Niñera\"\r\n    },\r\n     \"sqltypes\": {\r\n       \"id_extra\": 4,\r\n        \"ex_name\": 12,\r\n        \"ex_description\": 12\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "f911f371-0b8e-470f-9121-82fa85313888",
+		"_postman_id": "ee5d74ba-d609-4b60-a327-d45b3bb77ee2",
 		"name": "ExtraHotel management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "21017428"
+		"_exporter_id": "20964318"
 	},
 	"item": [
 		{
@@ -112,7 +112,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n   \"data\": {\r\n        \"exh_hotel\": 1,\r\n        \"exh_extra\": 3,\r\n        \"exh_price\": 200\r\n    },\r\n    \"sqltypes\": {\r\n        \"exh_hotel\": 4,\r\n        \"exh_active\": -7,\r\n        \"id_extras_hotel\": 4,\r\n        \"exh_extra\": 4,\r\n        \"exh_price\": 2\r\n    }\r\n}",
+					"raw": "{\r\n   \"data\": {\r\n        \"exh_hotel\": 1,\r\n        \"exh_extra\": 3,\r\n        \"exh_price\": \"200\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"exh_hotel\": 4,\r\n        \"exh_active\": -7,\r\n        \"id_extras_hotel\": 4,\r\n        \"exh_extra\": 4,\r\n        \"exh_price\": 2\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -141,12 +141,12 @@
 					"basic": [
 						{
 							"key": "password",
-							"value": "demouser",
+							"value": "abc123",
 							"type": "string"
 						},
 						{
 							"key": "username",
-							"value": "demo",
+							"value": "masterchief",
 							"type": "string"
 						}
 					]
@@ -155,7 +155,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"id_extras_hotel\" : 7\r\n },\r\n    \"data\": {\r\n        \"exh_hotel\": 1,\r\n        \"exh_extra\": 3,\r\n        \"exh_price\": 200\r\n    },\r\n     \"sqltypes\": {\r\n        \"exh_hotel\": 4,\r\n        \"exh_active\": -7,\r\n        \"id_extras_hotel\": 4,\r\n        \"exh_extra\": 4,\r\n        \"exh_price\": 2\r\n    }\r\n}",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_extras_hotel\" : 1\r\n },\r\n    \"data\": {\r\n        \"exh_active\": 3\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_extras_hotel\": 4,\r\n        \"exh_active\": 4\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

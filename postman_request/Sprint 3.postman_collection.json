@@ -1,53 +1,13 @@
 {
 	"info": {
-		"_postman_id": "ecbea4a8-9a99-454b-9b19-18e0779ecf14",
-		"name": "Booking management",
+		"_postman_id": "7678bd48-1015-4339-8699-efd1d6290450",
+		"name": "Sprint 3",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "20964318"
 	},
 	"item": [
 		{
-			"name": "get bookings",
-			"request": {
-				"auth": {
-					"type": "basic",
-					"basic": [
-						{
-							"key": "username",
-							"value": "demo",
-							"type": "string"
-						},
-						{
-							"key": "password",
-							"value": "demouser",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "localhost:33333/bookings/booking?columns=id_booking,bk_check_in,bk_check_out,bk_room,bk_client",
-					"host": [
-						"localhost"
-					],
-					"port": "33333",
-					"path": [
-						"bookings",
-						"booking"
-					],
-					"query": [
-						{
-							"key": "columns",
-							"value": "id_booking,bk_check_in,bk_check_out,bk_room,bk_client"
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "search available rooms",
+			"name": "search available rooms Copy",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -91,7 +51,7 @@
 			"response": []
 		},
 		{
-			"name": "search bookings by client",
+			"name": "search hotels by services Copy",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -112,7 +72,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n     \"bk_client\": 2\r\n    },\r\n    \"columns\": [\"id_booking\",\"bk_check_in\",\"bk_check_out\",\"bk_room\",\"htl_name\",\"htl_address\",\"htl_phone\",\"htl_email\"]\r\n}\r\n",
+					"raw": "{\r\n    \"filter\": {\r\n     \"services\":\"[5,6]\"\r\n    },\r\n    \"columns\": [\"id_hotel\",\"htl_name\",\"htl_phone\",\"htl_email\"]\r\n} ",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -120,14 +80,14 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/bookings/clientbookings/search",
+					"raw": "localhost:33333/hotels/hotelsbyservices/search",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"bookings",
-						"clientbookings",
+						"hotels",
+						"hotelsbyservices",
 						"search"
 					]
 				}
@@ -135,13 +95,28 @@
 			"response": []
 		},
 		{
-			"name": "search active bookings by client",
+			"name": "search hotels by location Copy",
 			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n     \"bk_client\": 1\r\n    },\r\n    \"columns\": [\"id_booking\",\"bk_check_in\",\"bk_check_out\",\"bk_room\",\"htl_name\",\"htl_address\",\"htl_phone\",\"htl_email\"]\r\n}",
+					"raw": "{\r\n    \"filter\": {\r\n     \"latitude\": 42.2406,\r\n     \"longitude\": -8.720727,\r\n     \"radius\":50\r\n    }\r\n} \r\n",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -149,14 +124,14 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/bookings/clientactivebookings/search",
+					"raw": "localhost:33333/hotels/searchbylocation/search",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"bookings",
-						"clientactivebookings",
+						"hotels",
+						"searchbylocation",
 						"search"
 					]
 				}
@@ -164,19 +139,19 @@
 			"response": []
 		},
 		{
-			"name": "search today check-outs",
+			"name": "search hotels by city Copy",
 			"request": {
 				"auth": {
 					"type": "basic",
 					"basic": [
 						{
-							"key": "password",
-							"value": "1234",
+							"key": "username",
+							"value": "demo",
 							"type": "string"
 						},
 						{
-							"key": "username",
-							"value": "adolfoperez",
+							"key": "password",
+							"value": "demouser",
 							"type": "string"
 						}
 					]
@@ -185,7 +160,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n     \"rm_hotel\":1\r\n    },\r\n    \"columns\": [\"bk_room\",\"rm_hotel\",\"rm_number\"]\r\n}",
+					"raw": "{\r\n    \"filter\": {\r\n     \"location\":\"vigo\",\r\n     \"radius\":10\r\n    }\r\n}\r\n",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -193,14 +168,14 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/bookings/todaycheckout/search",
+					"raw": "localhost:33333/hotels/searchbycity/search",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"bookings",
-						"todaycheckout",
+						"hotels",
+						"searchbycity",
 						"search"
 					]
 				}
@@ -208,179 +183,7 @@
 			"response": []
 		},
 		{
-			"name": "insert booking",
-			"request": {
-				"auth": {
-					"type": "basic",
-					"basic": [
-						{
-							"key": "username",
-							"value": "demo",
-							"type": "string"
-						},
-						{
-							"key": "password",
-							"value": "demouser",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n   \"data\": {   \r\n        \"bk_room\": 5,\r\n        \"bk_client\": 3,\r\n        \"bk_check_in\": \"2025-11-11\",\r\n        \"bk_check_out\": \"2025-12-12\",\r\n        \"bk_price\":100\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_booking\": 4,\r\n        \"bk_client\": 4,\r\n        \"bk_room\": 4,\r\n        \"bk_check_in\": 91,\r\n        \"bk_check_out\": 91,\r\n        \"bk_price\":4\r\n    }\r\n}\r\n",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:33333/bookings/booking",
-					"host": [
-						"localhost"
-					],
-					"port": "33333",
-					"path": [
-						"bookings",
-						"booking"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "update dates on booking",
-			"request": {
-				"auth": {
-					"type": "basic",
-					"basic": [
-						{
-							"key": "username",
-							"value": "demo",
-							"type": "string"
-						},
-						{
-							"key": "password",
-							"value": "demouser",
-							"type": "string"
-						}
-					]
-				},
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"id_booking\" : 147\r\n },\r\n    \"data\": {\r\n      \"bk_check_in\":\"202-01-01\",\r\n      \"bk_check_out\":\"2024-01-10\"\r\n    },\r\n     \"sqltypes\": {\r\n        \"svh_hotel\": 4,\r\n        \"svh_active\": -7,\r\n        \"id_services_hotel\": 4,\r\n        \"svh_service\": 4,\r\n        \"bk_check_in\": 91,\r\n        \"bk_check_out\": 91\r\n    }\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:33333/bookings/changedates",
-					"host": [
-						"localhost"
-					],
-					"port": "33333",
-					"path": [
-						"bookings",
-						"changedates"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "add extras to booking",
-			"request": {
-				"auth": {
-					"type": "basic",
-					"basic": [
-						{
-							"key": "password",
-							"value": "abc123",
-							"type": "string"
-						},
-						{
-							"key": "username",
-							"value": "masterchief",
-							"type": "string"
-						}
-					]
-				},
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"id_booking\" : 147\r\n },\r\n    \"data\": {\r\n        \"id_extras_hotel\":7,\r\n        \"quantity\":2\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_booking\": 4,\r\n        \"id_extras_hotel\": 4,\r\n        \"quantity\": 4\r\n    \r\n    }\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:33333/bookings/addbookingextra",
-					"host": [
-						"localhost"
-					],
-					"port": "33333",
-					"path": [
-						"bookings",
-						"addbookingextra"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "mark an extras as enjoyed",
-			"request": {
-				"auth": {
-					"type": "basic",
-					"basic": [
-						{
-							"key": "username",
-							"value": "demo",
-							"type": "string"
-						},
-						{
-							"key": "password",
-							"value": "demouser",
-							"type": "string"
-						}
-					]
-				},
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"id_booking_extra\" : 4\r\n },\r\n    \"data\": {\r\n        \"quantity\":2\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_booking_extra\": 4,\r\n        \"quantity\": 4\r\n    }\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:33333/bookingextra/markextraenjoyed",
-					"host": [
-						"localhost"
-					],
-					"port": "33333",
-					"path": [
-						"bookingextra",
-						"markextraenjoyed"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "search extras by booking",
+			"name": "search extras by booking Copy",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -424,7 +227,7 @@
 			"response": []
 		},
 		{
-			"name": "cancel extras on bookings",
+			"name": "add extras to booking Copy",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -445,7 +248,93 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"bke_booking\" : 147\r\n },\r\n    \"data\": {\r\n        \"id_extras_hotel\":7,\r\n        \"quantity\":2\r\n    },\r\n     \"sqltypes\": {\r\n        \"bke_booking\": 4,\r\n        \"id_extras_hotel\": 4,\r\n        \"quantity\": 4\r\n    }\r\n}",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_booking\" : 147\r\n },\r\n    \"data\": {\r\n        \"id_extras_hotel\":7,\r\n        \"quantity\":2\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_booking\": 4,\r\n        \"id_extras_hotel\": 4,\r\n        \"quantity\": 4\r\n    \r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/addbookingextra",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"addbookingextra"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "mark an extras as enjoyed Copy",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_booking_extra\" : 4\r\n },\r\n    \"data\": {\r\n        \"quantity\":2\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_booking_extra\": 4,\r\n        \"quantity\": 4\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookingextra/markextraenjoyed",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookingextra",
+						"markextraenjoyed"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cancel extras on bookings Copy",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "abc123",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "masterchief",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_booking_extra\" : 12\r\n },\r\n    \"data\": {\r\n        \"quantity\":1\r\n    },\r\n     \"sqltypes\": {\r\n        \"bke_booking\": 4,\r\n        \"id_extras_hotel\": 4,\r\n        \"quantity\": 4\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -467,28 +356,28 @@
 			"response": []
 		},
 		{
-			"name": "delete booking",
+			"name": "update serviceHotel Copy",
 			"request": {
 				"auth": {
 					"type": "basic",
 					"basic": [
 						{
-							"key": "username",
-							"value": "demo",
+							"key": "password",
+							"value": "demouser",
 							"type": "string"
 						},
 						{
-							"key": "password",
-							"value": "demouser",
+							"key": "username",
+							"value": "demo",
 							"type": "string"
 						}
 					]
 				},
-				"method": "DELETE",
+				"method": "PUT",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"filter\": {\r\n        \"id_booking\": 45\r\n    }\r\n}",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_services_hotel\" : 1\r\n },\r\n    \"data\": {\r\n        \"svh_service\": 1111\r\n    },\r\n     \"sqltypes\": {\r\n        \"svh_hotel\": 4,\r\n        \"svh_active\": 4,\r\n        \"id_services_hotel\": 4,\r\n        \"svh_service\": 4\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -496,14 +385,57 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:33333/bookings/booking",
+					"raw": "localhost:33333/servicehotel/servicehotel",
 					"host": [
 						"localhost"
 					],
 					"port": "33333",
 					"path": [
-						"bookings",
-						"booking"
+						"servicehotel",
+						"servicehotel"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update extraHotel Copy",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "abc123",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "masterchief",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_extras_hotel\" : 1\r\n },\r\n    \"data\": {\r\n        \"exh_active\": 3\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_extras_hotel\": 4,\r\n        \"exh_active\": 4\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/extrahotel/extrahotel",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"extrahotel",
+						"extrahotel"
 					]
 				}
 			},

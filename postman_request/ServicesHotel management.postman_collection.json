@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "b96e9939-6f20-41a2-8901-4ae7e7eab6a1",
+		"_postman_id": "4c914b8a-1a98-4c40-9e58-5acbab4df569",
 		"name": "ServicesHotel management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "21017428"
+		"_exporter_id": "20964318"
 	},
 	"item": [
 		{
@@ -112,7 +112,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n   \"data\": {\r\n        \"svh_hotel\": 2,\r\n        \"svh_service\": 2\r\n    },\r\n    \"sqltypes\": {\r\n        \"svh_hotel\": 4,\r\n        \"svh_active\": -7,\r\n        \"id_services_hotel\": 4,\r\n        \"svh_service\": 4\r\n    }\r\n}",
+					"raw": "{\r\n   \"data\": {\r\n        \"svh_hotel\": 26,\r\n        \"svh_service\": 1,\r\n        \"svh_active\":1\r\n    },\r\n    \"sqltypes\": {\r\n        \"svh_hotel\": 4,\r\n        \"svh_active\": 4,\r\n        \"id_services_hotel\": 4,\r\n        \"svh_service\": 4\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -155,7 +155,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"id_services_hotel\" : 9\r\n },\r\n    \"data\": {\r\n        \"svh_hotel\": 2,\r\n        \"svh_service\": 2,\r\n        \"svh_active\": true\r\n    },\r\n     \"sqltypes\": {\r\n        \"svh_hotel\": 4,\r\n        \"svh_active\": -7,\r\n        \"id_services_hotel\": 4,\r\n        \"svh_service\": 4\r\n    }\r\n}",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_services_hotel\" : 1\r\n },\r\n    \"data\": {\r\n        \"svh_service\": 1111\r\n    },\r\n     \"sqltypes\": {\r\n        \"svh_hotel\": 4,\r\n        \"svh_active\": 4,\r\n        \"id_services_hotel\": 4,\r\n        \"svh_service\": 4\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

@@ -131,10 +131,10 @@ public class HotelService implements IHotelService {
 			for (int i = 0; i < servicesRequired.size(); i++) {
 				if (i == 0) {
 					sqlSentence.append(
-							"(SELECT SVH_HOTEL FROM SERVICES_HOTEL WHERE SVH_SERVICE=" + servicesRequired.get(i) + ")");
+							"(SELECT SVH_HOTEL FROM SERVICES_HOTEL WHERE SVH_SERVICE=" + servicesRequired.get(i) + " AND SVH_ACTIVE=1)");
 				} else {
 					sqlSentence.append(" AND ID_HOTEL IN (SELECT SVH_HOTEL FROM SERVICES_HOTEL WHERE SVH_SERVICE="
-							+ servicesRequired.get(i) + ")");
+							+ servicesRequired.get(i) + " AND SVH_ACTIVE=1)");
 				}
 			}
 			keyMap.remove("services");

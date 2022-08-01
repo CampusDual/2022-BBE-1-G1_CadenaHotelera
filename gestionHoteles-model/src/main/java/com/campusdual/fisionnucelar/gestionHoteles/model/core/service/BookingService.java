@@ -688,7 +688,7 @@ public class BookingService implements IBookingService {
 			bookingKeymap.put("id_booking", updateResult.getRecordValues(0).get("bke_booking"));
 			bookingAttrMap.put("bk_extras_price", newBookingExtraPrice);
 			updateResult = daoHelper.update(bookingDao, bookingAttrMap, bookingKeymap);
-			updateResult.setMessage("SUCCESSFULLY_ADDED");
+			updateResult.setMessage("SUCCESSFULLY_CANCELED");
 
 		} catch (RecordNotFoundException | EmptyRequestException | NotEnoughExtrasException e) {
 			control.setErrorMessage(updateResult, e.getMessage());
@@ -721,19 +721,34 @@ public class BookingService implements IBookingService {
 		EntityResult bookingExtrasPriceResult = new EntityResultMapImpl();
 		List<String> columnsBooking = new ArrayList<>();
 		columnsBooking.add("bk_extras_price");
+		columnsBooking.add("bk_room");
+		
 		bookingExtrasPriceResult = daoHelper.query(bookingDao, keyMap, columnsBooking);
 		bookingExtraPrice = (BigDecimal) bookingExtrasPriceResult.getRecordValues(0).get("bk_extras_price");
 
+		Map<String,Object>keyMapRoom=new HashMap<>();
+		keyMapRoom.put("id_room", bookingExtrasPriceResult.getRecordValues(0).get("bk_room"));
+				
+		EntityResult hotel=daoHelper.query(roomDao, keyMapRoom, Arrays.asList("rm_hotel"));
+		
 		Map<String, Object> filter = new HashMap<>();
 		filter.put("id_extras_hotel", attrMap.get("id_extras_hotel"));
+		filter.put("exh_hotel", hotel.getRecordValues(0).get("rm_hotel"));
+		
 		List<String> columns = new ArrayList<>();
 		columns.add("exh_price");
 		columns.add("ex_name");
+		columns.add("exh_active");
 
 		extraResult = this.daoHelper.query(extraHotelDao, filter, columns, "BOOKING_EXTRA_DATA");
 		if (extraResult.isEmpty()) {
-			throw new RecordNotFoundException("ID_EXTRA_NOT FOUND");
+			throw new RecordNotFoundException("EXTRA_IN_HOTEL_NOT_FOUND");
+		}else if((Integer)extraResult.getRecordValues(0).get("exh_active")!=1){
+			throw new RecordNotFoundException("EXTRA_IS_NOT_ACTIVE");	
 		}
+		
+		
+		
 
 		unitExtraPrice = (BigDecimal) extraResult.getRecordValues(0).get("exh_price");
 		String nameExtra = (String) extraResult.getRecordValues(0).get("ex_name");
@@ -959,7 +974,7 @@ public class BookingService implements IBookingService {
 		if (keyMap.isEmpty()) {
 			throw new RecordNotFoundException("ID_BOOKING_REQUIRED");
 		}
-		EntityResult existingBooking = this.daoHelper.query(bookingDao, keyMap, Arrays.asList("id_booking","bke_leaving_date"));
+		EntityResult existingBooking = this.daoHelper.query(bookingDao, keyMap, Arrays.asList("id_booking","bk_leaving_date"));
 		if (existingBooking.isEmpty())
 			throw new RecordNotFoundException("BOOKING_DOESN'T_EXISTS");
 		

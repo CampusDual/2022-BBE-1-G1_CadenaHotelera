@@ -112,7 +112,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n   \"data\": {\r\n        \"cl_nif\": \"44444444N\",\r\n        \"cl_name\": \"Ignacio Pérez\",\r\n        \"cl_phone\": \"988656565\",\r\n        \"cl_email\": \"ignacioperez@gmail.com\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"cl_email\": 12,\r\n        \"cl_name\": 12,\r\n        \"cl_phone\": 12,\r\n        \"id_client\": 4,\r\n        \"cl_nif\": 12\r\n    }\r\n}",
+					"raw": "{\r\n   \"data\": {\r\n        \"cl_nif\": \"55552222N\",\r\n        \"cl_name\": \"Alvaro Pérez\",\r\n        \"cl_phone\": \"976543123\",\r\n        \"cl_email\": \"marcos@gmailom\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"cl_email\": 12,\r\n        \"cl_name\": 12,\r\n        \"cl_phone\": 12,\r\n        \"id_client\": 4,\r\n        \"cl_nif\": 12\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -155,7 +155,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n \"filter\" :{\r\n  \"id_client\" : 3\r\n },\r\n    \"data\": {\r\n        \"cl_email\": \"emailcambiado@gmail.com\",\r\n        \"cl_phone\": \"765229933\"\r\n    },\r\n     \"sqltypes\": {\r\n       \"cl_email\": 12,\r\n        \"cl_name\": 12,\r\n        \"cl_phone\": 12,\r\n        \"id_client\": 4,\r\n        \"cl_nif\": 12\r\n    }\r\n}",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_client\" : 2\r\n },\r\n    \"data\": {\r\n        \"cl_email\": \"emailcambiado@gmail.es\",\r\n        \"cl_phone\": \"765229933\"\r\n    },\r\n     \"sqltypes\": {\r\n       \"cl_email\": 12,\r\n        \"cl_name\": 12,\r\n        \"cl_phone\": 12,\r\n        \"id_client\": 4,\r\n        \"cl_nif\": 12\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
