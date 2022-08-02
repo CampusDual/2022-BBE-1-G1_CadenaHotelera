@@ -1,14 +1,18 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
+
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.*;
 import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.services.user.UserInformation;
 
 /**
  * This class implements various data validation to check if the user input is
@@ -60,48 +64,102 @@ public class Control {
 	 * 
 	 * @param an email to be validated
 	 * @return true if the email is well formed or false in the rest of the cases
-	 * @throws InvalidEmailException 
+	 * @throws InvalidEmailException
 	 */
 	public void checkIfEmailIsValid(String emailAddress) throws InvalidEmailException {
-		if(!Pattern.compile("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(-[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$").matcher(emailAddress).matches())
+		if (!Pattern.compile(
+				"^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(-[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$")
+				.matcher(emailAddress).matches())
 			throw new InvalidEmailException("INVALID_EMAIL");
-		
-			
+
 	}
 
-	
-	
-	
 	public void checkResults(EntityResult searchResult) throws NoResultsException {
 		if (searchResult.isEmpty()) {
 			throw new NoResultsException("NO_RESULTS");
 		}
 
 	}
-	
+
 	/**
 	 * En un futuro poner un replaceAll con una expresión
+	 * 
 	 * @param result
 	 * @param exception
 	 */
-	
+
 	public EntityResult setMessageFromException(EntityResult result, String exception) {
 		String exceptionSplit[];
 		String message;
 		result.setCode(1);
-		if(exception.contains("null value")){
-		    exceptionSplit = exception.split("column"); 
-		    int index = exceptionSplit[1].indexOf("violates");
-		    message = exceptionSplit[1].substring(2, index-2).toUpperCase()+"_MUST_BE_PROVIDED";
+		if (exception.contains("null value")) {
+			exceptionSplit = exception.split("column");
+			int index = exceptionSplit[1].indexOf("violates");
+			message = exceptionSplit[1].substring(2, index - 2).toUpperCase() + "_MUST_BE_PROVIDED";
 			result.setMessage(message);
-		}else if (exception.contains("nested")) {
-			exceptionSplit =exception.split("Key");
+		} else if (exception.contains("nested")) {
+			exceptionSplit = exception.split("Key");
 			int index = exceptionSplit[1].indexOf("nested");
-			message = exceptionSplit[1].substring(2,index-3).replace(")","").replace("\"","").replace("(","").replace(" ", "_").replace("=", "_").toUpperCase();
+			message = exceptionSplit[1].substring(2, index - 3).replace(")", "").replace("\"", "").replace("(", "")
+					.replace(" ", "_").replace("=", "_").toUpperCase();
 			result.setMessage(message);
-		}else {
+		} else {
 			result.setMessage(exception);
 		}
 		return result;
-	} 
+	}
+
+	public void controlAccess(int id) throws NotAuthorizedException {
+		UserInformation user = ((UserInformation) SecurityContextHolder.getContext().getAuthentication()
+				.getPrincipal());
+		List<GrantedAuthority> userRole = (List<GrantedAuthority>) SecurityContextHolder.getContext()
+				.getAuthentication().getAuthorities();
+
+		for (GrantedAuthority x : userRole) {
+			if (x.getAuthority().compareTo("admin") != 0) {
+				int identifier = (int) user.getOtherData().get("IDENTIFIER");
+				if (identifier != id) {
+					throw new NotAuthorizedException("NOT_AUTHORIZED");
+				}
+			}					
+		}
+	}
+
+	public boolean controlAccessClient(int id) throws NotAuthorizedException {
+		UserInformation user = ((UserInformation) SecurityContextHolder.getContext().getAuthentication()
+				.getPrincipal());
+		List<GrantedAuthority> userRole = (List<GrantedAuthority>) SecurityContextHolder.getContext()
+				.getAuthentication().getAuthorities();
+		boolean flag=false;
+		for (GrantedAuthority x : userRole) {
+			if (x.getAuthority().compareTo("client") == 0) {
+				int identifier = (int) user.getOtherData().get("IDENTIFIER");
+				if (identifier != id) {
+					throw new NotAuthorizedException("NOT_AUTHORIZED");
+				}else flag=true;
+			}					
+		}
+		return flag;
+	}
+	
+	
+	
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

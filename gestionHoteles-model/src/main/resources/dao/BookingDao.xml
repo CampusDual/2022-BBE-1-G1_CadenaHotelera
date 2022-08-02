@@ -116,6 +116,27 @@
    ]]>
    </Sentence>
   </Query>
+    
+    <Query id="SEARCH_BOOKING_HOTEL">
+   <Sentence>
+   <![CDATA[
+  SELECT #COLUMNS#
+	FROM ROOMS R INNER JOIN BOOKINGS B ON R.ID_ROOM=B.BK_ROOM #WHERE#
+   ]]>
+   </Sentence>
+  </Query>
+  
+   <Query id="SEARCH_BOOKING_EXTRA_HOTEL">
+   <Sentence>
+   <![CDATA[
+  SELECT #COLUMNS#
+	FROM ROOMS R INNER JOIN BOOKINGS B ON R.ID_ROOM=B.BK_ROOM INNER JOIN BOOKING_EXTRA BE ON B.ID_BOOKING=BE.BKE_BOOKING #WHERE#
+   ]]>
+   </Sentence>
+  </Query>
+  
+  
+  
   
   
  </Queries>

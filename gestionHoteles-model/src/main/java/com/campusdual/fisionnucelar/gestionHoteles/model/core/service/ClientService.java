@@ -26,6 +26,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyReq
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
@@ -130,7 +131,6 @@ public class ClientService implements IClientService {
 			log.error("unable to insert a client. Request : {} ",attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		}
-
 		return insertResult;
 	}
 
@@ -156,6 +156,8 @@ public class ClientService implements IClientService {
 		try {
 			dataValidator.checkIfMapIsEmpty(attrMap);
 			checkIfClientExists(keyMap);
+			control.controlAccessClient((int) keyMap.get("id_client"));
+			
 			attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			
 			if (attrMap.get("cl_email") != null) {
@@ -165,7 +167,7 @@ public class ClientService implements IClientService {
 			updateResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 			
-		} catch (InvalidEmailException e) {
+		} catch (InvalidEmailException|NotAuthorizedException e) {
 			log.error("unable to update a client. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (DuplicateKeyException e) {
@@ -200,10 +202,11 @@ public class ClientService implements IClientService {
 		EntityResult deleteResult = new EntityResultMapImpl();
 		try {
 			checkIfClientExists(keyMap);
+			control.controlAccessClient((int) keyMap.get("id_client"));
 			checkActiveReservations(keyMap);
 			deleteResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
 			deleteResult.setMessage("SUCCESSFUL_DELETE");
-		} catch (RecordNotFoundException e) {
+		} catch (RecordNotFoundException|NotAuthorizedException e) {
 			control.setErrorMessage(deleteResult, e.getMessage());
 		}
 		return deleteResult;

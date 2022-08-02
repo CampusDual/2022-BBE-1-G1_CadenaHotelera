@@ -1,21 +1,20 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.math.BigDecimal;
-import java.nio.file.AccessDeniedException;
+
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.mockito.internal.stubbing.answers.ThrowsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -127,18 +126,7 @@ public class BookingService implements IBookingService {
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
-			UserInformation user = ((UserInformation) SecurityContextHolder.getContext().getAuthentication()
-					.getPrincipal());
-			List<GrantedAuthority> userRole = (List<GrantedAuthority>) SecurityContextHolder.getContext()
-					.getAuthentication().getAuthorities();
-			for (GrantedAuthority x : userRole) {
-				if (x.getAuthority().compareTo("client") == 0) {
-					int userClient = (int) user.getOtherData().get("IDENTIFIER");
-					if (userClient != (Integer) keyMap.get("bk_client")) {
-						throw new NotAuthorizedException("NOT_AUTHORIZED");
-					}
-				}
-			}
+			control.controlAccessClient((int) keyMap.get("bk_client"));
 			searchResult = searchBookingsByClient(keyMap, attrList, false);
 		} catch (NotAuthorizedException e) {
 			log.error("unable to retrieve bookings by client. Request : {} {}", keyMap, attrList, e);
@@ -163,18 +151,7 @@ public class BookingService implements IBookingService {
 	public EntityResult clientactivebookingsQuery(Map<String, Object> keyMap, List<String> attrList) {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
-			UserInformation user = ((UserInformation) SecurityContextHolder.getContext().getAuthentication()
-					.getPrincipal());
-			List<GrantedAuthority> userRole = (List<GrantedAuthority>) SecurityContextHolder.getContext()
-					.getAuthentication().getAuthorities();
-			for (GrantedAuthority x : userRole) {
-				if (x.getAuthority().compareTo("client") == 0) {
-					int userClient = (int) user.getOtherData().get("IDENTIFIER");
-					if (userClient != (Integer) keyMap.get("bk_client")) {
-						throw new NotAuthorizedException("NOT_AUTHORIZED");
-					}
-				}
-			}
+			control.controlAccessClient((int) keyMap.get("bk_client"));
 			searchResult = searchBookingsByClient(keyMap, attrList, true);
 		} catch (NotAuthorizedException e) {
 			log.error("unable to retrieve bookings by client. Request : {} {}", keyMap, attrList, e);
@@ -237,22 +214,9 @@ public class BookingService implements IBookingService {
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
-			UserInformation user = ((UserInformation) SecurityContextHolder.getContext().getAuthentication()
-					.getPrincipal());
-			List<GrantedAuthority> userRole = (List<GrantedAuthority>) SecurityContextHolder.getContext()
-					.getAuthentication().getAuthorities();
+
 			checkIfHotel(keyMap);
-
-			for (GrantedAuthority x : userRole) {
-				if (x.getAuthority().compareTo("hotel_manager") == 0
-						|| x.getAuthority().compareTo("hotel_recepcionist") == 0) {
-					int userHotel = (int) user.getOtherData().get("IDENTIFIER");
-					if (userHotel != (Integer) keyMap.get("rm_hotel")) {
-						throw new NotAuthorizedException("NOT_AUTHORIZED");
-					}
-				}
-			}
-
+			control.controlAccess((int) keyMap.get("rm_hotel"));
 			searchResult = daoHelper.query(bookingDao, keyMap, attrList);
 			control.checkResults(searchResult);
 		} catch (NoResultsException | NotAuthorizedException e) {
@@ -355,21 +319,9 @@ public class BookingService implements IBookingService {
 			throws OntimizeJEERuntimeException {
 		EntityResult result = new EntityResultMapImpl();
 		try {
-			UserInformation user = ((UserInformation) SecurityContextHolder.getContext().getAuthentication()
-					.getPrincipal());
-			List<GrantedAuthority> userRole = (List<GrantedAuthority>) SecurityContextHolder.getContext()
-					.getAuthentication().getAuthorities();
-			checkIfHotel(keyMap);
 
-			for (GrantedAuthority x : userRole) {
-				if (x.getAuthority().compareTo("cleaning_team") == 0 || x.getAuthority().compareTo("hotel_manager") == 0
-						|| x.getAuthority().compareTo("hotel_recepcionist") == 0) {
-					int userHotel = (int) user.getOtherData().get("IDENTIFIER");
-					if (userHotel != (Integer) keyMap.get("rm_hotel")) {
-						throw new NotAuthorizedException("NOT_AUTHORIZED");
-					}
-				}
-			}
+			checkIfHotel(keyMap);
+			control.controlAccess((int) keyMap.get("rm_hotel"));
 			result = daoHelper.query(bookingDao, keyMap, attrList, "TODAY_CHECKOUTS");
 			control.checkResults(result);
 		} catch (RecordNotFoundException | EmptyRequestException | NoResultsException | NotAuthorizedException e) {
@@ -664,26 +616,14 @@ public class BookingService implements IBookingService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-			checkIfBookingActive(keyMap);		
-			UserInformation user = ((UserInformation) SecurityContextHolder.getContext().getAuthentication()
-					.getPrincipal());
-			List<GrantedAuthority> userRole = (List<GrantedAuthority>) SecurityContextHolder.getContext()
-					.getAuthentication().getAuthorities();		
-			EntityResult existingBooking = this.daoHelper.query(bookingDao, keyMap,
-					Arrays.asList("bk_client"));
-			
-			for (GrantedAuthority x : userRole) {
-				if (x.getAuthority().compareTo("client") == 0) {
-					int userClient = (int) user.getOtherData().get("IDENTIFIER");
-					if (userClient != (Integer) existingBooking.getRecordValues(0).get("bk_client")) {
-						throw new NotAuthorizedException("NOT_AUTHORIZED");
-					}
-				}
-			}
+			checkIfBookingActive(keyMap);
+			EntityResult existingBooking = this.daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client"));
+			control.controlAccessClient((int) existingBooking.getRecordValues(0).get("bk_client"));
+
 			dataValidator.checkDataUpdateExtraPrice(attrMap);
 			updateResult = daoHelper.update(bookingDao, calculateAndInsertExtra(attrMap, keyMap), keyMap);
 			updateResult.setMessage("SUCCESSFULLY_ADDED");
-		} catch (RecordNotFoundException | EmptyRequestException|NotAuthorizedException e) {
+		} catch (RecordNotFoundException | EmptyRequestException | NotAuthorizedException e) {
 			log.error("unable to add an extra to a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (ClassCastException | BadSqlGrammarException e) {
@@ -731,7 +671,11 @@ public class BookingService implements IBookingService {
 	public EntityResult cancelbookingextraUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
+		EntityResult hotelResult = new EntityResultMapImpl();
 		try {
+			hotelResult = daoHelper.query(bookingDao, keyMap, Arrays.asList("rm_hotel"), "SEARCH_BOOKING_EXTRA_HOTEL");
+			control.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
+
 			checkIfExtraBookingExists(keyMap);
 			dataValidator.checkIfMapIsEmpty(attrMap);
 			if (attrMap.get("quantity") == null) {
@@ -778,7 +722,9 @@ public class BookingService implements IBookingService {
 			updateResult = daoHelper.update(bookingDao, bookingAttrMap, bookingKeymap);
 			updateResult.setMessage("SUCCESSFULLY_CANCELED");
 
-		} catch (RecordNotFoundException | EmptyRequestException | NotEnoughExtrasException e) {
+		} catch (RecordNotFoundException | EmptyRequestException | NotEnoughExtrasException
+				| NotAuthorizedException e) {
+			log.error("unable to cancel an extra to a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (ClassCastException | BadSqlGrammarException e) {
 			log.error("unable to cancel an extra to a booking. Request : {} {}", keyMap, attrMap, e);
@@ -889,7 +835,15 @@ public class BookingService implements IBookingService {
 		Map<String, Object> mapLeavingDate = new HashMap<>();
 		EntityResult updateResult = new EntityResultMapImpl();
 		EntityResult bookingResult = new EntityResultMapImpl();
+
+		EntityResult result = new EntityResultMapImpl();
+		result = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "rm_hotel"),"SEARCH_BOOKING_HOTEL");
 		try {
+					
+			if(!control.controlAccessClient((int) result.getRecordValues(0).get("bk_client"))){
+				control.controlAccess((int) result.getRecordValues(0).get("rm_hotel"));
+			}		
+
 			checkIfBookingActive(keyMap);
 			mapLeavingDate.put("bk_leaving_date", new Date(System.currentTimeMillis()));
 			daoHelper.update(bookingDao, mapLeavingDate, keyMap);
@@ -905,11 +859,8 @@ public class BookingService implements IBookingService {
 			updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 
-		} catch (RecordNotFoundException e) {
-			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
-			control.setErrorMessage(updateResult, e.getMessage());
-
-		} catch (InvalidDateException | OccupiedRoomException | EmptyRequestException e) {
+		} catch (InvalidDateException | OccupiedRoomException | EmptyRequestException | NotAuthorizedException
+				| RecordNotFoundException e) {
 			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (ParseException e) {
@@ -978,10 +929,16 @@ public class BookingService implements IBookingService {
 	@Override
 	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult bookingDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
-		Map<Object, Object> attrMap = new HashMap<>();
-		attrMap.put("bk_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
+
+		EntityResult bookingHotel = daoHelper.query(bookingDao, keyMap, Arrays.asList("rm_hotel"),
+				"SEARCH_BOOKING_HOTEL");
 		EntityResult deleteResult = new EntityResultMapImpl();
 		try {
+			control.controlAccess((int) bookingHotel.getRecordValues(0).get("rm_hotel"));
+
+			Map<Object, Object> attrMap = new HashMap<>();
+			attrMap.put("bk_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
+
 			if (checkIfBookingExists(keyMap)) {
 				deleteResult.setMessage("ERROR_BOOKING_NOT_FOUND");
 				deleteResult.setCode(1);
@@ -989,7 +946,7 @@ public class BookingService implements IBookingService {
 				deleteResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
 				deleteResult.setMessage("SUCCESSFUL_DELETE");
 			}
-		} catch (RecordNotFoundException e) {
+		} catch (RecordNotFoundException | NotAuthorizedException e) {
 			control.setErrorMessage(deleteResult, e.getMessage());
 		}
 		return deleteResult;

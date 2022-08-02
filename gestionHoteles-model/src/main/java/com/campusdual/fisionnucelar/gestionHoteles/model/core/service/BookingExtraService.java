@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -17,9 +18,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingExtraService;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingExtraDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotEnoughExtrasException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
@@ -43,6 +46,10 @@ public class BookingExtraService implements IBookingExtraService{
 	private Logger log;
 	@Autowired
 	private BookingExtraDao bookingExtraDao;
+	
+	@Autowired
+	private BookingDao bookingDao;
+
 
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
@@ -62,7 +69,7 @@ public class BookingExtraService implements IBookingExtraService{
 	
 	/**
 	 * 
-	 * Executes a generic query over the extraHotel table
+	 * Executes a generic query over the bookingExtra table
 	 * 
 	 * @since 20/07/2022
 	 * @param The filters and the fields of the query
@@ -79,11 +86,21 @@ public class BookingExtraService implements IBookingExtraService{
 	public EntityResult bookingextraQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
+		EntityResult result = new EntityResultMapImpl();
+		Map<String,Object> bookingMap=new HashMap<>();
 		try {
-			searchResult = this.daoHelper.query(this.bookingExtraDao, keyMap, attrList);
-			
+			if(keyMap.get("bke_booking")==null) throw new NotAuthorizedException("NOT_AUTHORIZED");			
+			bookingMap.put("id_booking", keyMap.get("bke_booking"));
+					
+			result = daoHelper.query(bookingDao, bookingMap, Arrays.asList("bk_client", "rm_hotel"),"SEARCH_BOOKING_HOTEL");
+								
+				if(!control.controlAccessClient((int) result.getRecordValues(0).get("bk_client"))){
+					control.controlAccess((int) result.getRecordValues(0).get("rm_hotel"));
+				}
+	
+			searchResult = this.daoHelper.query(bookingExtraDao, keyMap, attrList);			
 			control.checkResults(searchResult);
-		} catch (NoResultsException e) {
+		} catch (NoResultsException|NotAuthorizedException e) {
 			log.error("unable to retrieve a booking extra .Request {} {} ",keyMap, attrList,e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
@@ -92,7 +109,6 @@ public class BookingExtraService implements IBookingExtraService{
 		}
 		return searchResult;
 	}
-	
 	
 	
 
@@ -159,9 +175,12 @@ public class BookingExtraService implements IBookingExtraService{
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		EntityResult searchResult = new EntityResultMapImpl();
+		EntityResult hotelResult = new EntityResultMapImpl();
 		try {
-			
-			checkIfExtraBookingExists(keyMap);
+							
+			checkIfExtraBookingExists(keyMap);			
+			hotelResult=daoHelper.query(bookingDao, keyMap, Arrays.asList("rm_hotel"),"SEARCH_BOOKING_EXTRA_HOTEL");			
+			control.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
 
 			if (attrMap.get("quantity") == null) {
 				throw new EmptyRequestException("QUANTITY_FIELD_REQUIRED");
@@ -189,7 +208,7 @@ public class BookingExtraService implements IBookingExtraService{
 
 			updateResult.setMessage("SUCCESSFULLY_UPDATED");
 
-		} catch (RecordNotFoundException | EmptyRequestException | NotEnoughExtrasException e) {
+		} catch (RecordNotFoundException | EmptyRequestException | NotEnoughExtrasException|NotAuthorizedException e) {
 			log.error("unable to mark an extra as enjoyed. Request : {} {}", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} 
