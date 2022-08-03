@@ -8,18 +8,14 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+
 
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IReportsService;
-import com.ontimize.jee.common.dto.EntityResult;
-import com.ontimize.jee.common.dto.EntityResultMapImpl;
+
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
-import com.ontimize.jee.common.util.remote.BytesBlock;
+
 
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRResultSetDataSource;
@@ -28,7 +24,7 @@ import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.util.JRLoader;
-import net.sf.jasperreports.view.JasperViewer;
+
 @Service
 public class ReportsService implements IReportsService {
 
@@ -44,7 +40,7 @@ public class ReportsService implements IReportsService {
   	  	int parameter =154;
 		try {
 			jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
-			jasperPrint = JasperFillManager.fillReport(jasperReport, null, datasource);
+			jasperPrint = JasperFillManager.fillReport(jasperReport, null, datasource);			
 			contents =JasperExportManager.exportReportToPdf(jasperPrint);
 		} catch (JRException e) {
 			// TODO Auto-generated catch block
@@ -73,9 +69,7 @@ public class ReportsService implements IReportsService {
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-	  	
-		
+		}	  			
 	    return rs;
 	}
 

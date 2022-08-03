@@ -8,7 +8,6 @@ import java.util.Map;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.common.util.remote.BytesBlock;
 
-import net.sf.jasperreports.engine.JasperPrint;
 
 public interface IReportsService {
 

@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
@@ -41,9 +43,9 @@ import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 @Service("RoomService")
 @Lazy
 public class RoomService implements IRoomService {
-	
+
 	private Logger log;
-	
+
 	private Control control;
 
 	@Autowired
@@ -58,15 +60,13 @@ public class RoomService implements IRoomService {
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
 	Validator validator;
-	
+
 	public RoomService() {
 		super();
 		this.control = new Control();
-		this.validator=new Validator();
+		this.validator = new Validator();
 		this.log = LoggerFactory.getLogger(this.getClass());
 	}
-
-
 
 	/**
 	 * 
@@ -85,19 +85,18 @@ public class RoomService implements IRoomService {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
 			searchResult = daoHelper.query(roomDao, keyMap, attrList);
+			control.controlAccess((int) searchResult.getRecordValues(0).get("rm_hotel"));
 			control.checkResults(searchResult);
-		} catch (NoResultsException e) {
-			log.error("unable to retrieve a room. Request : {} {} ",keyMap,attrList, e);
+
+		} catch (NoResultsException | NotAuthorizedException e) {
+			log.error("unable to retrieve a room. Request : {} {} ", keyMap, attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
-		}catch (BadSqlGrammarException e) {
-			log.error("unable to retrieve a room. Request : {} {} ",keyMap,attrList, e);
+		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve a room. Request : {} {} ", keyMap, attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 		}
 		return searchResult;
 	}
-
-	
-
 
 	/**
 	 * 
@@ -112,7 +111,9 @@ public class RoomService implements IRoomService {
 	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult roomInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
-		try {
+		try {			
+			control.controlAccess((int) attrMap.get("rm_hotel"));
+			
 			if (attrMap.containsKey("rm_hotel")) {
 				checkIfHotelExists(attrMap);
 			}
@@ -122,15 +123,15 @@ public class RoomService implements IRoomService {
 			insertResult = this.daoHelper.insert(this.roomDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
-			
+
 		} catch (DuplicateKeyException e) {
-			log.error("unable to insert a room. Request : {} ",attrMap, e);
+			log.error("unable to insert a room. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
-		} catch (RecordNotFoundException e) {
-			log.error("unable to insert a room. Request : {} ",attrMap, e);
+		} catch (RecordNotFoundException|NotAuthorizedException e) {
+			log.error("unable to insert a room. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (AllFieldsRequiredException e) {
-			log.error("unable to insert a room. Request : {} ",attrMap, e);
+			log.error("unable to insert a room. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 
@@ -152,9 +153,13 @@ public class RoomService implements IRoomService {
 	public EntityResult roomUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
+		EntityResult hotelResult = new EntityResultMapImpl();
 		try {
 			checkIfRoomExists(keyMap);
 			validator.checkIfMapIsEmpty(attrMap);
+			hotelResult=daoHelper.query(roomDao, keyMap, Arrays.asList("rm_hotel"));
+			control.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
+						
 			if (attrMap.containsKey("rm_hotel")) {
 				checkIfHotelExists(attrMap);
 			}
@@ -164,13 +169,13 @@ public class RoomService implements IRoomService {
 			updateResult = this.daoHelper.update(this.roomDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {
-			log.error("unable to update a room. Request : {} {} ",keyMap,attrMap, e);
+			log.error("unable to update a room. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, "ROOM_ALREADY_EXISTS");
-		} catch (RecordNotFoundException e) {
-			log.error("unable to update a room. Request : {} {} ",keyMap,attrMap, e);
+		} catch (RecordNotFoundException|NotAuthorizedException e) {
+			log.error("unable to update a room. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
-		}catch (EmptyRequestException e) {
-			log.error("unable to update a room. Request : {} {} ",keyMap,attrMap, e);
+		} catch (EmptyRequestException e) {
+			log.error("unable to update a room. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
@@ -209,6 +214,5 @@ public class RoomService implements IRoomService {
 			throw new RecordNotFoundException("ROOMTYPE_DOESN'T_EXISTS");
 		return existingRoomType.isEmpty();
 	}
-
 
 }

@@ -115,7 +115,6 @@ public class HotelService implements IHotelService {
 	 */
 
 	@Override
-	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult hotelsbyservicesQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
@@ -254,7 +253,6 @@ public class HotelService implements IHotelService {
 	 * @throws OntimizeJEERuntimeException
 	 */
 	@Override
-	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult searchbylocationQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 
@@ -334,7 +332,6 @@ public class HotelService implements IHotelService {
 	
 	
 	@Override
-	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult searchbycityQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 
@@ -351,7 +348,7 @@ public class HotelService implements IHotelService {
 				placeName = placeName + " "+ (String)keyMap.get("region");
 			}
 			
-			GooglePlaces googleSearch = new GooglePlaces(ApiKey.API_KEY);
+			GooglePlaces googleSearch = new GooglePlaces(ApiKey.KEY_GOOGLE_PLACES);
 			keyMap.remove("location");
 			PlacesResult result = googleSearch.searchText(placeName);
 			

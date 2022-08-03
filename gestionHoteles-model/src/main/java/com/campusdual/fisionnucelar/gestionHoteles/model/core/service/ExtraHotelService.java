@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllField
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.IncorrectBooleanException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
@@ -77,7 +79,6 @@ public class ExtraHotelService implements IExtraHotelService {
 	 *         message with the operation result
 	 */
 	@Override
-	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult extrahotelQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
@@ -118,12 +119,13 @@ public class ExtraHotelService implements IExtraHotelService {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
 			dataValidator.checkIfMapIsEmpty(attrMap);
+			control.controlAccess((int) attrMap.get("exh_hotel"));		
 			insertResult = this.daoHelper.insert(this.extraHotelDao, attrMap);
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
 			log.error("unable to insert an extra hotel. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, "DUPLICATED_EXTRAS_IN_HOTEL");
-		} catch (EmptyRequestException e) {
+		} catch (EmptyRequestException|NotAuthorizedException e) {
 			log.error("unable to insert an extra hotel. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DataIntegrityViolationException e) {
@@ -166,10 +168,14 @@ public class ExtraHotelService implements IExtraHotelService {
 	public EntityResult extrahotelUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
+		EntityResult hotelResult = new EntityResultMapImpl();
 		try {
 			dataValidator.checkIfMapIsEmpty(attrMap);
 			checkIfExtraHotelExists(keyMap);
-
+			
+			hotelResult=daoHelper.query(extraHotelDao, keyMap, Arrays.asList("exh_hotel"));
+			control.controlAccess((int) hotelResult.getRecordValues(0).get("exh_hotel"));
+			
 			if (attrMap.containsKey("exh_active")) {
 				checkCorrectBoolean(attrMap);
 			}
@@ -179,7 +185,7 @@ public class ExtraHotelService implements IExtraHotelService {
 		} catch (DuplicateKeyException e) {
 			log.error("unable to update an extra hotel. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "DUPLICATED_EXTRA_IN_HOTEL");
-		} catch (DataIntegrityViolationException e) {
+		} catch (DataIntegrityViolationException|NotAuthorizedException e) {
 			log.error("unable to update an extra hotel. Request : {} {} ",keyMap,attrMap, e);
 			control.setMessageFromException(updateResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {

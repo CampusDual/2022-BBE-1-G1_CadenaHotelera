@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllField
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.IncorrectBooleanException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
@@ -81,10 +83,11 @@ public class ServiceHotelService implements IServicesHotelService {
 	public EntityResult servicehotelQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
-		try {
+		try {		
 			searchResult = daoHelper.query(serviceHotelDao, keyMap, attrList);
+			control.controlAccess((int) searchResult.getRecordValues(0).get("svh_hotel"));
 			control.checkResults(searchResult);
-		} catch (NoResultsException e) {
+		} catch (NoResultsException|NotAuthorizedException e) {
 			log.error("unable to retrieve a hotel service. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
@@ -118,7 +121,7 @@ public class ServiceHotelService implements IServicesHotelService {
 	public EntityResult servicehotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
-
+			control.controlAccess((int) attrMap.get("svh_hotel"));
 			insertResult = this.daoHelper.insert(this.serviceHotelDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new EmptyRequestException("FIELDS_REQUIRED");
@@ -127,7 +130,7 @@ public class ServiceHotelService implements IServicesHotelService {
 		} catch (DuplicateKeyException e) {
 			log.error("unable to insert a hotel service. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, "DUPLICATED_SERVICES_IN_HOTEL");
-		} catch (EmptyRequestException e) {
+		} catch (EmptyRequestException|NotAuthorizedException e) {
 			log.error("unable to insert a hotel service. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DataIntegrityViolationException e) {
@@ -167,9 +170,13 @@ public class ServiceHotelService implements IServicesHotelService {
 	public EntityResult servicehotelUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
+		EntityResult hotelResult = new EntityResultMapImpl();
 		try {
 			validator.checkIfMapIsEmpty(attrMap);
 			checkIfServiceHotelExists(keyMap);
+			hotelResult=daoHelper.query(serviceHotelDao, keyMap, Arrays.asList("svh_hotel"));
+			control.controlAccess((int) hotelResult.getRecordValues(0).get("svh_hotel"));
+			
 			if (attrMap.containsKey("svh_active"))
 				checkCorrectBoolean(attrMap);
 			updateResult = this.daoHelper.update(this.serviceHotelDao, attrMap, keyMap);
@@ -177,7 +184,7 @@ public class ServiceHotelService implements IServicesHotelService {
 		} catch (DuplicateKeyException e) {
 			log.error("unable to update a hotel service. Request : {}  {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, "DUPLICATED_SERVICES_IN_HOTEL");
-		} catch (DataIntegrityViolationException e) {
+		} catch (DataIntegrityViolationException|NotAuthorizedException e) {
 			log.error("unable to update a hotel service. Request : {}  {} ",keyMap,attrMap, e);
 			control.setMessageFromException(updateResult, e.getMessage());
 		} catch (RecordNotFoundException | IncorrectBooleanException | EmptyRequestException e) {
