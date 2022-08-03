@@ -64,13 +64,15 @@
 			<artifactId>logback-core</artifactId>
 		</dependency>
 
-
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-spatial</artifactId>
 		</dependency>
 
-
+  		<dependency>
+    		<groupId>net.sf.jasperreports</groupId>
+    		<artifactId>jasperreports</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>

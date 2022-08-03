@@ -26,7 +26,7 @@ public class Control {
 
 	public Control() {
 		super();
-		this.places = new GooglePlaces(ApiKey.API_KEY);
+		this.places = new GooglePlaces(ApiKey.KEY_GOOGLE_PLACES);
 	}
 
 	/**
@@ -102,6 +102,10 @@ public class Control {
 			int index = exceptionSplit[1].indexOf("nested");
 			message = exceptionSplit[1].substring(2, index - 3).replace(")", "").replace("\"", "").replace("(", "")
 					.replace(" ", "_").replace("=", "_").toUpperCase();
+			int valueIndex = message.indexOf("IS_NOT_PRESENT");
+			int first = message.indexOf("_");
+			int second = message.indexOf("_",first+1);
+			message = message.substring(0,second)+"_"+message.substring(valueIndex);
 			result.setMessage(message);
 		} else {
 			result.setMessage(exception);
