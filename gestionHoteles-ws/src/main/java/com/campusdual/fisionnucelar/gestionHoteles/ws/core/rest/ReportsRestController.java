@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IReportsService;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.common.util.remote.BytesBlock;
@@ -42,18 +43,23 @@ import net.sf.jasperreports.engine.util.JRLoader;
 @Controller
 @RequestMapping("/reports")
 public class ReportsRestController {
-	@Autowired
-	IReportsService reportsService;
-	@GetMapping("/receipt/{id_booking}")
+  @Autowired
+  IReportsService reportsService;
+  @GetMapping("/receipt/{id_booking}")
     public ResponseEntity<byte[]> getReceipt(@PathVariable("id_booking") int id_booking) throws OntimizeJEERuntimeException, JRException, IOException, SQLException {
-    		HttpHeaders headers = new HttpHeaders();
-    	    byte[] contents = reportsService.getReceipt(id_booking);
-    	    headers.setContentType(MediaType.APPLICATION_PDF);
-    	    // Here you have to set the actual filename of your pdf
-    	    String filename = "output.pdf";
-    	    headers.setContentDispositionFormData(filename, filename);
-    	    headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-    	    ResponseEntity<byte[]> response = new ResponseEntity<>(contents, headers, HttpStatus.OK);
-    	    return response;    
+        HttpHeaders headers = new HttpHeaders();
+        byte[] contents=null;
+        try {
+        contents = reportsService.getReceipt(id_booking);
+          }catch(RecordNotFoundException e ) {
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
+          }
+          headers.setContentType(MediaType.APPLICATION_PDF);
+          // Here you have to set the actual filename of your pdf
+          String filename = "output.pdf";
+          headers.setContentDispositionFormData(filename, filename);
+          headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+          ResponseEntity<byte[]> response = new ResponseEntity<>(contents, headers, HttpStatus.OK);
+          return response;    
     }
 }
