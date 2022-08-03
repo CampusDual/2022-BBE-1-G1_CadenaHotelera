@@ -35,6 +35,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
@@ -42,6 +43,9 @@ import org.springframework.jdbc.BadSqlGrammarException;
 
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
@@ -61,6 +65,9 @@ public class ClientServiceTest {
 	
 	@Mock
 	BookingDao bookingDao;
+	
+	@Mock
+	UserControl userControl;
 	
 	@BeforeEach
 	void setUp() {
@@ -283,7 +290,7 @@ public class ClientServiceTest {
 	public class ServiceUpdate {
 		@Test
 		@DisplayName("Client update successful")
-		void client_update_success() {
+		void client_update_success() throws NotAuthorizedException  {
 
 			Map<String, Object> filter = getGenericFilter();
 			Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
@@ -291,7 +298,8 @@ public class ClientServiceTest {
 			EntityResult queryResult = getGenericQueryResult();
 			List<String> attrList = getGenericAttrList();
 
-			// when
+	
+
 			when(daoHelper.update(clientDao, dataToUpdate, filter)).thenReturn(er);
 			when(daoHelper.query(clientDao, filter, attrList)).thenReturn(queryResult);
 			// then

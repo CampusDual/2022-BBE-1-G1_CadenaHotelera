@@ -35,6 +35,7 @@ import org.springframework.jdbc.BadSqlGrammarException;
 
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingExtraDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
@@ -48,6 +49,9 @@ public class BookingExtraServiceTest {
 	BookingExtraService bookingExtraService;
 	@Autowired
 	BookingExtraDao bookingExtraDao;
+	
+	@Mock
+	UserControl userControl;
 
 	@BeforeEach
 	void setUp() {

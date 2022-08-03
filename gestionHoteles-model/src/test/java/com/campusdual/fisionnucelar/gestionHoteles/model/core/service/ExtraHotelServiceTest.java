@@ -45,6 +45,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraHotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ServiceDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
@@ -71,6 +72,9 @@ public class ExtraHotelServiceTest {
 
 	@Mock
 	ServiceDao serviceDao;
+	
+	@Mock
+	UserControl userControl;
 
 	@BeforeEach
 	void setUp() {

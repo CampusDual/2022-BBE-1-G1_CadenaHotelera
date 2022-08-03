@@ -29,6 +29,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResult
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -61,12 +62,15 @@ public class ClientService implements IClientService {
 	
 	private Logger log;
 	private Control control;
+	
+	private UserControl userControl;
 	Validator dataValidator;
 
 	public ClientService() {
 		super();
 		this.control = new Control();
 		this.dataValidator=new Validator();
+		this.userControl=new UserControl();
 		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
@@ -156,7 +160,7 @@ public class ClientService implements IClientService {
 		try {
 			dataValidator.checkIfMapIsEmpty(attrMap);
 			checkIfClientExists(keyMap);
-			control.controlAccessClient((int) keyMap.get("id_client"));
+			userControl.controlAccessClient((int) keyMap.get("id_client"));
 			
 			attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			
@@ -202,7 +206,7 @@ public class ClientService implements IClientService {
 		EntityResult deleteResult = new EntityResultMapImpl();
 		try {
 			checkIfClientExists(keyMap);
-			control.controlAccessClient((int) keyMap.get("id_client"));
+			userControl.controlAccessClient((int) keyMap.get("id_client"));
 			checkActiveReservations(keyMap);
 			deleteResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
 			deleteResult.setMessage("SUCCESSFUL_DELETE");

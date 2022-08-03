@@ -29,6 +29,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResult
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -53,6 +54,7 @@ public class ExtraHotelService implements IExtraHotelService {
 	private DefaultOntimizeDaoHelper daoHelper;
 
 	private Control control;
+	private UserControl userControl;
 	
 	private Validator dataValidator;
 	
@@ -62,6 +64,7 @@ public class ExtraHotelService implements IExtraHotelService {
 		super();
 		this.control = new Control();
 		this.dataValidator=new Validator();
+		this.userControl=new UserControl();
 		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
@@ -119,7 +122,7 @@ public class ExtraHotelService implements IExtraHotelService {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
 			dataValidator.checkIfMapIsEmpty(attrMap);
-			control.controlAccess((int) attrMap.get("exh_hotel"));		
+			userControl.controlAccess((int) attrMap.get("exh_hotel"));		
 			insertResult = this.daoHelper.insert(this.extraHotelDao, attrMap);
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
@@ -174,7 +177,7 @@ public class ExtraHotelService implements IExtraHotelService {
 			checkIfExtraHotelExists(keyMap);
 			
 			hotelResult=daoHelper.query(extraHotelDao, keyMap, Arrays.asList("exh_hotel"));
-			control.controlAccess((int) hotelResult.getRecordValues(0).get("exh_hotel"));
+			userControl.controlAccess((int) hotelResult.getRecordValues(0).get("exh_hotel"));
 			
 			if (attrMap.containsKey("exh_active")) {
 				checkCorrectBoolean(attrMap);

@@ -37,6 +37,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.db.SQLStatementBuilder;
@@ -61,6 +62,9 @@ public class BookingServiceTest {
 	private ExtraHotelDao extraHotelDao;
 	@Mock
 	DefaultOntimizeDaoHelper daoHelper;
+	
+	@Mock
+	UserControl userControl;
 
 	@BeforeEach
 	void setUp() {

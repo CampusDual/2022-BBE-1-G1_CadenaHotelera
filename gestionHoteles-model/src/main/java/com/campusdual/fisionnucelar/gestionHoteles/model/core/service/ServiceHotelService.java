@@ -29,6 +29,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResult
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -55,11 +56,13 @@ public class ServiceHotelService implements IServicesHotelService {
 	private Control control;
 	private Validator validator;
 	private Logger log;
+	private UserControl userControl;
 
 	public ServiceHotelService() {
 		super();
 		this.control = new Control();
 		this.validator = new Validator();
+		this.userControl=new UserControl();
 		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
@@ -85,7 +88,7 @@ public class ServiceHotelService implements IServicesHotelService {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {		
 			searchResult = daoHelper.query(serviceHotelDao, keyMap, attrList);
-			control.controlAccess((int) searchResult.getRecordValues(0).get("svh_hotel"));
+			userControl.controlAccess((int) searchResult.getRecordValues(0).get("svh_hotel"));
 			control.checkResults(searchResult);
 		} catch (NoResultsException|NotAuthorizedException e) {
 			log.error("unable to retrieve a hotel service. Request : {} {} ",keyMap,attrList, e);
@@ -121,7 +124,7 @@ public class ServiceHotelService implements IServicesHotelService {
 	public EntityResult servicehotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
-			control.controlAccess((int) attrMap.get("svh_hotel"));
+			userControl.controlAccess((int) attrMap.get("svh_hotel"));
 			insertResult = this.daoHelper.insert(this.serviceHotelDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new EmptyRequestException("FIELDS_REQUIRED");
@@ -175,7 +178,7 @@ public class ServiceHotelService implements IServicesHotelService {
 			validator.checkIfMapIsEmpty(attrMap);
 			checkIfServiceHotelExists(keyMap);
 			hotelResult=daoHelper.query(serviceHotelDao, keyMap, Arrays.asList("svh_hotel"));
-			control.controlAccess((int) hotelResult.getRecordValues(0).get("svh_hotel"));
+			userControl.controlAccess((int) hotelResult.getRecordValues(0).get("svh_hotel"));
 			
 			if (attrMap.containsKey("svh_active"))
 				checkCorrectBoolean(attrMap);

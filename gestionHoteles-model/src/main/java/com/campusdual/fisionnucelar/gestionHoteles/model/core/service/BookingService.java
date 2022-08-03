@@ -44,6 +44,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotEnoug
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.OccupiedRoomException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.db.SQLStatementBuilder;
@@ -99,6 +100,8 @@ public class BookingService implements IBookingService {
 
 	@Autowired
 	private ExtraHotelDao extraHotelDao;
+	
+	private UserControl userControl;
 
 	Validator validator;
 	Validator dataValidator;
@@ -108,6 +111,7 @@ public class BookingService implements IBookingService {
 		this.control = new Control();
 		this.validator = new Validator();
 		this.dataValidator = new Validator();
+		this.userControl=new UserControl();
 		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
@@ -126,7 +130,7 @@ public class BookingService implements IBookingService {
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
-			control.controlAccessClient((int) keyMap.get("bk_client"));
+			userControl.controlAccessClient((int) keyMap.get("bk_client"));
 			searchResult = searchBookingsByClient(keyMap, attrList, false);
 		} catch (NotAuthorizedException e) {
 			log.error("unable to retrieve bookings by client. Request : {} {}", keyMap, attrList, e);
@@ -151,7 +155,7 @@ public class BookingService implements IBookingService {
 	public EntityResult clientactivebookingsQuery(Map<String, Object> keyMap, List<String> attrList) {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
-			control.controlAccessClient((int) keyMap.get("bk_client"));
+			userControl.controlAccessClient((int) keyMap.get("bk_client"));
 			searchResult = searchBookingsByClient(keyMap, attrList, true);
 		} catch (NotAuthorizedException e) {
 			log.error("unable to retrieve bookings by client. Request : {} {}", keyMap, attrList, e);
@@ -216,7 +220,7 @@ public class BookingService implements IBookingService {
 		try {
 
 			checkIfHotel(keyMap);
-			control.controlAccess((int) keyMap.get("rm_hotel"));
+			userControl.controlAccess((int) keyMap.get("rm_hotel"));
 			searchResult = daoHelper.query(bookingDao, keyMap, attrList);
 			control.checkResults(searchResult);
 		} catch (NoResultsException | NotAuthorizedException e) {
@@ -321,7 +325,7 @@ public class BookingService implements IBookingService {
 		try {
 
 			checkIfHotel(keyMap);
-			control.controlAccess((int) keyMap.get("rm_hotel"));
+			userControl.controlAccess((int) keyMap.get("rm_hotel"));
 			result = daoHelper.query(bookingDao, keyMap, attrList, "TODAY_CHECKOUTS");
 			control.checkResults(result);
 		} catch (RecordNotFoundException | EmptyRequestException | NoResultsException | NotAuthorizedException e) {
@@ -618,7 +622,7 @@ public class BookingService implements IBookingService {
 		try {
 			checkIfBookingActive(keyMap);
 			EntityResult existingBooking = this.daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client"));
-			control.controlAccessClient((int) existingBooking.getRecordValues(0).get("bk_client"));
+			userControl.controlAccessClient((int) existingBooking.getRecordValues(0).get("bk_client"));
 
 			dataValidator.checkDataUpdateExtraPrice(attrMap);
 			updateResult = daoHelper.update(bookingDao, calculateAndInsertExtra(attrMap, keyMap), keyMap);
@@ -674,7 +678,7 @@ public class BookingService implements IBookingService {
 		EntityResult hotelResult = new EntityResultMapImpl();
 		try {
 			hotelResult = daoHelper.query(bookingDao, keyMap, Arrays.asList("rm_hotel"), "SEARCH_BOOKING_EXTRA_HOTEL");
-			control.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
+			userControl.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
 
 			checkIfExtraBookingExists(keyMap);
 			dataValidator.checkIfMapIsEmpty(attrMap);
@@ -840,8 +844,8 @@ public class BookingService implements IBookingService {
 		result = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "rm_hotel"),"SEARCH_BOOKING_HOTEL");
 		try {
 					
-			if(!control.controlAccessClient((int) result.getRecordValues(0).get("bk_client"))){
-				control.controlAccess((int) result.getRecordValues(0).get("rm_hotel"));
+			if(!userControl.controlAccessClient((int) result.getRecordValues(0).get("bk_client"))){
+				userControl.controlAccess((int) result.getRecordValues(0).get("rm_hotel"));
 			}		
 
 			checkIfBookingActive(keyMap);
@@ -934,7 +938,7 @@ public class BookingService implements IBookingService {
 				"SEARCH_BOOKING_HOTEL");
 		EntityResult deleteResult = new EntityResultMapImpl();
 		try {
-			control.controlAccess((int) bookingHotel.getRecordValues(0).get("rm_hotel"));
+			userControl.controlAccess((int) bookingHotel.getRecordValues(0).get("rm_hotel"));
 
 			Map<Object, Object> attrMap = new HashMap<>();
 			attrMap.put("bk_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));

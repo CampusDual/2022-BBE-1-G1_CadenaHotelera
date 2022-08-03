@@ -26,6 +26,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAutho
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotEnoughExtrasException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
@@ -58,10 +59,13 @@ public class BookingExtraService implements IBookingExtraService{
 	private IBookingExtraService bookingExtraService;
 
 	private Control control;
+	
+	private UserControl userControl;
 
 	public BookingExtraService() {
 		super();
 		this.control = new Control();
+		this.userControl=new UserControl();
 		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
@@ -94,8 +98,8 @@ public class BookingExtraService implements IBookingExtraService{
 					
 			result = daoHelper.query(bookingDao, bookingMap, Arrays.asList("bk_client", "rm_hotel"),"SEARCH_BOOKING_HOTEL");
 								
-				if(!control.controlAccessClient((int) result.getRecordValues(0).get("bk_client"))){
-					control.controlAccess((int) result.getRecordValues(0).get("rm_hotel"));
+				if(!userControl.controlAccessClient((int) result.getRecordValues(0).get("bk_client"))){
+					userControl.controlAccess((int) result.getRecordValues(0).get("rm_hotel"));
 				}
 	
 			searchResult = this.daoHelper.query(bookingExtraDao, keyMap, attrList);			
@@ -180,7 +184,7 @@ public class BookingExtraService implements IBookingExtraService{
 							
 			checkIfExtraBookingExists(keyMap);			
 			hotelResult=daoHelper.query(bookingDao, keyMap, Arrays.asList("rm_hotel"),"SEARCH_BOOKING_EXTRA_HOTEL");			
-			control.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
+			userControl.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
 
 			if (attrMap.get("quantity") == null) {
 				throw new EmptyRequestException("QUANTITY_FIELD_REQUIRED");

@@ -26,6 +26,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResult
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -47,6 +48,7 @@ public class RoomService implements IRoomService {
 	private Logger log;
 
 	private Control control;
+	private UserControl userControl;
 
 	@Autowired
 	private RoomDao roomDao;
@@ -65,6 +67,7 @@ public class RoomService implements IRoomService {
 		super();
 		this.control = new Control();
 		this.validator = new Validator();
+		this.userControl=new UserControl();
 		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
@@ -85,7 +88,7 @@ public class RoomService implements IRoomService {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
 			searchResult = daoHelper.query(roomDao, keyMap, attrList);
-			control.controlAccess((int) searchResult.getRecordValues(0).get("rm_hotel"));
+			userControl.controlAccess((int) searchResult.getRecordValues(0).get("rm_hotel"));
 			control.checkResults(searchResult);
 
 		} catch (NoResultsException | NotAuthorizedException e) {
@@ -112,7 +115,7 @@ public class RoomService implements IRoomService {
 	public EntityResult roomInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {			
-			control.controlAccess((int) attrMap.get("rm_hotel"));
+			userControl.controlAccess((int) attrMap.get("rm_hotel"));
 			
 			if (attrMap.containsKey("rm_hotel")) {
 				checkIfHotelExists(attrMap);
@@ -158,7 +161,7 @@ public class RoomService implements IRoomService {
 			checkIfRoomExists(keyMap);
 			validator.checkIfMapIsEmpty(attrMap);
 			hotelResult=daoHelper.query(roomDao, keyMap, Arrays.asList("rm_hotel"));
-			control.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
+			userControl.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
 						
 			if (attrMap.containsKey("rm_hotel")) {
 				checkIfHotelExists(attrMap);

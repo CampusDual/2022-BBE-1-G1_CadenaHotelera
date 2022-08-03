@@ -28,6 +28,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidR
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.ApiKey;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.GooglePlaces;
@@ -61,6 +62,7 @@ public class HotelService implements IHotelService {
 	private Control control;
 	private Validator dataValidator;
 	private Logger log;
+
 
 	public HotelService() {
 		super();
