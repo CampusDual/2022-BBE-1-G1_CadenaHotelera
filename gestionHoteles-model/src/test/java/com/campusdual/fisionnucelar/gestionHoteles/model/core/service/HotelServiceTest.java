@@ -110,16 +110,11 @@ public class HotelServiceTest {
 		@Test
 		@DisplayName("Obtain all data columns from Hotels table when ID not exist")
 		void when_queryAllColumnsNotExisting_return_empty() {
-			HashMap<String, Object> keyMap = new HashMap<>() {
-				{
-					put("ID_HOTEL", 5);
-				}
-			};
-			List<String> attrList = Arrays.asList("ID_HOTEL", "HTL_NAME", "HTL_PHONE", "HTL_ADDRESS", "HTL_EMAIL");
-			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificHotelData(keyMap, attrList));
-			EntityResult entityResult = hotelService.hotelQuery(new HashMap<>(), new ArrayList<>());
-			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
-			assertEquals(0, entityResult.calculateRecordNumber());
+			EntityResult result=new EntityResultMapImpl();
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(result);		
+			result = hotelService.hotelQuery(new HashMap<>(), new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, result.getCode());
+			assertEquals("NO_RESULTS", result.getMessage());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 

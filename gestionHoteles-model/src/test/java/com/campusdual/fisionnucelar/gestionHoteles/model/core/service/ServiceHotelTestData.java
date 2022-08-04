@@ -12,40 +12,40 @@ import com.ontimize.jee.common.dto.EntityResultMapImpl;
 
 public class ServiceHotelTestData {
 	public static EntityResult getAllServiceHotelData() {
-		List<String> columnList = Arrays.asList("ID_SERVICES_HOTEL", "SVH_HOTEL", "SVH_SERVICE","SVH_ACTIVE");
+		List<String> columnList = Arrays.asList("id_services_hotel", "svh_hotel", "svh_service","svh_active");
 		EntityResult er = new EntityResultMapImpl(columnList);
 		er.addRecord(new HashMap<String, Object>() {
 			{
-				put("ID_SERVICES_HOTEL", 0);
-				put("SVH_HOTEL", 1);
-				put("SVH_SERVICE", 1);
-				put("SVH_ACTIVE", 1);
+				put("id_services_hotel", 0);
+				put("svh_hotel", 1);
+				put("svh_service", 1);
+				put("svh_active", 1);
 			}
 		});
 		er.addRecord(new HashMap<String, Object>() {
 			{
-				put("ID_SERVICES_HOTEL", 1);
-				put("SVH_HOTEL", 2);
-				put("SVH_SERVICE", 2);
-				put("SVH_ACTIVE", 2);
+				put("id_services_hotel", 1);
+				put("svh_hotel", 2);
+				put("svh_service", 2);
+				put("svh_active", 2);
 			}
 		});
 		er.addRecord(new HashMap<String, Object>() {
 			{
-				put("ID_SERVICES_HOTEL", 2);
-				put("SVH_HOTEL", 3);
-				put("SVH_SERVICE", 3);
-				put("SVH_ACTIVE", 3);
+				put("id_services_hotel", 2);
+				put("svh_hotel", 3);
+				put("svh_service", 3);
+				put("svh_active", 3);
 			}
 		});
 
 		er.setCode(EntityResult.OPERATION_SUCCESSFUL);
 		er.setColumnSQLTypes(new HashMap<String, Number>() {
 			{
-				put("ID_SERVICES_HOTEL", Types.INTEGER);
-				put("SVH_HOTEL", Types.INTEGER);
-				put("SVH_SERVICE", Types.INTEGER);
-				put("SVH_ACTIVE", Types.INTEGER);
+				put("id_services_hotel", Types.INTEGER);
+				put("svh_hotel", Types.INTEGER);
+				put("svh_service", Types.INTEGER);
+				put("svh_active", Types.INTEGER);
 
 			}
 		});
@@ -56,16 +56,17 @@ public class ServiceHotelTestData {
 		EntityResult allData = getAllServiceHotelData();
 		int recordIndex = allData.getRecordIndex(keyValues);
 		HashMap<String, Object> recordValues = (HashMap) allData.getRecordValues(recordIndex);
-		List<String> columnList = Arrays.asList("ID_SERVICES_HOTEL", "SVH_HOTEL");
+		List<String> columnList = Arrays.asList("id_services_hotel", "svh_hotel");
 		EntityResult er = new EntityResultMapImpl(columnList);
 		if (recordValues != null) {
 			er.addRecord(recordValues);
 		}
 		er.setCode(EntityResult.OPERATION_SUCCESSFUL);
+		
 		er.setColumnSQLTypes(new HashMap<String, Number>() {
 			{
-				put("ID_SERVICES_HOTEL", Types.INTEGER);
-				put("SVH_HOTEL", Types.INTEGER);
+				put("id_services_hotel", Types.INTEGER);
+				put("svh_hotel", Types.INTEGER);
 			}
 		});
 		return er;
@@ -80,10 +81,10 @@ public class ServiceHotelTestData {
 	}
 	
 	public static EntityResult getGenericInsertResult() {
-		EntityResult er = new EntityResultMapImpl(Arrays.asList("ID_SERVICES_HOTEL"));
+		EntityResult er = new EntityResultMapImpl(Arrays.asList("id_services_hotel"));
 		er.addRecord(new HashMap<String, Object>() {
 			{
-				put("ID_SERVICES_HOTEL", 2);
+				put("id_services_hotel", 2);
 			}
 		});
 		return er;
@@ -95,7 +96,9 @@ public class ServiceHotelTestData {
 		return filter;
 	}
 	public static EntityResult getGenericQueryResult() {
-		EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_SERVICES_HOTEL", "SVH_HOTEL"));	
+		EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("id_services_hotel", "svh_hotel"));	
+		queryResult.put("id_services_hotel", Arrays.asList(1));
+		queryResult.put("svh_hotel", Arrays.asList(1));
 		return queryResult;
 	}
 	

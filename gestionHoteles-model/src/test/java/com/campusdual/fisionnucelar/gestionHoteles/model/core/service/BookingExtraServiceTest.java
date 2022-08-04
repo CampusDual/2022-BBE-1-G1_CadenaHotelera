@@ -4,9 +4,13 @@ import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.Boo
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,7 +38,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.BadSqlGrammarException;
 
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingExtraDao;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -63,23 +67,50 @@ public class BookingExtraServiceTest {
 	@DisplayName("Test for BookingExtra queries")
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	public class BookingExtraQuery {
-
 		@Test
 		@DisplayName("Obtain all data from BookingExtra table")
-		void testBookingExtraQueryAllData() {
+		void testBookingExtraQueryAllData() throws NotAuthorizedException {
 			doReturn(getAllBookingExtraData()).when(daoHelper).query(any(), anyMap(), anyList());
-			EntityResult entityResult = bookingExtraService.bookingextraQuery(new HashMap<>(), new ArrayList<>());
+			doReturn(true).when(userControl).controlAccessClient(anyInt());
+						
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());
+			
+			EntityResult entityResult = bookingExtraService.bookingextraQuery(getQueryFilter(), new ArrayList<>());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			assertEquals(3, entityResult.calculateRecordNumber());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
 		@Test
+		@DisplayName("Try to search with an manager/recepcionist user from the incorrect hotel")
+		void manager_not_authorized() throws NotAuthorizedException {
+			doReturn(false).when(userControl).controlAccessClient(anyInt());
+			doThrow(new NotAuthorizedException("NOT_AUTHORIZED")).when(userControl).controlAccess(anyInt());			
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());
+			
+			EntityResult entityResult = bookingExtraService.bookingextraQuery(getQueryFilter(), new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("NOT_AUTHORIZED", entityResult.getMessage());	
+		}
+		
+		@Test
+		@DisplayName("Try to search with a non authorized client user")
+		void client_not_authorized() throws NotAuthorizedException {
+			doThrow(new NotAuthorizedException("NOT_AUTHORIZED")).when(userControl).controlAccessClient(anyInt());			
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());		
+			EntityResult entityResult = bookingExtraService.bookingextraQuery(getQueryFilter(), new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("NOT_AUTHORIZED", entityResult.getMessage());	
+		}
+		
+		
+		@Test
 		@DisplayName("Query without results")
 		void query_without_results() {
 			EntityResult queryResult = new EntityResultMapImpl();
 			doReturn(queryResult).when(daoHelper).query(any(), anyMap(), anyList());
-			EntityResult entityResult = bookingExtraService.bookingextraQuery(new HashMap<>(), new ArrayList<>());
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());
+			EntityResult entityResult = bookingExtraService.bookingextraQuery(getQueryFilter(), new ArrayList<>());
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("NO_RESULTS", entityResult.getMessage());
 			verify(daoHelper).query(any(), anyMap(), anyList());
@@ -90,67 +121,70 @@ public class BookingExtraServiceTest {
 		void when_send_string_as_id_throws_exception() {
 			Map<String, Object> filter = new HashMap<>();
 			filter.put("id_service", "string");
+			filter.put("bke_booking", 2);
 			List<String> columns = new ArrayList<>();
 			columns.add("sv_name");
 			columns.add("sv_description");
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());
 			when(daoHelper.query(bookingExtraDao, filter, columns)).thenThrow(BadSqlGrammarException.class);
 			EntityResult entityResult = bookingExtraService.bookingextraQuery(filter, columns);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("INCORRECT_REQUEST", entityResult.getMessage());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
-
+	
+		
 		@Test
-		@DisplayName("Obtain all data columns from BookingExtra table when ID is -> 2")
+		@DisplayName("Obtain all data columns from BookingExtra table when Booking is -> 2")
 		void when_queryAllColumns_return_specificData() {
 			HashMap<String, Object> keyMap = new HashMap<>() {
 				{
-					put("ID_BOOKING_EXTRA", 2);
+					put("bke_booking", 2);
 				}
 			};
-			List<String> attrList = Arrays.asList("ID_BOOKING_EXTRA", "BKE_BOOKING");
+			List<String> attrList = Arrays.asList("id_booking_extra", "bke_booking");
 			doReturn(getSpecificBookingExtraData(keyMap, attrList)).when(daoHelper).query(any(), anyMap(), anyList());
-			EntityResult entityResult = bookingExtraService.bookingextraQuery(new HashMap<>(), new ArrayList<>());
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());
+			EntityResult entityResult = bookingExtraService.bookingextraQuery(getQueryFilter(), new ArrayList<>());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			assertEquals(1, entityResult.calculateRecordNumber());
-			assertEquals(2, entityResult.getRecordValues(0).get(BookingExtraDao.ATTR_ID));
+			assertEquals(2, entityResult.getRecordValues(0).get("id_booking_extra"));
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
 		@Test
-		@DisplayName("Obtain all data columns from Services table when ID not exist")
+		@DisplayName("Obtain all data columns from BookingExtra table when ID not exist")
 		void when_queryAllColumnsNotExisting_return_empty() {
-			HashMap<String, Object> keyMap = new HashMap<>() {
-				{
-					put("ID_BOOKING_EXTRA", 5);
-				}
-			};
-			List<String> attrList = Arrays.asList("ID_BOOKING_EXTRA", "BKE_BOOKING", "BKE_NAME");
-			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificBookingExtraData(keyMap, attrList));
-			EntityResult entityResult = bookingExtraService.bookingextraQuery(new HashMap<>(), new ArrayList<>());
-			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
-			assertEquals(0, entityResult.calculateRecordNumber());
+			EntityResult result=new EntityResultMapImpl();
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(result);			
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());
+			result = bookingExtraService.bookingextraQuery(getQueryFilter(), new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, result.getCode());
+			assertEquals("NO_RESULTS", result.getMessage());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
+		
 		@ParameterizedTest(name = "Obtain data with ID -> {0}")
 		@MethodSource("randomIDGenerator")
-		@DisplayName("Obtain all data columns from Services table when ID is random")
+		@DisplayName("Obtain all data columns from BookingExtra table when Booking is random")
 		void when_queryAllColumnsWithRandomValue_return_specificData(int random) {
 			HashMap<String, Object> keyMap = new HashMap<>() {
 				{
-					put("ID_BOOKING_EXTRA", random);
+					put("bke_booking", random);
 				}
 			};
-			List<String> attrList = Arrays.asList("ID_BOOKING_EXTRA", "BKE_BOOKING");
+			List<String> attrList = Arrays.asList("id_booking_extra", "bke_booking");
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificBookingExtraData(keyMap, attrList));
-			EntityResult entityResult = bookingExtraService.bookingextraQuery(new HashMap<>(), new ArrayList<>());
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());
+			EntityResult entityResult = bookingExtraService.bookingextraQuery(getQueryFilter(), new ArrayList<>());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			assertEquals(1, entityResult.calculateRecordNumber());
-			assertEquals(random, entityResult.getRecordValues(0).get(BookingExtraDao.ATTR_ID));
+			assertEquals(random, entityResult.getRecordValues(0).get("id_booking_extra"));
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
+		
 		List<Integer> randomIDGenerator() {
 			List<Integer> list = new ArrayList<>();
 			for (int i = 0; i < 5; i++) {
@@ -170,12 +204,12 @@ public class BookingExtraServiceTest {
 			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
 			EntityResult er = getGenericInsertResult();
 			HashMap<String, Object> keyMap = new HashMap<>();
-			keyMap.put("ID_BOOKING_EXTRA", 2);
+			keyMap.put("id_booking_extra", 2);
 			when(daoHelper.insert(bookingExtraDao, dataToInsert)).thenReturn(er);
 			EntityResult entityResult = bookingExtraService.bookingextraInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			int recordIndex = entityResult.getRecordIndex(keyMap);
-			assertEquals(2, entityResult.getRecordValues(recordIndex).get("ID_BOOKING_EXTRA"));
+			assertEquals(2, entityResult.getRecordValues(recordIndex).get("id_booking_extra"));
 			verify(daoHelper).insert(bookingExtraDao, dataToInsert);
 
 		}
@@ -227,8 +261,9 @@ public class BookingExtraServiceTest {
 				}
 			});
 
-			when(daoHelper.update(any(), any(), any())).thenReturn(queryResult);
+			when(daoHelper.update(any(), any(), any())).thenReturn(getQueryResult());
 			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());
 
 			EntityResult entityResult = bookingExtraService.markextraenjoyedUpdate(quantity, filter);
 			assertEquals("SUCCESSFULLY_UPDATED", entityResult.getMessage());
@@ -236,6 +271,25 @@ public class BookingExtraServiceTest {
 			verify(daoHelper).update(any(), anyMap(), anyMap());
 
 		}
+		
+		@Test
+		@DisplayName("Try to update with a non authorized user")
+		void non_authorized() throws NotAuthorizedException {
+
+			Map<String, Object> filter = getGenericFilter();
+			Map<String, Object> quantity = new HashMap<>();
+			quantity.put("quantity", 3);
+
+			doThrow(new NotAuthorizedException("NOT_AUTHORIZED")).when(userControl).controlAccess(anyInt());
+			when(daoHelper.query(any(), any(), any())).thenReturn(getGenericQueryResult());
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());
+
+			EntityResult entityResult = bookingExtraService.markextraenjoyedUpdate(quantity, filter);
+			assertEquals("NOT_AUTHORIZED", entityResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());		
+
+		}
+		
 
 		@Test
 		@DisplayName("Inssuficient extras to mark as enjoyed")
@@ -252,6 +306,7 @@ public class BookingExtraServiceTest {
 				}
 			});
 			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());
 
 			EntityResult entityResult = bookingExtraService.markextraenjoyedUpdate(quantity, filter);
 			assertEquals("NOT_ENOUGH_PENDING_EXTRAS", entityResult.getMessage());
@@ -291,6 +346,7 @@ public class BookingExtraServiceTest {
 			EntityResult queryResult = getGenericQueryResult();
 
 			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
+			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getQueryResult());
 			
 			EntityResult updateResult = bookingExtraService.markextraenjoyedUpdate(dataToUpdate,filter);
 			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
