@@ -169,6 +169,13 @@ public class BookingTestData {
 			return keyMap;
 		
 		}
+		public static Map<String,Object> getBookingQueryKeyMap(){
+			Map<String, Object> keyMap = new HashMap<>();
+			keyMap.put("id_booking", 50);
+			keyMap.put("rm_hotel", 50);
+			return keyMap;
+			
+		}
 		
 		public static List<String> getExtraBookingColumns(){
 		List<String> columnsExtraBooking = new ArrayList<>();
@@ -193,7 +200,9 @@ public class BookingTestData {
 				put("bke_unit_price", new BigDecimal(200)); 
 				put("bke_total_price", new BigDecimal(2000)); 
 				put("bke_enjoyed", 0); 
-				put("bk_extras_price", new BigDecimal(200)); }});
+				put("bk_extras_price", new BigDecimal(200)); 
+				put("exh_active", 1); 
+				}});
 			return bookingExtraResult;
 		}
 		
@@ -222,6 +231,25 @@ public class BookingTestData {
         		put("id_booking",38);
         	}});
         	return availableRooms;
+			
+		}
+		public static EntityResult getRMHotelER() {
+			EntityResult availableRooms = new EntityResultMapImpl();
+			availableRooms.addRecord(new HashMap<String, Object>() {{
+				put("rm_hotel", 2);
+
+			}});
+			return availableRooms;
+			
+		}
+		public static EntityResult getChangeDatesER() {
+			EntityResult availableRooms = new EntityResultMapImpl();
+			availableRooms.addRecord(new HashMap<String, Object>() {{
+				put("rm_hotel", 2);
+				put("bk_client", 2);
+				
+			}});
+			return availableRooms;
 			
 		}
 }
