@@ -80,6 +80,7 @@ public class HotelService implements IHotelService {
 	 * @return The columns from the hotels table especified in the params and a
 	 *         message with the operation result
 	 */
+	
 	@Override
 	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult hotelQuery(Map<String, Object> keyMap, List<String> attrList)

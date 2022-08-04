@@ -4,9 +4,12 @@ import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.Ser
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,7 +33,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
@@ -39,7 +41,7 @@ import org.springframework.jdbc.BadSqlGrammarException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ServiceDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ServiceHotelDao;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -82,13 +84,27 @@ public class ServiceHotelServiceTest {
 
 		@Test
 		@DisplayName("Obtain all data from ServicesHotel table")
-		void when_queryOnlyWithAllColumns_return_allServiceHotelData() {
+		void when_queryOnlyWithAllColumns_return_allServiceHotelData() throws NotAuthorizedException {
 			doReturn(getAllServiceHotelData()).when(daoHelper).query(any(), anyMap(), anyList());
+			doNothing().when(userControl).controlAccess(anyInt());
 			EntityResult entityResult = serviceHotelService.servicehotelQuery(new HashMap<>(), new ArrayList<>());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			assertEquals(3, entityResult.calculateRecordNumber());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
+			
+		
+		@Test
+		@DisplayName("Try to search with a non authorized user")
+		void when_not_authorized() throws NotAuthorizedException  {
+			doReturn(getAllServiceHotelData()).when(daoHelper).query(any(), anyMap(), anyList());			
+			doThrow(new NotAuthorizedException("NOT_AUTHORIZED")).when(userControl).controlAccess(anyInt());
+			EntityResult entityResult = serviceHotelService.servicehotelQuery(new HashMap<>(), new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("NOT_AUTHORIZED", entityResult.getMessage());
+			verify(daoHelper).query(any(), anyMap(), anyList());
+		}		
+		
 
 		@Test
 		@DisplayName("Query without results")
@@ -121,49 +137,46 @@ public class ServiceHotelServiceTest {
 		void when_queryAllColumns_return_specificData() {
 			HashMap<String, Object> keyMap = new HashMap<>() {
 				{
-					put("ID_SERVICES_HOTEL", 2);
+					put("id_services_hotel", 2);
 				}
 			};
-			List<String> attrList = Arrays.asList("ID_SERVICES_HOTEL", "SVH_HOTEL");
+			List<String> attrList = Arrays.asList("id_services_hotel", "svh_hotel");
 			doReturn(getSpecificServiceHotelData(keyMap, attrList)).when(daoHelper).query(any(), anyMap(), anyList());
 			EntityResult entityResult = serviceHotelService.servicehotelQuery(new HashMap<>(), new ArrayList<>());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			assertEquals(1, entityResult.calculateRecordNumber());
-			assertEquals(2, entityResult.getRecordValues(0).get(ServiceHotelDao.ATTR_ID));
+			assertEquals(2, entityResult.getRecordValues(0).get("id_services_hotel"));
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
 		@Test
 		@DisplayName("Obtain all data columns from ServicesHotel table when ID not exist")
-		void when_queryAllColumnsNotExisting_return_empty() {
-			HashMap<String, Object> keyMap = new HashMap<>() {
-				{
-					put("ID_SERVICES_HOTEL", 5);
-				}
-			};
-			List<String> attrList = Arrays.asList("ID_SERVICES_HOTEL", "SVH_HOTEL", "SVH_SERVICE", "SVH_ACTIVE");
-			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificServiceHotelData(keyMap, attrList));
-			EntityResult entityResult = serviceHotelService.servicehotelQuery(new HashMap<>(), new ArrayList<>());
-			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
-			assertEquals(0, entityResult.calculateRecordNumber());
+		void when_queryAllColumnsNotExisting_return_empty() {			
+			EntityResult result=new EntityResultMapImpl();
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(result);			
+			result = serviceHotelService.servicehotelQuery(new HashMap<>(), new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, result.getCode());
+			assertEquals("NO_RESULTS", result.getMessage());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
+		
 		@ParameterizedTest(name = "Obtain data with ID -> {0}")
 		@MethodSource("randomIDGenerator")
-		@DisplayName("Obtain all data columns from Services table when ID is random")
-		void when_queryAllColumnsWithRandomValue_return_specificData(int random) {
+		@DisplayName("Obtain all data columns from ServicesHotel table when ID is random")
+		void when_queryAllColumnsWithRandomValue_return_specificData(int random) throws NotAuthorizedException {
 			HashMap<String, Object> keyMap = new HashMap<>() {
 				{
-					put("ID_SERVICES_HOTEL", random);
+					put("id_services_hotel", random);
 				}
 			};
-			List<String> attrList = Arrays.asList("ID_SERVICES_HOTEL", "SV_HOTEL");
+			List<String> attrList = Arrays.asList("id_services_hotel", "svh_hotel");
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificServiceHotelData(keyMap, attrList));
+			doNothing().when(userControl).controlAccess(anyInt());
 			EntityResult entityResult = serviceHotelService.servicehotelQuery(new HashMap<>(), new ArrayList<>());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			assertEquals(1, entityResult.calculateRecordNumber());
-			assertEquals(random, entityResult.getRecordValues(0).get(ServiceHotelDao.ATTR_ID));
+			assertEquals(random, entityResult.getRecordValues(0).get("id_services_hotel"));
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
@@ -180,6 +193,8 @@ public class ServiceHotelServiceTest {
 	@DisplayName("Test for ServicesHotel inserts")
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	public class ServiceInsert {
+	
+		
 		@Test
 		@DisplayName("Insert a ServiceHotel successfully")
 		void serviceHotel_insert_success() {
@@ -187,14 +202,28 @@ public class ServiceHotelServiceTest {
 			EntityResult er =getGenericInsertResult();
 			
 			HashMap<String, Object> keyMap = new HashMap<>();
-			keyMap.put("ID_SERVICES_HOTEL", 2);
+			keyMap.put("id_services_hotel", 2);
 			when(daoHelper.insert(serviceHotelDao, dataToInsert)).thenReturn(er);
 
 			EntityResult entityResult = serviceHotelService.servicehotelInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			int recordIndex = entityResult.getRecordIndex(keyMap);
-			assertEquals(2, entityResult.getRecordValues(recordIndex).get("ID_SERVICES_HOTEL"));
+			assertEquals(2, entityResult.getRecordValues(recordIndex).get("id_services_hotel"));
 			verify(daoHelper).insert(serviceHotelDao, dataToInsert);
+		}
+		
+		@Test
+		@DisplayName("Try to insert with a non authorized user")
+		void not_authorized() throws NotAuthorizedException {
+			Map<String, Object> dataToInsert= getGenericDataToInsertOrUpdate();
+			EntityResult er =getGenericInsertResult();			
+			HashMap<String, Object> keyMap = new HashMap<>();
+			keyMap.put("id_services_hotel", 2);
+			when(daoHelper.insert(serviceHotelDao, dataToInsert)).thenReturn(er);
+			doThrow(new NotAuthorizedException("NOT_AUTHORIZED")).when(userControl).controlAccess(anyInt());
+			EntityResult entityResult = serviceHotelService.servicehotelInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("NOT_AUTHORIZED", entityResult.getMessage());			
 		}
 
 		@Test
@@ -218,10 +247,8 @@ public class ServiceHotelServiceTest {
 		@Test
 		@DisplayName("Fail trying to insert without a not null field or with a non existing foreign key")
 		void serviceHotel_insert_without_service_or_hotel() {
-			Map<String, Object> dataToInsert = new HashMap<>();
-			dataToInsert.put("svh_active", 1);
-			DataIntegrityViolationException DataIntegrityException=new DataIntegrityViolationException("RUN_TIME_MESSAGE");
-					
+			Map<String, Object> dataToInsert = new HashMap<>();		
+			DataIntegrityViolationException DataIntegrityException=new DataIntegrityViolationException("RUN_TIME_MESSAGE");				
 			when(daoHelper.insert(serviceHotelDao, dataToInsert)).thenThrow(DataIntegrityException);
 			EntityResult entityResult = serviceHotelService.servicehotelInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
@@ -245,7 +272,7 @@ public class ServiceHotelServiceTest {
 	@Nested
 	@DisplayName("Test for ServiceHotel updates")
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-	public class HotelUpdate {
+	public class ServiceHotelUpdate {
 		@Test
 		@DisplayName("ServiceHotel update succesful")
 		void serviceHotel_update_success() {
@@ -262,24 +289,42 @@ public class ServiceHotelServiceTest {
 			assertEquals("SUCCESSFUL_UPDATE", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			verify(daoHelper).update(any(), anyMap(), anyMap());
-			verify(daoHelper).query(any(), any(), any());
+			verify(daoHelper,times(2)).query(any(), any(), any());
 		}
-
 		@Test
-		@DisplayName("Fail trying to update an hotel with a duplicated combination of hotel and service")
-		void serviceHotel_fail_update_with_duplicated() {
-		
-			Map<String, Object> filter = getGenericFilter();
-			Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
+		@DisplayName("Try to update with a non authorized user")
+		void not_authorized() throws NotAuthorizedException {
+			
+			Map<String, Object> filter = getGenericFilter();			
+			Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();			
 			EntityResult queryResult = getGenericQueryResult();
 		
 			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
+			doThrow(new NotAuthorizedException("NOT_AUTHORIZED")).when(userControl).controlAccess(anyInt());
+		
+			EntityResult entityResult = serviceHotelService.servicehotelUpdate(dataToUpdate, filter);
+			assertEquals("NOT_AUTHORIZED", entityResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+		
+		}
+		
+
+		@Test
+		@DisplayName("Fail trying to update an servicehotel with a duplicated combination of hotel and service")
+		void serviceHotel_fail_update_with_duplicated() throws NotAuthorizedException {		
+			Map<String, Object> filter = getGenericFilter();
+			Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
+			EntityResult queryResult = getGenericQueryResult();
+						
+			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
+			doNothing().when(userControl).controlAccess(anyInt());
+			
 			when(daoHelper.update(serviceHotelDao, dataToUpdate, filter)).thenThrow(DuplicateKeyException.class);
 			EntityResult entityResult = serviceHotelService.servicehotelUpdate(dataToUpdate, filter);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("DUPLICATED_SERVICES_IN_HOTEL", entityResult.getMessage());
 			verify(daoHelper).update(any(), anyMap(), anyMap());
-			verify(daoHelper).query(any(), any(), any());
+			verify(daoHelper, times(2)).query(any(), any(),any());
 		}
 
 		@Test
@@ -337,19 +382,21 @@ public class ServiceHotelServiceTest {
 		
 		@Test
 		@DisplayName("Fail trying to update with boolean bigger than 1 ")
-		void serviceHotel_update_with_big_boolean() {
+		void serviceHotel_update_with_big_boolean() throws NotAuthorizedException {
 			Map<String, Object> filter = getGenericFilter();
 			Map<String, Object> dataToUpdate = new HashMap<>();
 			dataToUpdate.put("svh_hotel", 1);
 			dataToUpdate.put("svh_service", 1);
 			dataToUpdate.put("svh_active", 3);
 				
-			EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_SERVICES_HOTEL", "SVH_HOTEL"));	
+			EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("id_services_hotel", "svh_hotel"));	
+			queryResult.put("svh_hotel", Arrays.asList(1));	
+			
 			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
 			EntityResult entityResult = serviceHotelService.servicehotelUpdate(dataToUpdate, filter);
 			assertEquals("SVH_ACTIVE_MUST_BE_1_OR_0", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			verify(daoHelper).query(any(), any(), any());
+			verify(daoHelper,times(2)).query(any(), any(), any());
 		}
 		
 		@Test
@@ -366,7 +413,7 @@ public class ServiceHotelServiceTest {
 			EntityResult entityResult = serviceHotelService.servicehotelUpdate(dataToUpdate, filter);
 			assertEquals("SVH_ACTIVE_MUST_BE_1_OR_0", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			verify(daoHelper).query(any(), any(), any());
+			verify(daoHelper,times(2)).query(any(), any(), any());
 		}
 		
 	

@@ -9,9 +9,11 @@ import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.Cli
 import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.ClientTestData.getGenericQueryResult;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -137,19 +139,15 @@ public class ClientServiceTest {
 		@Test
 		@DisplayName("Obtain all data columns from Clients table when ID not exist")
 		void when_queryAllColumnsNotExisting_return_empty() {
-			HashMap<String, Object> keyMap = new HashMap<>() {
-				{
-					put("ID_CLIENT", 5);
-				}
-			};
-			List<String> attrList = Arrays.asList("ID_CLIENT", "CL_NAME", "CL_EMAIL", "CL_NIF");
-			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificClientData(keyMap, attrList));
+			EntityResult result=new EntityResultMapImpl();
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(result);		
 			EntityResult entityResult = clientService.clientQuery(new HashMap<>(), new ArrayList<>());
-			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
-			assertEquals(0, entityResult.calculateRecordNumber());
+			assertEquals(EntityResult.OPERATION_WRONG, result.getCode());
+			assertEquals("NO_RESULTS", result.getMessage());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
+		
 		@ParameterizedTest(name = "Obtain data with ID -> {0}")
 		@MethodSource("randomIDGenerator")
 		@DisplayName("Obtain all data columns from Extra table when ID is random")
@@ -297,7 +295,6 @@ public class ClientServiceTest {
 			EntityResult er = new EntityResultMapImpl();
 			EntityResult queryResult = getGenericQueryResult();
 			List<String> attrList = getGenericAttrList();
-
 	
 
 			when(daoHelper.update(clientDao, dataToUpdate, filter)).thenReturn(er);
@@ -309,6 +306,21 @@ public class ClientServiceTest {
 			verify(daoHelper).update(any(), anyMap(), anyMap());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
+		
+		@Test
+		@DisplayName("Try to update with a non authorized user")
+		void not_authorized() throws NotAuthorizedException {
+			Map<String, Object> filter = getGenericFilter();			
+			Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();			
+			EntityResult queryResult = getGenericQueryResult();
+			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
+			doThrow(new NotAuthorizedException("NOT_AUTHORIZED")).when(userControl).controlAccessClient(anyInt());
+			EntityResult entityResult = clientService.clientUpdate(dataToUpdate, filter);
+			assertEquals("NOT_AUTHORIZED", entityResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+		}
+
+			
 
 		@Test
 		@DisplayName("Fail trying to update a client with a duplicated email")
@@ -398,6 +410,7 @@ public class ClientServiceTest {
 			
 			when(daoHelper.query(clientDao, filter,attrList)).thenReturn(queryResult);
 			
+			
 			EntityResult queryResultBooking=new EntityResultMapImpl();
 			
 			when(bookingService.clientactivebookingsQuery(anyMap(), anyList())).thenReturn(queryResultBooking);
@@ -412,6 +425,22 @@ public class ClientServiceTest {
 			verify(daoHelper).update(any(), anyMap(), anyMap());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
+		
+		@Test
+		@DisplayName("Try to delete with a non authorized user")
+		void not_authorized() throws NotAuthorizedException {
+			Map<String, Object> filter = getGenericFilter();
+			List<String> attrList = getGenericAttrList();
+			EntityResult queryResult = getGenericQueryResult();
+			
+			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
+			doThrow(new NotAuthorizedException("NOT_AUTHORIZED")).when(userControl).controlAccessClient(anyInt());
+			
+			EntityResult entityResult = clientService.clientUpdate(getGenericDataToInsertOrUpdate(), filter);
+			assertEquals("NOT_AUTHORIZED", entityResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+		}
+		
 	
 		@Test
 		@DisplayName("Fail because it has Active Reservations ")

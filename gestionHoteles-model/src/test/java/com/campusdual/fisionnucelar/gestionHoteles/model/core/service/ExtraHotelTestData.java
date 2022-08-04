@@ -85,10 +85,10 @@ public class ExtraHotelTestData {
 	}
 	
 	public static EntityResult getGenericInsertResult() {
-		EntityResult er = new EntityResultMapImpl(Arrays.asList("ID_EXTRAS_HOTEL"));
+		EntityResult er = new EntityResultMapImpl(Arrays.asList("id_extras_hotel"));
 		er.addRecord(new HashMap<String, Object>() {
 			{
-				put("ID_EXTRAS_HOTEL", 2);
+				put("id_extras_hotel", 2);
 			}
 		});
 		return er;
@@ -100,7 +100,10 @@ public class ExtraHotelTestData {
 		return filter;
 	}
 	public static EntityResult getGenericQueryResult() {
-		EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_EXTRAS_HOTEL", "EXH_HOTEL"));	
+		EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("id_extras_hotel", "exh_hotel"));
+		queryResult.put("id_extras_hotel", Arrays.asList(1));
+		queryResult.put("exh_hotel", Arrays.asList(1));
+		
 		return queryResult;
 	}
 	

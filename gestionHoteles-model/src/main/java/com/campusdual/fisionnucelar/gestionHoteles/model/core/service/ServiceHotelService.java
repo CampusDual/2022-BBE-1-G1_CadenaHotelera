@@ -88,8 +88,8 @@ public class ServiceHotelService implements IServicesHotelService {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {		
 			searchResult = daoHelper.query(serviceHotelDao, keyMap, attrList);
-			userControl.controlAccess((int) searchResult.getRecordValues(0).get("svh_hotel"));
 			control.checkResults(searchResult);
+			userControl.controlAccess((int) searchResult.getRecordValues(0).get("svh_hotel"));		
 		} catch (NoResultsException|NotAuthorizedException e) {
 			log.error("unable to retrieve a hotel service. Request : {} {} ",keyMap,attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
@@ -124,11 +124,11 @@ public class ServiceHotelService implements IServicesHotelService {
 	public EntityResult servicehotelInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
-			userControl.controlAccess((int) attrMap.get("svh_hotel"));
+			
 			insertResult = this.daoHelper.insert(this.serviceHotelDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new EmptyRequestException("FIELDS_REQUIRED");
-
+			userControl.controlAccess((int) attrMap.get("svh_hotel"));
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
 			log.error("unable to insert a hotel service. Request : {} ",attrMap, e);

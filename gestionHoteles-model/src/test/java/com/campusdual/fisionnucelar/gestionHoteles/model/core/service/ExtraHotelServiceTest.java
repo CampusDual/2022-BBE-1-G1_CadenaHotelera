@@ -10,9 +10,12 @@ import static com.campusdual.fisionnucelar.gestionHoteles.model.core.service.Ext
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,6 +48,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraHotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ServiceDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
@@ -86,7 +90,7 @@ public class ExtraHotelServiceTest {
 	@Nested
 	@DisplayName("Test for ExtraHotel queries")
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-	public class ServiceHotelQuery {
+	public class ExtraHotellQuery {
 
 		@Test
 		@DisplayName("Obtain all data from ExtraHotel table")
@@ -98,6 +102,7 @@ public class ExtraHotelServiceTest {
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
+		
 		@Test
 		@DisplayName("Query without results")
 		void query_without_results() {
@@ -144,17 +149,11 @@ public class ExtraHotelServiceTest {
 		@Test
 		@DisplayName("Obtain all data columns from ExtraHotel table when ID not exist")
 		void when_queryAllColumnsNotExisting_return_empty() {
-			HashMap<String, Object> keyMap = new HashMap<>() {
-				{
-					put("ID_EXTRAS_HOTEL", 5);
-				}
-			};
-			List<String> attrList = Arrays.asList("ID_EXTRAS_HOTEL", "EXH_HOTEL", "EXH_SERVICE", "EX_PRICE",
-					"EXH_ACTIVE");
-			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificExtraHotelData(keyMap, attrList));
-			EntityResult entityResult = extraHotelService.extrahotelQuery(new HashMap<>(), new ArrayList<>());
-			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
-			assertEquals(0, entityResult.calculateRecordNumber());
+			EntityResult result=new EntityResultMapImpl();
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(result);			
+			result = extraHotelService.extrahotelQuery(new HashMap<>(), new ArrayList<>());
+			assertEquals(EntityResult.OPERATION_WRONG, result.getCode());
+			assertEquals("NO_RESULTS", result.getMessage());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
@@ -188,25 +187,38 @@ public class ExtraHotelServiceTest {
 	@Nested
 	@DisplayName("Test for ExtraHotel inserts")
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-	public class ServiceInsert {
+	public class ExtraHotelInsert {
 		@Test
-		@DisplayName("Insert a ServicesHotel successfully")
+		@DisplayName("Insert a ExtraHotel successfully")
 		void extraHotel_insert_success() {
 			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
 			EntityResult er = getGenericInsertResult();
 
 			HashMap<String, Object> keyMap = new HashMap<>();
-			keyMap.put("ID_EXTRAS_HOTEL", 2);
-
+			keyMap.put("id_extras_hotel", 2);
 			when(daoHelper.insert(extraHotelDao, dataToInsert)).thenReturn(er);
 
 			EntityResult entityResult = extraHotelService.extrahotelInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			int recordIndex = entityResult.getRecordIndex(keyMap);
-			assertEquals(2, entityResult.getRecordValues(recordIndex).get("ID_EXTRAS_HOTEL"));
+			assertEquals(2, entityResult.getRecordValues(recordIndex).get("id_extras_hotel"));
 			verify(daoHelper).insert(extraHotelDao, dataToInsert);
 		}
 
+		
+		@Test
+		@DisplayName("Try to insert with a non authorized user")
+		void not_authorized() throws NotAuthorizedException {
+			Map<String, Object> dataToInsert= getGenericDataToInsertOrUpdate();		
+			HashMap<String, Object> keyMap = new HashMap<>();
+			keyMap.put("id_extras_hotel", 2);
+			doThrow(new NotAuthorizedException("NOT_AUTHORIZED")).when(userControl).controlAccess(anyInt());
+			EntityResult entityResult = extraHotelService.extrahotelInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("NOT_AUTHORIZED", entityResult.getMessage());			
+		}
+		
+		
 		@Test
 		@DisplayName("Fail trying to insert duplicated combination of hotel and extra")
 		void extraHotel_insert_duplicated() {
@@ -230,6 +242,7 @@ public class ExtraHotelServiceTest {
 		@DisplayName("Fail trying to insert without a not null field or a non existing foreign key")
 		void extraHotel_insert_without_hotel_price_or_extra() {
 			Map<String, Object> dataToInsert = new HashMap<>();
+			dataToInsert.put("exh_hotel", 1);
 			dataToInsert.put("exh_active", 1);
 			DataIntegrityViolationException dataIntegrityException = new DataIntegrityViolationException("RUN_TIME_EXCEPTION");
 			when(daoHelper.insert(extraHotelDao, dataToInsert)).thenThrow(dataIntegrityException);
@@ -265,7 +278,7 @@ public class ExtraHotelServiceTest {
 	@Nested
 	@DisplayName("Test for ExtraHotel updates")
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-	public class HotelUpdate {
+	public class ExtraHotelUpdate {
 		@Test
 		@DisplayName("ExtraHotel update succesful")
 		void hotel_update_success() {
@@ -282,9 +295,28 @@ public class ExtraHotelServiceTest {
 			assertEquals("SUCCESSFUL_UPDATE", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			verify(daoHelper).update(any(), anyMap(), anyMap());
-			verify(daoHelper).query(any(), any(), any());
+			verify(daoHelper,times(2)).query(any(), any(), any());
 		}
 
+		@Test
+		@DisplayName("Try to update with a non authorized user")
+		void not_authorized() throws NotAuthorizedException {
+
+			Map<String, Object> filter = getGenericFilter();
+			Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
+			EntityResult queryResult = getGenericQueryResult();
+
+			doThrow(new NotAuthorizedException("NOT_AUTHORIZED")).when(userControl).controlAccess(anyInt());
+			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
+
+			EntityResult entityResult = extraHotelService.extrahotelUpdate(dataToUpdate, filter);
+			assertEquals("NOT_AUTHORIZED", entityResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+		}
+
+		
+		
+		
 		@Test
 		@DisplayName("Fail trying to update an ExtraHotel with a duplicated combination of hotel and extra")
 		void hotel_fail_update_with_duplicated_hotel_name_or_email() {
@@ -299,11 +331,11 @@ public class ExtraHotelServiceTest {
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("DUPLICATED_EXTRA_IN_HOTEL", entityResult.getMessage());
 			verify(daoHelper).update(any(), anyMap(), anyMap());
-			verify(daoHelper).query(any(), any(), any());
+			verify(daoHelper,times(2)).query(any(), any(), any());
 		}
 
 		@Test
-		@DisplayName("Fail trying to update an extra that doesn´t exists")
+		@DisplayName("Fail trying to update an extraHotel that doesn´t exists")
 		void update_extraHotel_doesnt_exists() {
 			Map<String, Object> filter = getGenericFilter();
 			Map<String, Object> dataToUpdate = getGenericDataToInsertOrUpdate();
@@ -346,12 +378,13 @@ public class ExtraHotelServiceTest {
 			dataToUpdate.put("exh_price", 4);
 			dataToUpdate.put("exh_active", 3);
 
-			EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_EXTRAS_HOTEL", "EXH_HOTEL"));
+			EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("id_extras_hotel", "exh_hotel"));
+			queryResult.put("exh_hotel", Arrays.asList(1));
 			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
 			EntityResult entityResult = extraHotelService.extrahotelUpdate(dataToUpdate, filter);
 			assertEquals("EXH_ACTIVE_MUST_BE_1_OR_0", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			verify(daoHelper).query(any(), any(), any());
+			verify(daoHelper,times(2)).query(any(), any(), any());
 
 		}
 
@@ -365,12 +398,13 @@ public class ExtraHotelServiceTest {
 			dataToUpdate.put("exh_price", 4);
 			dataToUpdate.put("exh_active", -3);
 
-			EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("ID_EXTRAS_HOTEL", "EXH_HOTEL"));
+			EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("id_extras_hotel", "exh_hotel"));
+			queryResult.put("exh_hotel", Arrays.asList(1));
 			when(daoHelper.query(any(), any(), any())).thenReturn(queryResult);
 			EntityResult entityResult = extraHotelService.extrahotelUpdate(dataToUpdate, filter);
 			assertEquals("EXH_ACTIVE_MUST_BE_1_OR_0", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			verify(daoHelper).query(any(), any(), any());
+			verify(daoHelper,times(2)).query(any(), any(), any());
 
 		}
 		
