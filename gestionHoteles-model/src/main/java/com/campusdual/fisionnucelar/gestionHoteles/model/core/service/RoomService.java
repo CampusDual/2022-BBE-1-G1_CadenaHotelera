@@ -88,8 +88,9 @@ public class RoomService implements IRoomService {
 		EntityResult searchResult = new EntityResultMapImpl();
 		try {
 			searchResult = daoHelper.query(roomDao, keyMap, attrList);
-			userControl.controlAccess((int) searchResult.getRecordValues(0).get("rm_hotel"));
 			control.checkResults(searchResult);
+			userControl.controlAccess((int) searchResult.getRecordValues(0).get("rm_hotel"));
+			
 
 		} catch (NoResultsException | NotAuthorizedException e) {
 			log.error("unable to retrieve a room. Request : {} {} ", keyMap, attrList, e);

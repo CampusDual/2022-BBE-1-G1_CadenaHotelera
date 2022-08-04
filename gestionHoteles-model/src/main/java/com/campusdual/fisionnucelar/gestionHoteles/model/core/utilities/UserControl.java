@@ -10,7 +10,7 @@ import com.ontimize.jee.common.services.user.UserInformation;
 
 public class UserControl {
 
-	public boolean controlAccess(int id) throws NotAuthorizedException {
+	public void controlAccess(int id) throws NotAuthorizedException {
 		UserInformation user = ((UserInformation) SecurityContextHolder.getContext().getAuthentication()
 				.getPrincipal());
 		List<GrantedAuthority> userRole = (List<GrantedAuthority>) SecurityContextHolder.getContext()
@@ -24,7 +24,7 @@ public class UserControl {
 				}
 			}					
 		}
-		return true;
+	
 	}
 
 	public boolean controlAccessClient(int id) throws NotAuthorizedException {
