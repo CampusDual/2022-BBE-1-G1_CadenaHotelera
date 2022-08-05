@@ -79,9 +79,9 @@ import com.ontimize.jee.common.dto.EntityResultMapImpl;
 		public static Map<String,Object> getGenericDataToInsertOrUpdate() {
 			Map<String, Object> dataToInsert = new HashMap<>();
 			dataToInsert.put("id_room", 1);
-			dataToInsert.put("rm_room_type", 1);
+			dataToInsert.put("rm_room_type", 2);
 			dataToInsert.put("rm_hotel",1);
-			dataToInsert.put("rm_number", 507);
+			dataToInsert.put("rm_number", 401);
 			return dataToInsert;
 		}
 		
@@ -101,7 +101,11 @@ import com.ontimize.jee.common.dto.EntityResultMapImpl;
 			return filter;
 		}
 		public static EntityResult getGenericQueryResult() {
-			EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("id_room", "rm_room_type"));	
+			EntityResult queryResult = new EntityResultMapImpl(Arrays.asList("id_room", "rm_room_type","rm_hotel","rm_number"));
+			queryResult.put("id_room", Arrays.asList(1));
+			queryResult.put("rm_room_type", Arrays.asList(1));
+			queryResult.put("rm_hotel", Arrays.asList(1));
+			queryResult.put("rm_number", Arrays.asList(1));
 			return queryResult;
 		}
 		
