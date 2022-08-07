@@ -1,5 +1,11 @@
 package com.campusdual.fisionnucelar.gestionHoteles.ws.core.rest;
-
+/**
+ * Listens for requests to make a receipt og the given booking id
+ * @author Samuel Purriños
+ * @since 2/8/22
+ * @version 1.0
+ * 
+ */
 import java.io.IOException;
 
 import java.io.InputStream;
@@ -49,17 +55,12 @@ public class ReportsRestController {
     public ResponseEntity<byte[]> getReceipt(@PathVariable("id_booking") int id_booking) throws OntimizeJEERuntimeException, JRException, IOException, SQLException {
         HttpHeaders headers = new HttpHeaders();
         byte[] contents=null;
-        try {
         contents = reportsService.getReceipt(id_booking);
-          }catch(RecordNotFoundException e ) {
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
-          }
-          headers.setContentType(MediaType.APPLICATION_PDF);
-          // Here you have to set the actual filename of your pdf
-          String filename = "output.pdf";
-          headers.setContentDispositionFormData(filename, filename);
-          headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-          ResponseEntity<byte[]> response = new ResponseEntity<>(contents, headers, HttpStatus.OK);
-          return response;    
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        String filename = "output.pdf";
+        headers.setContentDispositionFormData(filename, filename);
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        ResponseEntity<byte[]> response = new ResponseEntity<>(contents, headers, HttpStatus.OK);
+        return response;    
     }
 }
