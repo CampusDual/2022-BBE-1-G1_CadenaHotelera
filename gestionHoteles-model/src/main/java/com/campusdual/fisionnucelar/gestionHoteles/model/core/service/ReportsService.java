@@ -2,16 +2,12 @@ package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.io.InputStream;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
+
+
+
+import java.sql.*;
+import java.util.*;
+import java.util.Date;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,20 +15,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IReportsService;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingExtraDao;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingExtraHistDao;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingHistDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JasperExportManager;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.util.JRLoader;
 
 /**
@@ -72,13 +61,13 @@ public class ReportsService implements IReportsService {
 	 */
 	@Override
 	public byte[] getReceipt(int bookingId) throws OntimizeJEERuntimeException {
-		Map<String, Object> params = new HashMap<String, Object>();
+		Map<String, Object> params = new HashMap<>();
 		int parameter = bookingId;
 		params.put("Parameter1", parameter);
 		InputStream jasperStream = this.getClass().getResourceAsStream("billReport.jasper");
 		JasperReport jasperReport;
 		JasperPrint jasperPrint;
-		if (!checkIfQueryReturnsResults(bookingId))
+		if (!checkIfQueryReturnsResults(getReceiptQuery(bookingId)))
 			throw new RecordNotFoundException("BOOKING_NOT_FOUND");
 		Connection conn = null;
 		try {
@@ -112,11 +101,10 @@ public class ReportsService implements IReportsService {
 	 * @exception RecordNotFoundException if the booking id not exists in the database
 	 * @since 4/8/22
 	 */
-	private boolean checkIfQueryReturnsResults(int bookingId) {
+	private boolean checkIfQueryReturnsResults(String query) {
 		boolean results = false;
-		Connection conn;
+		Connection conn = null;
 		ResultSet rs = null;
-		String query = getReceiptQuery(bookingId);
 		try {
 			conn = DriverManager.getConnection("jdbc:postgresql://45.84.210.174:65432/Backend_2022_G1",
 					"Backend_2022_G1", "iexaicaef1iaQuotea");
@@ -129,9 +117,15 @@ public class ReportsService implements IReportsService {
 			} else {
 				results = false;
 			}
-			conn.close();
+			
 		} catch (SQLException e) {
 			log.error("unable to connect from database ", e.getMessage());
+		}finally {
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				log.error("unable to close connection to database ", e.getMessage());
+			}
 		}
 
 		return results;
@@ -153,13 +147,23 @@ public class ReportsService implements IReportsService {
 				+ "inner join hotels h on h.id_hotel = r.rm_hotel where b.bk_leaving_date is null and b.id_booking = "
 				+ bookingId;
 	}
+	/**
+	 * Query to check if getReipt method is capable of generate the receipt. The receipt contains all these fields
+	 * @param bookingId
+	 * @return the query used by the method checkIfQueryReturnsResults
+	 */
+//	private String getFinancialReportQuery(Date from, Date to) {
+//		return "select count(b.id_booking)as bookings ,sum(b.bk_price)as total_bookings, sum(b.bk_extras_price) as total_extras ,h.htl_name from bookings_hist b "+ 
+//				"inner join rooms r on r.id_room =b.bk_room inner join hotels h on h.id_hotel =r.rm_hotel where b.bk_check_out between '"+from.getYear()+"-"+from.getMonth()+"-"+from.getDay()+"' AND '\"+from.getYear()+\"-\"+from.getMonth()+\"-\"+from.getDay()+\"'+ 
+//				"group by h.htl_name";  
+//	}
 
 	/**
 	 * Puts the booking and its related booking extras in bookings_old and booking_extra_old, once the booking its completed
 	 * @param bookingId
 	 */
 	@Transactional
-	private void moveBookingToBookingOld(int bookingId) {
+	public void moveBookingToBookingOld(int bookingId) {
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_booking", bookingId);
 		EntityResult bookingResult = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "bk_price",
@@ -199,4 +203,39 @@ public class ReportsService implements IReportsService {
 		keyMap.put("id_booking", bookingId);
 		daoHelper.delete(bookingDao, keyMap);
 	}
+
+	@Override
+	public byte[] getFinancialReport(Date from, Date to) throws OntimizeJEERuntimeException {
+		Map<String, Object> params = new HashMap<>();
+		params.put("Parameter1", from);
+		params.put("Parameter2", to);
+		InputStream jasperStream = this.getClass().getResourceAsStream("financialReport.jasper");
+		JasperReport jasperReport;
+		JasperPrint jasperPrint;
+//		if (!checkIfQueryReturnsResults(getFinancialReportQuery(from,to)))
+//			throw new RecordNotFoundException("BOOKING_NOT_FOUND");
+		Connection conn = null;
+		try {
+			conn = DriverManager.getConnection("jdbc:postgresql://45.84.210.174:65432/Backend_2022_G1",
+					"Backend_2022_G1", "iexaicaef1iaQuotea");
+		} catch (SQLException e1) {
+			log.error("unable to connect to database ", e1.getMessage());
+		}
+		byte[] contents = null;
+		try {
+			jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
+			jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+			contents = JasperExportManager.exportReportToPdf(jasperPrint);
+		} catch (JRException e) {
+			log.error("unable to build receipt ", e.getMessage());
+		} finally {
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				log.error("unable to disconnect from database ", e.getMessage());
+			}
+		}
+		return contents;
+	}
+	
 }
