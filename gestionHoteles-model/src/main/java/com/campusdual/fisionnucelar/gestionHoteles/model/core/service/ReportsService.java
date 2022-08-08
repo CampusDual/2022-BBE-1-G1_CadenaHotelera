@@ -148,7 +148,7 @@ public class ReportsService implements IReportsService {
 				+ " rt.rmt_name, rt.rmt_price, h.htl_name ,h.htl_address ,h.htl_phone ,h.htl_email ,"
 				+ "DATE_PART('day', b.bk_check_out  - b.bk_check_in::timestamp) AS days"
 				+ " from clients c inner join bookings b on b.bk_client = c.id_client "
-				+ "inner join booking_extra be on be.bke_booking = b.id_booking inner join rooms r "
+				+ "left join booking_extra be on be.bke_booking = b.id_booking inner join rooms r "
 				+ " on r.id_room =b.bk_room inner join room_types rt on rt.id_room_type = r.rm_room_type "
 				+ "inner join hotels h on h.id_hotel = r.rm_hotel where b.bk_leaving_date is null and b.id_booking = "
 				+ bookingId;
