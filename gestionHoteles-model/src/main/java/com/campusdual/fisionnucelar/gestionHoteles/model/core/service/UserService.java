@@ -46,6 +46,8 @@ public class UserService implements IUserService {
 		return this.daoHelper.insert(userDao, attrMap);
 	}
 
+	
+	
 	public EntityResult userUpdate(Map<?, ?> attrMap, Map<?, ?> keyMap) {
 		return this.daoHelper.update(userDao, attrMap, keyMap);
 	}
