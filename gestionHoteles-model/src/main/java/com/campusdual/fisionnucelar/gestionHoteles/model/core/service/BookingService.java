@@ -2,6 +2,7 @@ package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.math.BigDecimal;
 
+
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -44,7 +45,6 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNo
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.db.SQLStatementBuilder;
 import com.ontimize.jee.common.db.SQLStatementBuilder.BasicExpression;
 import com.ontimize.jee.common.db.SQLStatementBuilder.BasicField;
@@ -55,13 +55,11 @@ import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.common.gui.SearchValue;
 import com.ontimize.jee.common.security.PermissionsProviderSecured;
-import com.ontimize.jee.common.services.user.UserInformation;
 import com.ontimize.jee.common.tools.EntityResultTools;
-import com.ontimize.jee.common.tools.ertools.IAggregateFunction;
-import com.ontimize.jee.common.tools.ertools.IPartialAggregateValue;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 import com.ontimize.jee.server.dao.IOntimizeDaoSupport;
 import com.ontimize.jee.server.dao.ISQLQueryAdapter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -329,7 +327,7 @@ public class BookingService implements IBookingService {
 		} catch (RecordNotFoundException | EmptyRequestException | NoResultsException | NotAuthorizedException e) {
 			log.error("unable to retrieve today checkouts. Request : {} {}", keyMap, attrList, e);
 			control.setErrorMessage(result, e.getMessage());
-		} catch (BadSqlGrammarException e) {
+		} catch (BadSqlGrammarException | ClassCastException e) {
 			log.error("unable to retrieve today checkouts. Request : {} {}", keyMap, attrList, e);
 			control.setErrorMessage(result, "INCORRECT_REQUEST");
 		}
@@ -685,11 +683,12 @@ public class BookingService implements IBookingService {
 		EntityResult updateResult = new EntityResultMapImpl();
 		EntityResult hotelResult = new EntityResultMapImpl();
 		try {
-			hotelResult = daoHelper.query(bookingDao, keyMap, Arrays.asList("rm_hotel"), "SEARCH_BOOKING_EXTRA_HOTEL");
-			userControl.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
+
 
 			checkIfExtraBookingExists(keyMap);
 			dataValidator.checkIfMapIsEmpty(attrMap);
+			hotelResult = daoHelper.query(bookingDao, keyMap, Arrays.asList("rm_hotel"), "SEARCH_BOOKING_EXTRA_HOTEL");
+			userControl.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
 			if (attrMap.get("quantity") == null) {
 				throw new EmptyRequestException("QUANTITY_FIELD_REQUIRED");
 			}

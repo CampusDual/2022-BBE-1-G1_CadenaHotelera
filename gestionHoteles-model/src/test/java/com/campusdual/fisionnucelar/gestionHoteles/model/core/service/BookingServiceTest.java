@@ -2,6 +2,7 @@ package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.math.BigDecimal;
 
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -36,6 +37,7 @@ import org.springframework.jdbc.BadSqlGrammarException;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
@@ -79,12 +81,22 @@ public class BookingServiceTest {
 
 		@Test
 		@DisplayName("Obtain all data from bookings table")
-		void when_queryOnlyWithAllColumns_return_allHotelData() {
+		void when_queryOnlyWithAllColumns_return_allHotelData() throws NotAuthorizedException {
 			doReturn(getAllBookingData()).when(daoHelper).query(any(), anyMap(), anyList());
-			EntityResult entityResult = bookingService.bookingQuery(new HashMap<>(), new ArrayList<>());
+			doNothing().when(userControl).controlAccess(anyInt());
+			EntityResult entityResult = bookingService.bookingQuery(getBookingQueryKeyMap(), getGenericColumns());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			assertEquals(3, entityResult.calculateRecordNumber());
 			verify(daoHelper).query(any(), anyMap(), anyList());
+		}
+		@Test
+		@DisplayName("Query fails due not authorized")
+		void when_query_fails_due_not_authorized() throws NotAuthorizedException {
+			NotAuthorizedException exception = new NotAuthorizedException("NOT_AUTHORIZED");
+			doThrow(exception).when(userControl).controlAccess(anyInt());
+			EntityResult entityResult = bookingService.bookingQuery(getBookingQueryKeyMap(), getGenericColumns());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("NOT_AUTHORIZED", entityResult.getMessage());
 		}
 
 		@Test
@@ -92,7 +104,7 @@ public class BookingServiceTest {
 		void query_without_results() {
 			EntityResult queryResult = new EntityResultMapImpl();
 			doReturn(queryResult).when(daoHelper).query(any(), anyMap(), anyList());
-			EntityResult entityResult = bookingService.bookingQuery(new HashMap<>(), new ArrayList<>());
+			EntityResult entityResult = bookingService.bookingQuery(getBookingQueryKeyMap(), getGenericColumns());
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("NO_RESULTS", entityResult.getMessage());
 			verify(daoHelper).query(any(), anyMap(), anyList());
@@ -101,50 +113,32 @@ public class BookingServiceTest {
 		@Test
 		@DisplayName("Fail when sends a string in a number field")
 		void when_send_string_as_id_throws_exception() {
-			Map<String, Object> filter = new HashMap<>();
-			filter.put("id_hotel", "string");
-			List<String> columns = new ArrayList<>();
-			columns.add("htl_name");
-			columns.add("htl_email");
-			when(daoHelper.query(bookingDao, filter, columns)).thenThrow(BadSqlGrammarException.class);
-			EntityResult entityResult = bookingService.bookingQuery(filter, columns);
+			when(daoHelper.query(any(), anyMap(), anyList())).thenThrow(BadSqlGrammarException.class);
+			EntityResult entityResult = bookingService.bookingQuery(getBookingQueryKeyMap(), getGenericColumns());
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("INCORRECT_REQUEST", entityResult.getMessage());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
 		@Test
-		@DisplayName("Obtain all data columns from Hotels table when ID is -> 2")
-		void when_queryAllColumns_return_specificData() {
-			HashMap<String, Object> keyMap = new HashMap<>() {
-				{
-					put("ID_HOTEL", 2);
-				}
-			};
-			List<String> attrList = Arrays.asList("ID_BOOKING", "BK_CHECK_IN", "BK_CHECK_OUT", "BK_PRICE", "BK_ROOM",
-					"BK_CLIENT", "BK_EXTRAS_PRICE");
-			doReturn(getSpecificBookingData(keyMap, attrList)).when(daoHelper).query(any(), anyMap(), anyList());
-			EntityResult entityResult = bookingService.bookingQuery(new HashMap<>(), new ArrayList<>());
+		@DisplayName("Obtain all data columns from bookings table when ID is -> 2")
+		void when_queryAllColumns_return_specificData() throws NotAuthorizedException {
+			doReturn(getGenericBookingER()).when(daoHelper).query(any(), anyMap(), anyList());
+			doNothing().when(userControl).controlAccess(anyInt());
+			EntityResult entityResult = bookingService.bookingQuery(getBookingQueryKeyMap(), getGenericColumns());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			assertEquals(1, entityResult.calculateRecordNumber());
-			assertEquals(2, entityResult.getRecordValues(0).get(HotelDao.ATTR_ID));
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
 		@Test
-		@DisplayName("Obtain all data columns from Hotels table when ID not exist")
-		void when_queryAllColumnsNotExisting_return_empty() {
-			HashMap<String, Object> keyMap = new HashMap<>() {
-				{
-					put("ID_HOTEL", 5);
-				}
-			};
-			List<String> attrList = Arrays.asList("ID_BOOKING", "BK_CHECK_IN", "BK_CHECK_OUT", "BK_PRICE", "BK_ROOM",
-					"BK_CLIENT", "BK_EXTRAS_PRICE");
-			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificBookingData(keyMap, attrList));
-			EntityResult entityResult = bookingService.bookingQuery(new HashMap<>(), new ArrayList<>());
-			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
-			assertEquals(0, entityResult.calculateRecordNumber());
+		@DisplayName("query fails table when ID not exist")
+		void when_queryAllColumnsNotExisting_return_empty() throws NotAuthorizedException {
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(new EntityResultMapImpl());
+			doNothing().when(userControl).controlAccess(anyInt());
+			EntityResult entityResult = bookingService.bookingQuery(getBookingQueryKeyMap(),getGenericColumns());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("NO_RESULTS", entityResult.getMessage());
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
@@ -159,7 +153,7 @@ public class BookingServiceTest {
 			};
 			List<String> attrList = Arrays.asList("ID_HOTEL", "HTL_NAME");
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificBookingData(keyMap, attrList));
-			EntityResult entityResult = bookingService.bookingQuery(new HashMap<>(), new ArrayList<>());
+			EntityResult entityResult = bookingService.bookingQuery(getBookingQueryKeyMap(),getGenericColumns());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			assertEquals(1, entityResult.calculateRecordNumber());
 			assertEquals(random, entityResult.getRecordValues(0).get(HotelDao.ATTR_ID));
@@ -229,6 +223,20 @@ public class BookingServiceTest {
 				assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());
 				assertEquals(0, queryResult.calculateRecordNumber());
 			}
+			
+			@Test
+			@DisplayName("search client active bookings fails due not authorized")
+			void search_active_bookings_by_client_not_authorized() throws NotAuthorizedException {
+				Map<String, Object> filter = new HashMap<>();
+				filter.put("bk_client", 10);
+				List<String> columns = getGenericColumns();
+				EntityResult clientBookings = new EntityResultMapImpl();
+				NotAuthorizedException exception = new NotAuthorizedException("NOT_AUTHORIZED");
+				doThrow(exception).when(userControl).controlAccessClient(anyInt());
+				EntityResult queryResult = bookingService.clientactivebookingsQuery(filter, columns);
+				assertEquals("NOT_AUTHORIZED", queryResult.getMessage());
+				assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());
+			}
 
 			@Test
 			@DisplayName("search client bookings without results")
@@ -242,6 +250,19 @@ public class BookingServiceTest {
 				assertEquals("NO_RESULTS", queryResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());
 				assertEquals(0, queryResult.calculateRecordNumber());
+			}
+			@Test
+			@DisplayName("search client bookings fails due not authorized")
+			void search_bookings_by_client_not_authorized() throws NotAuthorizedException {
+				Map<String, Object> filter = new HashMap<>();
+				filter.put("bk_client", 10);
+				List<String> columns = getGenericColumns();
+				EntityResult clientBookings = new EntityResultMapImpl();
+				NotAuthorizedException exception = new NotAuthorizedException("NOT_AUTHORIZED");
+				doThrow(exception).when(userControl).controlAccessClient(anyInt());
+				EntityResult queryResult = bookingService.clientbookingsQuery(filter, columns);
+				assertEquals("NOT_AUTHORIZED", queryResult.getMessage());
+				assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());
 			}
 		}
 
@@ -289,6 +310,18 @@ public class BookingServiceTest {
 				assertEquals("RM_HOTEL_NEEDED", queryResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());
 			}
+			@Test
+			@DisplayName("todayCheckoutQuery fails due not authorized")
+			void test_todayCheckoutQuery_fails_due_not_authorized() throws NotAuthorizedException {
+				Map<String, Object> filter = new HashMap<>();
+				filter.put("rm_hotel", 2);
+				List<String> columns = new ArrayList<>();
+				NotAuthorizedException exception = new NotAuthorizedException("NOT_AUTHORIZED");
+				doThrow(exception).when(userControl).controlAccess(anyInt());
+				EntityResult queryResult = bookingService.todaycheckoutQuery(filter, columns);
+				assertEquals("NOT_AUTHORIZED", queryResult.getMessage());
+				assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());
+			}
 
 			@Test
 			@DisplayName("todayCheckoutQuery empty response")
@@ -307,8 +340,6 @@ public class BookingServiceTest {
 				Map<String, Object> filter = new HashMap<>();
 				filter.put("rm_hotel", "invalid");
 				List<String> columns = new ArrayList<>();
-				when(daoHelper.query(bookingDao, filter, columns, "TODAY_CHECKOUTS"))
-						.thenThrow(BadSqlGrammarException.class);
 				EntityResult queryResult = bookingService.todaycheckoutQuery(filter, columns);
 
 				assertEquals("INCORRECT_REQUEST", queryResult.getMessage());
@@ -577,8 +608,10 @@ public class BookingServiceTest {
 					public Object answer(InvocationOnMock invocation) throws Throwable {
 						count++;
 						if (count == 1)
-							return emptyEr;
+							return getChangeDatesER();
 						if (count == 2)
+							return emptyEr;
+						if (count == 3)
 							return er;
 						return invocation;
 					}
@@ -612,8 +645,18 @@ public class BookingServiceTest {
 				EntityResult roomResult = new EntityResultMapImpl(Arrays.asList("id_room"));
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(er);
 				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);
-				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(roomResult);
-				
+				Mockito.doAnswer(new Answer() {
+					private int count = 0;
+					@Override
+					public Object answer(InvocationOnMock invocation) throws Throwable {
+						count++;
+						if (count == 1)
+							return getChangeDatesER();
+						if (count == 2)
+							return roomResult;
+						return invocation;
+					}
+				}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
 				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
 				assertEquals("OCCUPIED_ROOM", updateResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
@@ -626,6 +669,7 @@ public class BookingServiceTest {
 				Map<String, Object> attrMap = new HashMap<>();
 				Map<String, Object> keyMap = new HashMap<>();
 				EntityResult queryResult = new EntityResultMapImpl();
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getChangeDatesER());
 				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
 				assertEquals("ID_BOOKING_REQUIRED", updateResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
@@ -640,6 +684,7 @@ public class BookingServiceTest {
 				EntityResult bookingQuery = getGenericBookingER();
 				EntityResult queryResult = new EntityResultMapImpl();			
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getChangeDatesER());	
 				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
 				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
 				assertEquals("CHECK_IN_AND_CHECK_OUT_REQUIRED", updateResult.getMessage());
@@ -655,6 +700,7 @@ public class BookingServiceTest {
 				EntityResult queryResult = new EntityResultMapImpl();
 				
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getChangeDatesER());	
 				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
 				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
 				assertEquals("CHECK_IN_AND_CHECK_OUT_REQUIRED", updateResult.getMessage());
@@ -678,12 +724,40 @@ public class BookingServiceTest {
 	
 				EntityResult queryResult = new EntityResultMapImpl();								
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);	
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getChangeDatesER());	
 				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
 				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
 				assertEquals("BOOKING_ISN'T_ACTIVE", updateResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 			}
 			
+			@Test
+			@DisplayName("change dates fails due not authorized client")
+			void test_change_dates_fails_due_not_authorized_client() throws NotAuthorizedException {
+				Map<String, Object> attrMap =getGenericAttrMap();
+				attrMap.put("bk_room", 2);
+				Map<String, Object> keyMap = getBookingKeyMap();
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getChangeDatesER());
+				NotAuthorizedException exception = new NotAuthorizedException("NOT_AUTHORIZED");
+				doThrow(exception).when(userControl).controlAccessClient(anyInt());
+				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
+				assertEquals("NOT_AUTHORIZED", updateResult.getMessage());
+				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+			}
+			@Test
+			@DisplayName("change dates fails due not authorized")
+			void test_change_dates_fails_due_not_authorized() throws NotAuthorizedException {
+				Map<String, Object> attrMap =getGenericAttrMap();
+				attrMap.put("bk_room", 2);
+				Map<String, Object> keyMap = getBookingKeyMap();
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getChangeDatesER());
+				NotAuthorizedException exception = new NotAuthorizedException("NOT_AUTHORIZED");
+				doReturn(false).when(userControl).controlAccessClient(anyInt());
+				doThrow(exception).when(userControl).controlAccess(anyInt());
+				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
+				assertEquals("NOT_AUTHORIZED", updateResult.getMessage());
+				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+			}
 			
 		}
 
@@ -700,16 +774,30 @@ public class BookingServiceTest {
 				queryResult.setCode(0);
 				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(queryResult);
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getRMHotelER());
 				EntityResult deleteResult = bookingService.bookingDelete(keyMap);
 				assertEquals("SUCCESSFUL_DELETE", deleteResult.getMessage());
 				assertEquals(EntityResult.OPERATION_SUCCESSFUL, deleteResult.getCode());
 
+			}
+			
+			@Test
+			@DisplayName("delete booking fails due not authorized")
+			void test_booking_delete_fails_due_not_authorized() throws NotAuthorizedException {
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getRMHotelER());
+				Map<String, Object> keyMap = getBookingKeyMap();
+				NotAuthorizedException exception = new NotAuthorizedException("NOT_AUTHORIZED");
+				doThrow(exception).when(userControl).controlAccess(anyInt());
+				EntityResult deleteResult = bookingService.bookingDelete(keyMap);
+				assertEquals("NOT_AUTHORIZED", deleteResult.getMessage());
+				assertEquals(EntityResult.OPERATION_WRONG, deleteResult.getCode());
 			}
 
 			@Test
 			@DisplayName("delete booking without id_booking")
 			void test_booking_delete_without_id_booking() {
 				Map<String, Object> keyMap = new HashMap<>();
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getRMHotelER());
 				EntityResult deleteResult = bookingService.bookingDelete(keyMap);
 				assertEquals("ID_BOOKING_REQUIRED", deleteResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, deleteResult.getCode());
@@ -721,6 +809,7 @@ public class BookingServiceTest {
 				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult bookingQuery = new EntityResultMapImpl();
 				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingQuery);
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getRMHotelER());
 				EntityResult deleteResult = bookingService.bookingDelete(keyMap);
 				assertEquals("BOOKING_DOESN'T_EXISTS", deleteResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, deleteResult.getCode());
@@ -745,15 +834,17 @@ public class BookingServiceTest {
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("bk_extras_price"));
 			bookingResult.addRecord(new HashMap<String, Object>() {
 				{
-					put("bk_extras_price", 25);
+					put("bk_extras_price", new BigDecimal(25));
+					put("rm_hotel",2);
 				}
 			});
 
-			EntityResult extrasPriceResult = new EntityResultMapImpl(Arrays.asList("exh_price", "exh_name"));
+			EntityResult extrasPriceResult = new EntityResultMapImpl(Arrays.asList("exh_price", "exh_name","exh_active"));
 			extrasPriceResult.addRecord(new HashMap<String, Object>() {
 				{
 					put("exh_price", new BigDecimal(50));
 					put("exh_name", "niñero");
+					put("exh_active", 1);
 				}
 			});
 
@@ -761,6 +852,7 @@ public class BookingServiceTest {
 			extraResult.addRecord(new HashMap<String, Object>() {
 				{
 					put("bk_extras_price", new BigDecimal(25));
+
 				}
 			});
 
@@ -774,9 +866,15 @@ public class BookingServiceTest {
 				public Object answer(InvocationOnMock invocation) throws Throwable {
 					count++;
 					if (count == 1) {
-						return bookingResult;
+						return getChangeDatesER();
 					}
 					if (count == 2) {
+						return getChangeDatesER();
+					}
+					if (count == 3) {
+						return bookingResult;
+					}
+					if (count == 4) {
 						return extraResult;
 					}
 					return invocation;
@@ -789,6 +887,35 @@ public class BookingServiceTest {
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, updateResult.getCode());
 		}
 
+		@Test
+		@DisplayName("update an extra fails due not outhorized")
+		void test_booking_extra_update_not_authorized() throws NotAuthorizedException {
+			Map<String, Object> attrMap = new HashMap<>();
+			attrMap.put("id_extras_hotel", 1);
+			attrMap.put("quantity", 2);
+			Map<String, Object> keyMap = getBookingKeyMap();
+			NotAuthorizedException exception = new NotAuthorizedException("NOT_AUTHORIZED");
+			doThrow(exception).when(userControl).controlAccessClient(anyInt());
+			Mockito.doAnswer(new Answer() {
+				private int count = 0;
+
+				@Override
+				public Object answer(InvocationOnMock invocation) throws Throwable {
+					count++;
+					if (count == 1) {
+						return getChangeDatesER();
+					}
+					if (count == 2) {
+						return getChangeDatesER();
+					}
+					return invocation;
+				}
+			}).when(daoHelper).query(any(), anyMap(), anyList());
+			EntityResult updateResult = bookingService.addbookingextraUpdate(attrMap, keyMap);
+			assertEquals("NOT_AUTHORIZED", updateResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+			
+		}
 		@Test
 		@DisplayName("update an extra with a booking that doesnt exists")
 		void test_booking_extra_booking_not_exists() {
@@ -854,15 +981,25 @@ public class BookingServiceTest {
 				}
 			});
 
-			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
-			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(extrasPriceResult);
+			Mockito.doAnswer(new Answer() {
+				private int count = 0;
+				@Override
+				public Object answer(InvocationOnMock invocation) throws Throwable {
+					count++;
+					if (count == 1)
+						return bookingResult;
+					if (count == 2)
+						return getChangeDatesER();
+					return invocation;
+				}
+			}).when(daoHelper).query(any(), anyMap(), anyList());
 			EntityResult updateResult = bookingService.addbookingextraUpdate(attrMap, keyMap);
 			assertEquals("INCORRECT_REQUEST", updateResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 		}
 
 		@Test
-		@DisplayName("cancel an extra with succesfully")
+		@DisplayName("cancel an extra succesfully")
 		void test_cancel_booking_extra() {
 			Map<String, Object> keyMap = getBookingKeyMap();
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking"));
@@ -873,13 +1010,39 @@ public class BookingServiceTest {
 			updateResult.setCode(0);
 			when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(updateResult);
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
-			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(bookingExtraResult);
+			Mockito.doAnswer(new Answer() {
+				private int count = 0;
+				@Override
+				public Object answer(InvocationOnMock invocation) throws Throwable {
+					count++;
+					if (count == 1)
+						return getChangeDatesER();
+					if (count == 2)
+						return bookingExtraResult;
+					return invocation;
+				}
+			}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
-			assertEquals("SUCCESSFULLY_ADDED", dischargeResult.getMessage());
+			assertEquals("SUCCESSFULLY_CANCELED", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, dischargeResult.getCode());
 
 		}
 
+		@Test
+		@DisplayName("cancel an extra fail due not authorized")
+		void test_cancel_booking_fail_due_not_authorized() throws NotAuthorizedException {
+			Map<String, Object> attrMap = getBKExtraAttrMap();
+			Map<String, Object> keyMap = getBookingKeyMap();
+			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking"));
+			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
+			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getRMHotelER());
+			NotAuthorizedException exception = new NotAuthorizedException("NOT_AUTHORIZED");
+			doThrow(exception).when(userControl).controlAccess(anyInt());
+			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
+			assertEquals("NOT_AUTHORIZED", dischargeResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
+			
+		}
 		@Test
 		@DisplayName("cancel an extra fail due not enough available extras to cancel")
 		void test_cancel_booking_fail_due_not_available() {
@@ -903,7 +1066,18 @@ public class BookingServiceTest {
 				}
 			});
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
-			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(bookingExtraResult);
+			Mockito.doAnswer(new Answer() {
+				private int count = 0;
+				@Override
+				public Object answer(InvocationOnMock invocation) throws Throwable {
+					count++;
+					if (count == 1)
+						return getChangeDatesER();
+					if (count == 2)
+						return bookingExtraResult;
+					return invocation;
+				}
+			}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("NOT_ENOUGH_PENDING_EXTRAS_TO_CANCEL", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
@@ -932,6 +1106,7 @@ public class BookingServiceTest {
 			Map<String, Object> attrMap = new HashMap<String, Object>();
 			attrMap.put("id_booking_extra", 2);
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
+			when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getChangeDatesER());
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("QUANTITY_FIELD_REQUIRED", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());
@@ -957,6 +1132,7 @@ public class BookingServiceTest {
 			keyMap.put("id_booking_extra", 2);
 			Map<String, Object> attrMap = new HashMap<String, Object>();
 			EntityResult bookingResult = new EntityResultMapImpl(Arrays.asList("id_booking_extra"));
+
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("EMPTY_REQUEST", dischargeResult.getMessage());
@@ -977,7 +1153,18 @@ public class BookingServiceTest {
 			EntityResult updateResult = new EntityResultMapImpl();
 			updateResult.setCode(0);
 			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(bookingResult);
-			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(bookingExtraResult);
+			Mockito.doAnswer(new Answer() {
+				private int count = 0;
+				@Override
+				public Object answer(InvocationOnMock invocation) throws Throwable {
+					count++;
+					if (count == 1)
+						return getChangeDatesER();
+					if (count == 2)
+						return bookingExtraResult;
+					return invocation;
+				}
+			}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
 			EntityResult dischargeResult = bookingService.cancelbookingextraUpdate(attrMap, keyMap);
 			assertEquals("INCORRECT_REQUEST", dischargeResult.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, dischargeResult.getCode());

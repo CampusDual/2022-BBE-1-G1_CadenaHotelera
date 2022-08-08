@@ -22,6 +22,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomTypeSer
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.IncorrectBooleanException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
@@ -62,7 +63,7 @@ public class RoomService implements IRoomService {
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
 	Validator validator;
-
+	
 	public RoomService() {
 		super();
 		this.control = new Control();
@@ -79,6 +80,11 @@ public class RoomService implements IRoomService {
 	 * @param The filters and the fields of the query
 	 * @return The columns from the room table especified in the params and a
 	 *         message with the operation result
+	 * @exception NoResultsException     when there are not matching results on the
+	 *                                   extraHotel table
+	 * @exception BadSqlGrammarException when it receives an incorrect type in the
+	 *                                   params
+	 * @exception NotAuthorizedException
 	 */
 	@Override
 	@Secured({ PermissionsProviderSecured.SECURED })
@@ -110,35 +116,39 @@ public class RoomService implements IRoomService {
 	 * @since 27/06/2022
 	 * @param The fields of the new register
 	 * @return The id of the new register and a message with the operation result
+	 * @exception DuplicateKeyException           when receives an existing
+	 *                                            extraHotel
+	 * 
+	 * @exception DataIntegrityViolationException when the params don't include the
+	 *                                            not null fields or include a non
+	 *                                            existing hotel or extra
+	 * 
+	 * @exception EmptyRequestException           when the params are empty
+	 * @exception NotAuthorizedException
 	 */
 	@Override
 	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult roomInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
-		try {			
+		try {
+			validator.checkIfMapIsEmpty(attrMap);
 			userControl.controlAccess((int) attrMap.get("rm_hotel"));
-			
-			if (attrMap.containsKey("rm_hotel")) {
-				checkIfHotelExists(attrMap);
-			}
-			if (attrMap.containsKey("rm_room_type")) {
-				checkIfRoomTypeExists(attrMap);
-			}
 			insertResult = this.daoHelper.insert(this.roomDao, attrMap);
-			if (insertResult.isEmpty())
-				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
-
+			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
 			log.error("unable to insert a room. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
-		} catch (RecordNotFoundException|NotAuthorizedException e) {
+		} catch (EmptyRequestException|NotAuthorizedException e) {
 			log.error("unable to insert a room. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
-		} catch (AllFieldsRequiredException e) {
-			log.error("unable to insert a room. Request : {} ", attrMap, e);
-			control.setErrorMessage(insertResult, e.getMessage());
+		} catch (DataIntegrityViolationException e) {
+			log.error("unable to insert a room. Request : {} ",attrMap, e);
+			control.setMessageFromException(insertResult, e.getMessage());
+		} catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve a room : {} ",attrMap, e);
+			control.setErrorMessage(insertResult, "FIELDS_MUST_BE_NUMERIC");
 		}
-
+		
 		return insertResult;
 	}
 
@@ -151,6 +161,23 @@ public class RoomService implements IRoomService {
 	 * @since 27/06/2022
 	 * @param The fields to be updated
 	 * @return A message with the operation result
+	 * @exception DuplicateKeyException           when trying to change a not null
+	 *                                            field of an extraHotel for an
+	 *                                            existing one
+	 * 
+	 * @exception EmptyRequestException           when the params are empty
+	 * 
+	 * @exception RecordNotFoundException         when receives a non existing
+	 *                                            extraHotel to update
+	 * 
+	 * @exception DataIntegrityViolationException when the params don't include the
+	 *                                            not null fields or include a non
+	 *                                            existing hotel or extra
+	 * 
+	 * @exception NotAuthorizedException
+	 * @exception BadSqlGrammarException
+	 *
+	 *                                      
 	 */
 	@Override
 	@Secured({ PermissionsProviderSecured.SECURED })
@@ -159,17 +186,11 @@ public class RoomService implements IRoomService {
 		EntityResult updateResult = new EntityResultMapImpl();
 		EntityResult hotelResult = new EntityResultMapImpl();
 		try {
-			checkIfRoomExists(keyMap);
 			validator.checkIfMapIsEmpty(attrMap);
+			checkIfRoomExists(keyMap);
 			hotelResult=daoHelper.query(roomDao, keyMap, Arrays.asList("rm_hotel"));
 			userControl.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
-						
-			if (attrMap.containsKey("rm_hotel")) {
-				checkIfHotelExists(attrMap);
-			}
-			if (attrMap.containsKey("rm_room_type")) {
-				checkIfRoomTypeExists(attrMap);
-			}
+			
 			updateResult = this.daoHelper.update(this.roomDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {
@@ -181,6 +202,12 @@ public class RoomService implements IRoomService {
 		} catch (EmptyRequestException e) {
 			log.error("unable to update a room. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
+		}catch (DataIntegrityViolationException e) {
+			log.error("unable update a room. Request : {} ",attrMap, e);
+			control.setMessageFromException(updateResult, e.getMessage());
+		}catch (BadSqlGrammarException e) {
+			log.error("unable to retrieve a room : {} ",attrMap, e);
+			control.setErrorMessage(updateResult, "FIELDS_MUST_BE_NUMERIC");
 		}
 		return updateResult;
 	}
@@ -195,28 +222,6 @@ public class RoomService implements IRoomService {
 		if (existingRoom.isEmpty())
 			throw new RecordNotFoundException("ROOM_DOESN'T_EXISTS");
 		return existingRoom.isEmpty();
-	}
-
-	private boolean checkIfHotelExists(Map<String, Object> attrMap) {
-		List<String> attrList = new ArrayList<>();
-		attrList.add("id_hotel");
-		Map<String, Object> keyMap = new HashMap<>();
-		keyMap.put("id_hotel", attrMap.get("rm_hotel"));
-		EntityResult existingHotel = hotelService.hotelQuery(keyMap, attrList);
-		if (existingHotel.isEmpty())
-			throw new RecordNotFoundException("HOTEL_DOESN'T_EXISTS");
-		return existingHotel.isEmpty();
-	}
-
-	private boolean checkIfRoomTypeExists(Map<String, Object> attrMap) {
-		List<String> attrList = new ArrayList<>();
-		attrList.add("id_room_type");
-		Map<String, Object> keyMap = new HashMap<>();
-		keyMap.put("id_room_type", attrMap.get("rm_room_type"));
-		EntityResult existingRoomType = roomTypeService.roomtypeQuery(keyMap, attrList);
-		if (existingRoomType.isEmpty())
-			throw new RecordNotFoundException("ROOMTYPE_DOESN'T_EXISTS");
-		return existingRoomType.isEmpty();
 	}
 
 }
