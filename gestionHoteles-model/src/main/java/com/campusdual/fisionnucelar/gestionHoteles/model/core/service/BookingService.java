@@ -22,8 +22,6 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.SQLWarningException;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -572,17 +570,22 @@ public class BookingService implements IBookingService {
 	private void calculateBookingPrice(Map<String, Object> attrMap) {
 		if (attrMap.get("bk_room") == null)
 			throw new EmptyRequestException("bk_room_field_needed");
-
 		Map<String, Object> filter = new HashMap<String, Object>();
 		filter.put("id_room", attrMap.get("bk_room"));
 		EntityResult roomResult = daoHelper.query(bookingDao, filter, Arrays.asList("rmt_price"), "SEARCH_ROOM_PRICE");
-
+		
 		if (roomResult.isEmpty()) {
 			throw new RecordNotFoundException("BK_ROOM_OR_BK_CLIENT_DOESN'T EXISTS");
 		}
-
+		
 		Date checkIn = (Date) attrMap.get("bk_check_in");
 		Date checkOut = (Date) attrMap.get("bk_check_out");
+				
+//		for (LocalDate date = startDate; date.isBefore(endDate); date = date.plusDays(1))
+//		{
+//		    ...
+//		}
+		
 		long diff = checkOut.getTime() - checkIn.getTime();
 		TimeUnit time = TimeUnit.DAYS;
 		long days = time.convert(diff, TimeUnit.MILLISECONDS);
@@ -592,6 +595,11 @@ public class BookingService implements IBookingService {
 		BigDecimal bookingPrice = bookingDays.multiply(roomPrice);
 		attrMap.put("bk_price", bookingPrice);
 	}
+	
+		
+
+	
+	
 
 	/**
 	 * Adds and extra to the given booking and updates the booking extras price. It
