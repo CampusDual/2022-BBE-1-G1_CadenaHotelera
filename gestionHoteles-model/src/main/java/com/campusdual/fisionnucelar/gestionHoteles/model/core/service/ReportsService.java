@@ -21,8 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IReportsService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingExtraDao;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingExtraOldDao;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingOldDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingExtraHistDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingHistDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
@@ -48,11 +48,11 @@ public class ReportsService implements IReportsService {
 	@Autowired
 	private BookingDao bookingDao;
 	@Autowired
-	private BookingOldDao bookingOldDao;
+	private BookingHistDao bookingHistDao;
 	@Autowired
 	private BookingExtraDao bookingExtraDao;
 	@Autowired
-	private BookingExtraOldDao bookingExtraOldDao;
+	private BookingExtraHistDao bookingExtraHistDao;
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
 	org.slf4j.Logger log;
@@ -174,7 +174,7 @@ public class ReportsService implements IReportsService {
 		keyMap.put("bk_check_out", bookingResult.getRecordValues(0).get("bk_check_out"));
 		keyMap.put("bk_room", bookingResult.getRecordValues(0).get("bk_room"));
 		keyMap.put("bk_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
-		daoHelper.insert(bookingOldDao, keyMap);
+		daoHelper.insert(bookingHistDao, keyMap);
 		keyMap.clear();
 		keyMap.put("bke_booking", bookingId);
 		EntityResult extras = daoHelper.query(bookingExtraDao, keyMap, Arrays.asList("bke_booking", "bke_name",
@@ -188,7 +188,7 @@ public class ReportsService implements IReportsService {
 				keyMap.put("bke_unit_price", extras.getRecordValues(i).get("bke_unit_price"));
 				keyMap.put("bke_total_price", extras.getRecordValues(i).get("bke_total_price"));
 				keyMap.put("bke_enjoyed", extras.getRecordValues(i).get("bke_enjoyed"));
-				daoHelper.insert(bookingExtraOldDao, keyMap);
+				daoHelper.insert(bookingExtraHistDao, keyMap);
 				keyMap.clear();
 				keyMap.put("id_booking_extra", extras.getRecordValues(i).get("id_booking_extra"));
 				daoHelper.delete(bookingExtraDao, keyMap);

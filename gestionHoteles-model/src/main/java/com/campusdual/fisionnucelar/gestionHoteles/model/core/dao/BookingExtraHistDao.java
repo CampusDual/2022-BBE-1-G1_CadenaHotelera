@@ -13,10 +13,10 @@ import com.ontimize.jee.server.dao.jdbc.OntimizeJdbcDaoSupport;
  *
  */
 
-@Repository("BookingExtraOldDao")
+@Repository("BookingExtraHistDao")
 @Lazy
-@ConfigurationFile(configurationFile = "dao/BookingExtraOldDao.xml", configurationFilePlaceholder = "dao/placeholders.properties")
-public class BookingExtraOldDao extends OntimizeJdbcDaoSupport {
+@ConfigurationFile(configurationFile = "dao/BookingExtraHistDao.xml", configurationFilePlaceholder = "dao/placeholders.properties")
+public class BookingExtraHistDao extends OntimizeJdbcDaoSupport {
 
 	public static final String ATTR_ID = "ID_BOOKING_EXTRA";
 	public static final String ATTR_BOOKING = "BKE_BOOKING";
