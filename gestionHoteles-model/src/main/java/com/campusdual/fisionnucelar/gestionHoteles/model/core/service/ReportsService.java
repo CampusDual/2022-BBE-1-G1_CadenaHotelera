@@ -113,8 +113,10 @@ public class ReportsService implements IReportsService {
 			if (rs.next()) {
 				do {
 					results = true;
+					System.out.println("Query returning data");
 				} while (rs.next());
 			} else {
+				System.out.println("empty results");
 				results = false;
 			}
 			
@@ -132,7 +134,7 @@ public class ReportsService implements IReportsService {
 	}
 
 	/**
-	 * Query to check if getReipt method is capable of generate the receipt. The receipt contains all these fields
+	 * Query to check if getReceipt method is capable of generate the receipt. The receipt contains all these fields
 	 * @param bookingId
 	 * @return the query used by the method checkIfQueryReturnsResults
 	 */
@@ -148,15 +150,16 @@ public class ReportsService implements IReportsService {
 				+ bookingId;
 	}
 	/**
-	 * Query to check if getReipt method is capable of generate the receipt. The receipt contains all these fields
-	 * @param bookingId
+	 * Query to check if getFinancialReport method is capable of generate the report. The report contains all these fields
+	 * @param from to the dates of the billed bookings to elaborate the report
 	 * @return the query used by the method checkIfQueryReturnsResults
 	 */
-//	private String getFinancialReportQuery(Date from, Date to) {
-//		return "select count(b.id_booking)as bookings ,sum(b.bk_price)as total_bookings, sum(b.bk_extras_price) as total_extras ,h.htl_name from bookings_hist b "+ 
-//				"inner join rooms r on r.id_room =b.bk_room inner join hotels h on h.id_hotel =r.rm_hotel where b.bk_check_out between '"+from.getYear()+"-"+from.getMonth()+"-"+from.getDay()+"' AND '\"+from.getYear()+\"-\"+from.getMonth()+\"-\"+from.getDay()+\"'+ 
-//				"group by h.htl_name";  
-//	}
+	private String getFinancialReportQuery(Date from, Date to) {
+		return "select count(b.id_booking)as bookings ,sum(b.bk_price)as total_bookings, sum(b.bk_extras_price) as total_extras ,h.htl_name from bookings_hist b "+ 
+				"inner join rooms r on r.id_room =b.bk_room inner join hotels h on h.id_hotel =r.rm_hotel where b.bk_check_out between  "
+				+ " '"+from+"' AND  '"+to+"' "+ 
+				"group by h.htl_name"  ;  
+	}
 
 	/**
 	 * Puts the booking and its related booking extras in bookings_old and booking_extra_old, once the booking its completed
@@ -204,6 +207,15 @@ public class ReportsService implements IReportsService {
 		daoHelper.delete(bookingDao, keyMap);
 	}
 
+	/**
+	 * Generates a pdf financial report between two dates
+	 * @exception RecordNotFoundException when there aren´t bookings between the requested dates
+	 * @exception SQLException when there are problems connecting to the database
+	 * @exception RException when thre are problems jenerating the receipt
+	 * @param from to the dates to elaborate the financial report, it gives the bookings billed between these two dates
+	 * @return the receipt in pdf formatted yb a byte array
+	 * @since 8/8/22
+	 */
 	@Override
 	public byte[] getFinancialReport(Date from, Date to) throws OntimizeJEERuntimeException {
 		Map<String, Object> params = new HashMap<>();
@@ -212,8 +224,8 @@ public class ReportsService implements IReportsService {
 		InputStream jasperStream = this.getClass().getResourceAsStream("financialReport.jasper");
 		JasperReport jasperReport;
 		JasperPrint jasperPrint;
-//		if (!checkIfQueryReturnsResults(getFinancialReportQuery(from,to)))
-//			throw new RecordNotFoundException("BOOKING_NOT_FOUND");
+		if (!checkIfQueryReturnsResults(getFinancialReportQuery(from,to)))
+			throw new RecordNotFoundException("THERE_ARE_NOT_BOOKINGS_IN_THESE_DATES");
 		Connection conn = null;
 		try {
 			conn = DriverManager.getConnection("jdbc:postgresql://45.84.210.174:65432/Backend_2022_G1",
