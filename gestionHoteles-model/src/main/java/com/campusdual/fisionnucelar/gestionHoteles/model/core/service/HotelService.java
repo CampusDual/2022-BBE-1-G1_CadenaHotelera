@@ -24,6 +24,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidPhoneException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
@@ -179,12 +180,17 @@ public class HotelService implements IHotelService {
 			if (attrMap.get("htl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
 			}
+			if(attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone")){
+				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"), (String)attrMap.get("htl_phone"))) {
+					throw new InvalidPhoneException("INVALID_PHONE");
+				}
+			}else throw new AllFieldsRequiredException("COUNTRY_CODE_AND_PHONE_REQUIRED");
 			insertResult = this.daoHelper.insert(this.hotelDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
 			insertResult.setMessage("SUCESSFUL_INSERTION");
 
-		} catch (InvalidEmailException e) {
+		} catch (InvalidEmailException | InvalidPhoneException e) {
 			log.error("unable to insert an hotel. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DuplicateKeyException e) {
@@ -196,7 +202,7 @@ public class HotelService implements IHotelService {
 		} catch (AllFieldsRequiredException e) {
 			log.error("unable to insert an hotel. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
-		}
+		} 
 		return insertResult;
 	}
 
@@ -219,6 +225,11 @@ public class HotelService implements IHotelService {
 			checkIfHotelExists(keyMap);
 			if (attrMap.get("htl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
+			}
+			if(attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone")) {
+				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"), (String)attrMap.get("htl_phone"))) {
+					throw new InvalidPhoneException("INVALID_PHONE");
+				}
 			}
 			updateResult = this.daoHelper.update(this.hotelDao, attrMap, keyMap);
 			updateResult.setMessage("SUCESSFUL_UPDATE");
