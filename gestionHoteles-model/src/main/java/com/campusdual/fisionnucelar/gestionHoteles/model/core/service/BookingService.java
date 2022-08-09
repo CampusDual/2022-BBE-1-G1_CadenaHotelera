@@ -2,7 +2,6 @@ package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.math.BigDecimal;
 
-
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -33,6 +32,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ClientDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraHotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.SeasonDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
@@ -77,6 +77,10 @@ public class BookingService implements IBookingService {
 
 	@Autowired
 	private BookingDao bookingDao;
+
+	@Autowired
+	private SeasonDao seasonDao;
+
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
 	private Logger log;
@@ -96,7 +100,7 @@ public class BookingService implements IBookingService {
 
 	@Autowired
 	private ExtraHotelDao extraHotelDao;
-	
+
 	private UserControl userControl;
 
 	Validator validator;
@@ -107,7 +111,7 @@ public class BookingService implements IBookingService {
 		this.control = new Control();
 		this.validator = new Validator();
 		this.dataValidator = new Validator();
-		this.userControl=new UserControl();
+		this.userControl = new UserControl();
 		this.log = LoggerFactory.getLogger(this.getClass());
 	}
 
@@ -395,6 +399,7 @@ public class BookingService implements IBookingService {
 			}
 		});
 
+			
 		result = filterBookingByPrice(result, keyMap);
 
 		Map<String, Object> hotelFilter = new HashMap<>();
@@ -559,46 +564,62 @@ public class BookingService implements IBookingService {
 
 	/**
 	 * Calculates the price of the booking based on the price of the room and
-	 * check_in and check_out days
+	 * check_in and check_out days. It also takes in count if there are active
+	 * promotions on that dates
 	 * 
 	 * @param attrMap the id of the room and check_in, check_out dates
 	 * @since 18/07/2022
 	 */
-
 	private void calculateBookingPrice(Map<String, Object> attrMap) {
+		EntityResult seasonResult = new EntityResultMapImpl();
+		EntityResult coincidentSeasonResult = new EntityResultMapImpl();
+		BigDecimal bookingPrice = new BigDecimal("0");
+		Map<String, Object> promoFilter = new HashMap<>();
+		BigDecimal rmt_price,priceToAdd;
+
 		if (attrMap.get("bk_room") == null)
-			throw new EmptyRequestException("bk_room_field_needed");
+			throw new EmptyRequestException("BK_ROOM_FIELD_NEEDED");
 		Map<String, Object> filter = new HashMap<String, Object>();
 		filter.put("id_room", attrMap.get("bk_room"));
-		EntityResult roomResult = daoHelper.query(bookingDao, filter, Arrays.asList("rmt_price"), "SEARCH_ROOM_PRICE");
+		EntityResult roomResult = daoHelper.query(bookingDao, filter, Arrays.asList("rmt_price", "rm_hotel"),
+				"SEARCH_ROOM_PRICE");
 		
 		if (roomResult.isEmpty()) {
 			throw new RecordNotFoundException("BK_ROOM_OR_BK_CLIENT_DOESN'T EXISTS");
 		}
+		Map<String, Object> hotelFilter = new HashMap<String, Object>();
+		hotelFilter.put("ss_hotel", roomResult.getRecordValues(0).get("rm_hotel"));
 		
 		Date checkIn = (Date) attrMap.get("bk_check_in");
-		Date checkOut = (Date) attrMap.get("bk_check_out");
-				
-//		for (LocalDate date = startDate; date.isBefore(endDate); date = date.plusDays(1))
-//		{
-//		    ...
-//		}
+		Date checkOut = (Date) attrMap.get("bk_check_out");	
+	
+		Calendar start = Calendar.getInstance();
+		start.setTime(checkIn);
+		Calendar end = Calendar.getInstance();
+		end.setTime(checkOut);
 		
-		long diff = checkOut.getTime() - checkIn.getTime();
-		TimeUnit time = TimeUnit.DAYS;
-		long days = time.convert(diff, TimeUnit.MILLISECONDS);
+		seasonResult = daoHelper.query(seasonDao, hotelFilter,
+				Arrays.asList("ss_multiplier", "ss_start_date", "ss_end_date"));
+		rmt_price = (BigDecimal) roomResult.getRecordValues(0).get("rmt_price");
+		
+		
+		for (Date date = start.getTime(); start.before(end); start.add(Calendar.DATE, 1), date = start.getTime()) {	
+			priceToAdd=rmt_price;			
+			SearchValue less = new SearchValue(SearchValue.LESS_EQUAL, date);
+			SearchValue more = new SearchValue(SearchValue.MORE_EQUAL, date);
+			promoFilter.put("ss_start_date", less);
+			promoFilter.put("ss_end_date", more);
 
-		BigDecimal roomPrice = (BigDecimal) roomResult.getRecordValues(0).get("rmt_price");
-		BigDecimal bookingDays = new BigDecimal(days);
-		BigDecimal bookingPrice = bookingDays.multiply(roomPrice);
+			coincidentSeasonResult = EntityResultTools.dofilter(seasonResult, promoFilter);
+			if(coincidentSeasonResult.getRecordValues(0).get("ss_multiplier")!=null){
+				priceToAdd=priceToAdd.multiply((BigDecimal) coincidentSeasonResult.getRecordValues(0).get("ss_multiplier"));		
+			}
+			bookingPrice = bookingPrice.add(priceToAdd);
+		}
 		attrMap.put("bk_price", bookingPrice);
 	}
-	
-		
 
 	
-	
-
 	/**
 	 * Adds and extra to the given booking and updates the booking extras price. It
 	 * also creates a detailed register in the bookingExtra table
@@ -683,7 +704,6 @@ public class BookingService implements IBookingService {
 		EntityResult updateResult = new EntityResultMapImpl();
 		EntityResult hotelResult = new EntityResultMapImpl();
 		try {
-
 
 			checkIfExtraBookingExists(keyMap);
 			dataValidator.checkIfMapIsEmpty(attrMap);
@@ -848,12 +868,12 @@ public class BookingService implements IBookingService {
 		EntityResult bookingResult = new EntityResultMapImpl();
 
 		EntityResult result = new EntityResultMapImpl();
-		result = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "rm_hotel"),"SEARCH_BOOKING_HOTEL");
+		result = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "rm_hotel"), "SEARCH_BOOKING_HOTEL");
 		try {
-					
-			if(!userControl.controlAccessClient((int) result.getRecordValues(0).get("bk_client"))){
+
+			if (!userControl.controlAccessClient((int) result.getRecordValues(0).get("bk_client"))) {
 				userControl.controlAccess((int) result.getRecordValues(0).get("rm_hotel"));
-			}		
+			}
 
 			checkIfBookingActive(keyMap);
 			mapLeavingDate.put("bk_leaving_date", new Date(System.currentTimeMillis()));

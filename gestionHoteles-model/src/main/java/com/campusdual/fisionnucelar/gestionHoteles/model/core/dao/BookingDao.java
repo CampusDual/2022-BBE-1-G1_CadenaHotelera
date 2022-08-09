@@ -23,6 +23,7 @@ public class BookingDao extends OntimizeJdbcDaoSupport {
 	public static final String ATTR_CHECK_OUT = "BK_CHECK_OUT";
 	public static final String ATTR_ROOM = "BK_ROOM";
 	public static final String ATTR_CLIENT = "BK_CLIENT";
+	public static final String ATTR_PROMOTIONAL = "BK_PROMOTIONAL";
 
 
 }

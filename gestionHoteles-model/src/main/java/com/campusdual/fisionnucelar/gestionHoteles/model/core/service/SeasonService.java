@@ -200,8 +200,7 @@ public class SeasonService implements ISeasonService {
 					Arrays.asList("ss_hotel", "ss_start_date", "ss_end_date"));
 			if(searchResult.isEmpty()) {
 				throw new RecordNotFoundException("SEASON_DON'T_EXISTS");
-			}
-			
+			}		
 		
 			int hotel = (int) searchResult.getRecordValues(0).get("ss_hotel");
 			userControl.controlAccess(hotel);
@@ -258,7 +257,6 @@ public class SeasonService implements ISeasonService {
 			if (keyMap.isEmpty()) {
 				throw new EmptyRequestException("ID_SEASON_REQUIRED");
 			}
-
 			deleteResult = daoHelper.query(seasonDao, keyMap, Arrays.asList("id_season", "ss_hotel"));
 			control.checkResults(deleteResult);
 			userControl.controlAccess((int) deleteResult.getRecordValues(0).get("ss_hotel"));			
