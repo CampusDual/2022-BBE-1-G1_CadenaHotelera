@@ -5,12 +5,14 @@ import java.io.InputStream;
 
 
 
+
 import java.sql.*;
 import java.util.*;
 import java.util.Date;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +21,10 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
+import com.ontimize.jee.common.security.PermissionsProviderSecured;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 
-import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.util.JRLoader;
 
 /**
@@ -60,6 +63,7 @@ public class ReportsService implements IReportsService {
 	 * @since 2/8/22
 	 */
 	@Override
+	@Secured({"admin","hotel_manager","hotel_recepcionist"})
 	public byte[] getReceipt(int bookingId) throws OntimizeJEERuntimeException {
 		Map<String, Object> params = new HashMap<>();
 		int parameter = bookingId;
@@ -217,10 +221,12 @@ public class ReportsService implements IReportsService {
 	 * @since 8/8/22
 	 */
 	@Override
+	@Secured({"admin"})
 	public byte[] getFinancialReport(Date from, Date to) throws OntimizeJEERuntimeException {
 		Map<String, Object> params = new HashMap<>();
 		params.put("Parameter1", from);
 		params.put("Parameter2", to);
+		System.out.println(this.getClass().getResource("").getPath());
 		InputStream jasperStream = this.getClass().getResourceAsStream("financialReport.jasper");
 		JasperReport jasperReport;
 		JasperPrint jasperPrint;
