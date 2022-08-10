@@ -1,20 +1,20 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.math.BigDecimal;
-
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -29,6 +29,7 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingServ
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingExtraDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ClientDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.DiscountCodeDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ExtraHotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomDao;
@@ -60,9 +61,6 @@ import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 import com.ontimize.jee.server.dao.IOntimizeDaoSupport;
 import com.ontimize.jee.server.dao.ISQLQueryAdapter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * This class builds the operations over the bookings table
  * 
@@ -77,6 +75,9 @@ public class BookingService implements IBookingService {
 
 	@Autowired
 	private BookingDao bookingDao;
+
+	@Autowired
+	private DiscountCodeDao discountCodeDao;
 
 	@Autowired
 	private SeasonDao seasonDao;
@@ -365,7 +366,7 @@ public class BookingService implements IBookingService {
 			throws ParseException, ClassCastException, InvalidRequestException {
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 		EntityResult result;
-		EntityResult seasonResult=new EntityResultMapImpl();
+		EntityResult seasonResult = new EntityResultMapImpl();
 		BigDecimal bookingPrice;
 		final String checkIn = "bk_check_in";
 		final String checkOut = "bk_check_out";
@@ -379,7 +380,7 @@ public class BookingService implements IBookingService {
 
 		Date startDate = formatter.parse(requestCheckIn);
 		Date endDate = formatter.parse(requestCheckOut);
-		
+
 		checkDates(startDate, endDate);
 
 		Map<String, Object> keyMap2 = new HashMap<>();
@@ -400,41 +401,39 @@ public class BookingService implements IBookingService {
 						sqlStatement.getValues());
 			}
 		});
-			
+
 		Map<String, Object> hotelFilter = new HashMap<String, Object>();
 		hotelFilter.put(hotelId, keyMap.get(hotelId));
-		
+
 		result = EntityResultTools.dofilter(result, hotelFilter);
-		
+
 		hotelFilter.remove("id_hotel");
 		hotelFilter.put("ss_hotel", keyMap.get("id_hotel"));
-				
+
 		seasonResult = daoHelper.query(seasonDao, hotelFilter,
 				Arrays.asList("ss_multiplier", "ss_start_date", "ss_end_date"));
-		
-		if(!seasonResult.isEmpty()) {
-			for(int i=0;i<result.calculateRecordNumber();i++) {
-				BigDecimal rmt_price=(BigDecimal) result.getRecordValues(i).get("rmt_price");
-				bookingPrice=calculatePriceWithSeason(startDate, endDate, seasonResult, rmt_price);
-				Map<String,Object> register=new HashMap<>();
-				register=result.getRecordValues(i);
+
+		if (!seasonResult.isEmpty()) {
+			for (int i = 0; i < result.calculateRecordNumber(); i++) {
+				BigDecimal rmt_price = (BigDecimal) result.getRecordValues(i).get("rmt_price");
+				bookingPrice = calculatePriceWithSeason(startDate, endDate, seasonResult, rmt_price);
+				Map<String, Object> register = new HashMap<>();
+				register = result.getRecordValues(i);
 				register.put("price", bookingPrice);
 				result.deleteRecord(i);
-				result.addRecord(register);			
+				result.addRecord(register);
 			}
-		}				
-			
+		}
+
 		result = filterBookingByPrice(result, keyMap);
-		
-		
+
 		if (keyMap.get(roomType) != null) {
 			Map<String, Object> rmtFilter = new HashMap<String, Object>();
 			rmtFilter.put(roomType, keyMap.get(roomType));
 			result = EntityResultTools.dofilter(result, rmtFilter);
-			
+
 		}
 		result.remove("rmt_price");
-
 
 		return result;
 
@@ -566,11 +565,17 @@ public class BookingService implements IBookingService {
 				checkDisponibility(attrMap);
 				calculateBookingPrice(attrMap);
 			}
+
+			if (attrMap.get("discount_code") != null) {
+				checkDiscountCode(attrMap);
+			}
+
 			insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
 
 			if (insertResult.isEmpty()) {
 				throw new AllFieldsRequiredException("FIELDS_MUST_BE_PROVIDED");
 			}
+			insertResult.setMessage("SUCESSFULL_INSERTION");
 		} catch (DuplicateKeyException e) {
 			log.error("unable to save booking. Request : {}", attrMap, e);
 			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
@@ -589,6 +594,33 @@ public class BookingService implements IBookingService {
 	}
 
 	/**
+	 * It checks if the discount_code received is valid and active. In that case it
+	 * actualizes the booking price with the discount multiplier
+	 * 
+	 * @since 10/08/2022
+	 * 
+	 * @param attrMap The map with the discount_code and the booking price
+	 */
+	private void checkDiscountCode(Map<String, Object> attrMap) {
+
+		EntityResult discountResult = new EntityResultMapImpl();
+
+		Map<String, Object> discountFilter = new HashMap<>();
+		discountFilter.put("dc_name", attrMap.get("discount_code"));
+		discountResult = daoHelper.query(discountCodeDao, discountFilter,
+				Arrays.asList("dc_name", "dc_multiplier", "dc_leaving_date"));
+
+		BigDecimal bookingPrice = (BigDecimal) attrMap.get("bk_price");
+
+		if (!discountResult.isEmpty() && discountResult.getRecordValues(0).get("dc_leaving_date") == null) {
+			bookingPrice = bookingPrice.multiply((BigDecimal) discountResult.getRecordValues(0).get("dc_multiplier"));
+			attrMap.put("bk_promotional", 1);
+			attrMap.put("bk_price", bookingPrice);
+		}
+
+	}
+
+	/**
 	 * Calculates the price of the booking based on the price of the room and
 	 * check_in and check_out days. It also takes in count if there are active
 	 * promotions on that dates
@@ -598,9 +630,9 @@ public class BookingService implements IBookingService {
 	 */
 	private void calculateBookingPrice(Map<String, Object> attrMap) {
 		EntityResult seasonResult = new EntityResultMapImpl();
-		
+
 		BigDecimal bookingPrice = new BigDecimal("0");
-		
+
 		BigDecimal rmt_price;
 
 		if (attrMap.get("bk_room") == null)
@@ -609,66 +641,78 @@ public class BookingService implements IBookingService {
 		filter.put("id_room", attrMap.get("bk_room"));
 		EntityResult roomResult = daoHelper.query(bookingDao, filter, Arrays.asList("rmt_price", "rm_hotel"),
 				"SEARCH_ROOM_PRICE");
-		
+
 		if (roomResult.isEmpty()) {
 			throw new RecordNotFoundException("BK_ROOM_OR_BK_CLIENT_DOESN'T EXISTS");
 		}
 		Map<String, Object> hotelFilter = new HashMap<String, Object>();
 		hotelFilter.put("ss_hotel", roomResult.getRecordValues(0).get("rm_hotel"));
-		
+
 		Date checkIn = (Date) attrMap.get("bk_check_in");
-		Date checkOut = (Date) attrMap.get("bk_check_out");	
-	
+		Date checkOut = (Date) attrMap.get("bk_check_out");
+
 		rmt_price = (BigDecimal) roomResult.getRecordValues(0).get("rmt_price");
-		
+
 		seasonResult = daoHelper.query(seasonDao, hotelFilter,
-				Arrays.asList("ss_multiplier", "ss_start_date", "ss_end_date"));	
-		if(!seasonResult.isEmpty()) {
-			bookingPrice=calculatePriceWithSeason(checkIn, checkOut, seasonResult, rmt_price);
-		}else {
-			 long diff = checkOut.getTime() - checkIn.getTime();
-			   TimeUnit time = TimeUnit.DAYS;
-			   long days = time.convert(diff, TimeUnit.MILLISECONDS);
-			   BigDecimal bookingDays = new BigDecimal(days);
-			   bookingPrice = bookingDays.multiply(rmt_price);
-		}			
+				Arrays.asList("ss_multiplier", "ss_start_date", "ss_end_date"));
+		if (!seasonResult.isEmpty()) {
+			bookingPrice = calculatePriceWithSeason(checkIn, checkOut, seasonResult, rmt_price);
+		} else {
+			long diff = checkOut.getTime() - checkIn.getTime();
+			TimeUnit time = TimeUnit.DAYS;
+			long days = time.convert(diff, TimeUnit.MILLISECONDS);
+			BigDecimal bookingDays = new BigDecimal(days);
+			bookingPrice = bookingDays.multiply(rmt_price);
+		}
 		attrMap.put("bk_price", bookingPrice);
 	}
 
-	
-	public BigDecimal calculatePriceWithSeason(Date checkIn,Date checkOut, EntityResult seasonResult,BigDecimal rmt_price) {
-		
+	/**
+	 * 
+	 * It recalculates the price of a booking checking the active seasons on a
+	 * concrete hotel. It loops the booking day by day, checking if there is any
+	 * active season on that day and recalculating the price of that day
+	 * 
+	 * @since 09/08/2022
+	 * 
+	 * 
+	 * @param checkIn      The starting date of the booking
+	 * @param checkOut     The ending date of the bookings
+	 * @param seasonResult An entityresult with all the seasons existing on a hotel
+	 * @param rmt_price    The price for night of the room
+	 * @return The new price of the bookings
+	 */
+	public BigDecimal calculatePriceWithSeason(Date checkIn, Date checkOut, EntityResult seasonResult,
+			BigDecimal rmt_price) {
+
 		EntityResult coincidentSeasonResult = new EntityResultMapImpl();
 		Map<String, Object> promoFilter = new HashMap<>();
 		BigDecimal bookingPrice = new BigDecimal("0");
-		
+
 		BigDecimal priceToAdd;
 		Calendar start = Calendar.getInstance();
 		start.setTime(checkIn);
 		Calendar end = Calendar.getInstance();
 		end.setTime(checkOut);
-		
-		for (Date date = start.getTime(); start.before(end); start.add(Calendar.DATE, 1), date = start.getTime()) {	
-			priceToAdd=rmt_price;			
+
+		for (Date date = start.getTime(); start.before(end); start.add(Calendar.DATE, 1), date = start.getTime()) {
+			priceToAdd = rmt_price;
 			SearchValue less = new SearchValue(SearchValue.LESS_EQUAL, date);
 			SearchValue more = new SearchValue(SearchValue.MORE_EQUAL, date);
 			promoFilter.put("ss_start_date", less);
 			promoFilter.put("ss_end_date", more);
 
 			coincidentSeasonResult = EntityResultTools.dofilter(seasonResult, promoFilter);
-			if(coincidentSeasonResult.getRecordValues(0).get("ss_multiplier")!=null){
-				priceToAdd=priceToAdd.multiply((BigDecimal) coincidentSeasonResult.getRecordValues(0).get("ss_multiplier"));		
+			if (coincidentSeasonResult.getRecordValues(0).get("ss_multiplier") != null) {
+				priceToAdd = priceToAdd
+						.multiply((BigDecimal) coincidentSeasonResult.getRecordValues(0).get("ss_multiplier"));
 			}
 			bookingPrice = bookingPrice.add(priceToAdd);
 		}
-		
+
 		return bookingPrice;
 	}
-	
-	
-	
-	
-	
+
 	/**
 	 * Adds and extra to the given booking and updates the booking extras price. It
 	 * also creates a detailed register in the bookingExtra table
@@ -905,6 +949,10 @@ public class BookingService implements IBookingService {
 	 * 
 	 * @exception SQLWarningException     when it doesn't receives an id_booking
 	 * 
+	 * @exception NotAuthorizedException  when it tries to change a reserve from the
+	 *                                    incorrect hotel or client. When it tries
+	 *                                    to update a promotional booking
+	 * 
 	 * 
 	 */
 
@@ -917,8 +965,12 @@ public class BookingService implements IBookingService {
 		EntityResult bookingResult = new EntityResultMapImpl();
 
 		EntityResult result = new EntityResultMapImpl();
-		result = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "rm_hotel"), "SEARCH_BOOKING_HOTEL");
+		result = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "rm_hotel", "bk_promotional"),
+				"SEARCH_BOOKING_HOTEL");
 		try {
+			if ((Integer) result.getRecordValues(0).get("bk_promotional") == 1) {
+				throw new NotAuthorizedException("PROMOTIONAL_BOOKING_CAN'T_BE_UPDATED");
+			}
 
 			if (!userControl.controlAccessClient((int) result.getRecordValues(0).get("bk_client"))) {
 				userControl.controlAccess((int) result.getRecordValues(0).get("rm_hotel"));

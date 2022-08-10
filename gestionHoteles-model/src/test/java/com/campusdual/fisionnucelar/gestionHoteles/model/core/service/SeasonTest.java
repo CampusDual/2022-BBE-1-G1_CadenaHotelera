@@ -76,7 +76,7 @@ public class SeasonTest {
 
 		@Test
 		@DisplayName("Obtain all data from Seasons table")
-		void testServiceQueryAllData() throws NotAuthorizedException {
+		void testQueryAllData() throws NotAuthorizedException {
 			doReturn(getAllSeasonData()).when(daoHelper).query(any(), anyMap(), anyList());
 			EntityResult entityResult = seasonService.seasonQuery(getQueryFilter(), new ArrayList<>());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
@@ -149,21 +149,6 @@ public class SeasonTest {
 			verify(daoHelper).query(any(), anyMap(), anyList());
 		}
 
-		@Test
-		@DisplayName("Obtain all data columns from Seasons table when hotel not exist")
-		void when_queryAllColumnsNotExisting_return_empty() {
-			HashMap<String, Object> keyMap = new HashMap<>() {
-				{
-					put("ss_hotel", 5);
-				}
-			};
-			List<String> attrList = Arrays.asList("id_season", "ss_hotel", "ss_multiplier");
-			when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getSpecificSeasonData(keyMap, attrList));
-			EntityResult entityResult = seasonService.seasonQuery(getQueryFilter(), new ArrayList<>());
-			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
-			assertEquals(0, entityResult.calculateRecordNumber());
-			verify(daoHelper).query(any(), anyMap(), anyList());
-		}
 
 		@ParameterizedTest(name = "Obtain data with Hotel -> {0}")
 		@MethodSource("randomIDGenerator")
