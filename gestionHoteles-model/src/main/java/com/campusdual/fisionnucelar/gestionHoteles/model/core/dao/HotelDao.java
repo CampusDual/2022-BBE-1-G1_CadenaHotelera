@@ -22,6 +22,7 @@ public class HotelDao extends OntimizeJdbcDaoSupport {
  public static final String ATTR_ADDRESS = "HTL_ADDRESS";
  public static final String ATTR_PHONE = "HTL_PHONE";
  public static final String ATTR_EMAIL = "HTL_EMAIL";
+ public static final String ATTR_COUNTRY_CODE = "HTL_COUNTRY_CODE";
 
 
 }

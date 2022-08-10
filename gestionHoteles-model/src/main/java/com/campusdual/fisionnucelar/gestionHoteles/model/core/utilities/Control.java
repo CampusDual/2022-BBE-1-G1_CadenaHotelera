@@ -11,6 +11,8 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidE
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.*;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.services.user.UserInformation;
 
@@ -22,11 +24,15 @@ import com.ontimize.jee.common.services.user.UserInformation;
  *
  */
 public class Control {
-	GooglePlaces places;
+	private GooglePlaces places;
+	PhoneNumberUtil phoneNumberUtil; 
+	PhoneNumber number;
 
 	public Control() {
 		super();
 		this.places = new GooglePlaces(ApiKey.KEY_GOOGLE_PLACES);
+		this.number = new PhoneNumber();
+		this.phoneNumberUtil = PhoneNumberUtil.getInstance();
 	}
 
 	/**
@@ -114,9 +120,26 @@ public class Control {
 	}
 
 
+	public boolean checkIfPhoneNumberIsValid(int countryCode, String phoneNumber) {
+		boolean valid=false;
+		if(isNumber(phoneNumber)) {
+			this.number.setCountryCode(countryCode).setNationalNumber(Long.parseLong(phoneNumber));
+			valid=this.phoneNumberUtil.isPossibleNumber(number);
+		}else valid = false;
+		return valid;
+	}
 	
-	
-
+	public boolean isNumber(String number) {
+		boolean isNumber=false;
+		try {
+			Integer.parseInt(number);
+			isNumber=true;
+		}catch(Exception e) {
+			isNumber=false;
+		}
+		
+		return isNumber;
+	}
 
 }
 

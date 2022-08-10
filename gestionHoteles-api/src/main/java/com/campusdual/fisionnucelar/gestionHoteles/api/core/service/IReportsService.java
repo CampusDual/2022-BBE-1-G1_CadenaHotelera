@@ -11,4 +11,5 @@ public interface IReportsService {
 			throws OntimizeJEERuntimeException;
 	
 	public byte[] getFinancialReport(Date from, Date to) throws OntimizeJEERuntimeException;
+	byte[] getReceiptFromHistoric(int bookingId) throws OntimizeJEERuntimeException;
 }

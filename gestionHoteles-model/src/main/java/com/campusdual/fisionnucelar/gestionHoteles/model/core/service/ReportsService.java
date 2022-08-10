@@ -97,6 +97,57 @@ public class ReportsService implements IReportsService {
 		this.moveBookingToBookingOld(bookingId);
 		return contents;
 	}
+	
+	/**
+	 * Generates a pdf receipt of a given booking from the booking_hist table
+	 * @exception RecordNotFoundException when the booking requested by the user not exists
+	 * @exception SQLException when there are problems connecting to the database
+	 * @exception RException when thre are problems jenerating the receipt
+	 * @param bookingId the booking id to generate the receipt
+	 * @return the receipt in pdf formatted yb a byte array
+	 * @since 2/8/22
+	 */
+	@Override
+	@Secured({"admin","hotel_manager","hotel_recepcionist"})
+	public byte[] getReceiptFromHistoric(int bookingId) throws OntimizeJEERuntimeException {
+		Map<String, Object> params = new HashMap<>();
+		int parameter = bookingId;
+		params.put("Parameter1", parameter);
+		InputStream jasperStream = this.getClass().getResourceAsStream("invoice.jasper");
+		JasperReport jasperReport;
+		JasperPrint jasperPrint;
+		if (!checkIfQueryReturnsResults(getHistoricReceiptQuery(bookingId)))
+			throw new RecordNotFoundException("BOOKING_NOT_FOUND");
+		Connection conn = null;
+		try {
+			conn = DriverManager.getConnection("jdbc:postgresql://45.84.210.174:65432/Backend_2022_G1",
+					"Backend_2022_G1", "iexaicaef1iaQuotea");
+		} catch (SQLException e1) {
+			log.error("unable to connect to database ", e1.getMessage());
+		}
+		byte[] contents = null;
+		try {
+			jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
+			jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+			contents = JasperExportManager.exportReportToPdf(jasperPrint);
+		} catch (JRException e) {
+			log.error("unable to build receipt ", e.getMessage());
+		} finally {
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				log.error("unable to disconnect from database ", e.getMessage());
+			}
+		}
+		return contents;
+	}
+
+	private String getHistoricReceiptQuery(int bookingId) {
+		return "select b.id_booking, c.cl_nif ,c.cl_name, c.cl_email, c.cl_phone, b.bk_check_in, b.bk_check_out ,b.bk_price, be.bke_name, be.bke_quantity,b.bk_extras_price,  be.bke_unit_price, be.bke_total_price, r.rm_number, "+
+		"rt.rmt_name, rt.rmt_price, h.htl_name ,h.htl_address ,h.htl_phone ,h.htl_email ,DATE_PART('day', b.bk_check_out  - b.bk_check_in::timestamp) AS days "+
+		"from clients c inner join bookings_hist b on b.bk_client = c.id_client left join booking_extra_hist be on be.bke_booking = b.id_booking_old inner join rooms r "+
+		"on r.id_room =b.bk_room inner join room_types rt on rt.id_room_type = r.rm_room_type inner join hotels h on h.id_hotel = r.rm_hotel where b.id_booking_old = "+bookingId;
+	}
 
 	/**
 	 * Check if the booking provided by the user exists in the database
@@ -184,6 +235,7 @@ public class ReportsService implements IReportsService {
 		keyMap.put("bk_check_in", bookingResult.getRecordValues(0).get("bk_check_in"));
 		keyMap.put("bk_check_out", bookingResult.getRecordValues(0).get("bk_check_out"));
 		keyMap.put("bk_room", bookingResult.getRecordValues(0).get("bk_room"));
+		keyMap.put("id_booking_old", bookingId);
 		keyMap.put("bk_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		daoHelper.insert(bookingHistDao, keyMap);
 		keyMap.clear();

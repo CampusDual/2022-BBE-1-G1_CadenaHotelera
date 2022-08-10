@@ -47,6 +47,19 @@ public class ReportsRestController {
         return new ResponseEntity<>(contents, headers, HttpStatus.OK);  
     }
     
+    @GetMapping("/historic/receipt/{bookingId}")
+    public ResponseEntity<byte[]> getHistoricReceipt(@PathVariable("bookingId") int bookingId) throws OntimizeJEERuntimeException, JRException, IOException, SQLException {
+    	HttpHeaders headers = new HttpHeaders();
+    	byte[] contents=null;
+    	contents = reportsService.getReceiptFromHistoric(bookingId);
+    	headers.setContentType(MediaType.APPLICATION_PDF);
+    	String filename = "output.pdf";
+    	headers.setContentDispositionFormData(filename, filename);
+    	headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+    	
+    	return new ResponseEntity<>(contents, headers, HttpStatus.OK);  
+    }
+    
     @PostMapping("/financial")
     public ResponseEntity<byte[]> getFinancialReport(@RequestParam("from") 
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date from,@RequestParam("to") 
