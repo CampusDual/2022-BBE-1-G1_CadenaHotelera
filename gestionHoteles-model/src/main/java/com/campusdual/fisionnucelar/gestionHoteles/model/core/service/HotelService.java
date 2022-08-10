@@ -202,7 +202,10 @@ public class HotelService implements IHotelService {
 		} catch (AllFieldsRequiredException e) {
 			log.error("unable to insert an hotel. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
-		} 
+		} catch (ClassCastException e) {
+		log.error("unable to insert an hotel. Request : {} ", attrMap, e);
+		control.setErrorMessage(insertResult, "INVALID_PHONE");
+	} 
 		return insertResult;
 	}
 
@@ -245,7 +248,10 @@ public class HotelService implements IHotelService {
 		} catch (EmptyRequestException e) {
 			log.error("unable to update an hotel. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
-		}
+		}catch (ClassCastException e) {
+			log.error("unable to insert an hotel. Request : {} ", attrMap, e);
+			control.setErrorMessage(updateResult, "INVALID_PHONE");
+		} 
 		return updateResult;
 	}
 
