@@ -101,7 +101,7 @@ public class ClientService implements IClientService {
 		}
 		return searchResult;
 	}
-
+	
 	/**
 	 * 
 	 * Adds a new register on the clients table. We assume that we are receiving the
@@ -117,6 +117,7 @@ public class ClientService implements IClientService {
 	@Override
 	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult clientInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
+		dataValidator.checkIfMapIsEmpty(attrMap);
 		attrMap.put("cl_entry_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		attrMap.put("cl_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		EntityResult insertResult = new EntityResultMapImpl();
@@ -134,6 +135,9 @@ public class ClientService implements IClientService {
 		} catch (DataIntegrityViolationException e) {
 			log.error("unable to insert a client. Request : {} ",attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
+		}catch (EmptyRequestException e) {
+			log.error("unable to insert a client. Request : {} {} ",attrMap, e);
+			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
 	}
@@ -200,6 +204,7 @@ public class ClientService implements IClientService {
 	@Override
 	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult clientDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
+		dataValidator.checkIfMapIsEmpty(keyMap);
 		Map<Object, Object> attrMap = new HashMap<>();
 		attrMap.put("cl_leaving_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 
@@ -211,6 +216,9 @@ public class ClientService implements IClientService {
 			deleteResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
 			deleteResult.setMessage("SUCCESSFUL_DELETE");
 		} catch (RecordNotFoundException|NotAuthorizedException e) {
+			control.setErrorMessage(deleteResult, e.getMessage());
+		}catch (EmptyRequestException e) {
+			log.error("unable to insert a client. Request : {} {} ",keyMap, e);
 			control.setErrorMessage(deleteResult, e.getMessage());
 		}
 		return deleteResult;

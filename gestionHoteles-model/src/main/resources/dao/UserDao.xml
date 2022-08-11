@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <JdbcEntitySetup
-    xmlns="http://www.ontimize.com/schema/jdbc"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.ontimize.com/schema/jdbc http://www.ontimize.com/schema/jdbc/ontimize-jdbc-dao.xsd"
-    catalog="" schema="${mainschema}" table="TUSER"
-    datasource="mainDataSource" sqlhandler="dbSQLStatementHandler">
-    <DeleteKeys>
-        <Column>USER_</Column>
-    </DeleteKeys>
-    <UpdateKeys>
-        <Column>USER_</Column>
-    </UpdateKeys>
-    <GeneratedKey>USER_</GeneratedKey>
-    <Queries>
-        <Query id="default">
-            <ValidColumns>
-                <Column>USER_</Column>
-                <Column>EMAIL</Column>
-                <Column>PASSWORD</Column>
-                <Column>NAME</Column>
-                <Column>SURNAME</Column>
-            </ValidColumns>
-            <Sentence>
+	xmlns="http://www.ontimize.com/schema/jdbc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.ontimize.com/schema/jdbc http://www.ontimize.com/schema/jdbc/ontimize-jdbc-dao.xsd"
+	catalog="" schema="${mainschema}" table="TUSER"
+	datasource="mainDataSource" sqlhandler="dbSQLStatementHandler">
+	<DeleteKeys>
+		<Column>user_</Column>
+	</DeleteKeys>
+	<UpdateKeys>
+		<Column>user_</Column>
+	</UpdateKeys>
+	<Queries>
+		<Query id="default">
+			<ValidColumns>
+				<Column>user_</Column>
+				<Column>email</Column>
+				<Column>password</Column>
+				<Column>name</Column>
+				<Column>surname</Column>
+				<Column>identifier</Column>
+			</ValidColumns>
+			<Sentence>
                 <![CDATA[
                     SELECT
                         #COLUMNS#
@@ -30,17 +30,17 @@
                     #WHERE#
                 ]]>
             </Sentence>
-        </Query>    
-        <Query id="login">
-            <ValidColumns>
-                <Column>USER_</Column>
-                <Column>EMAIL</Column>
-                <Column>PASSWORD</Column>
-                <Column>NAME</Column>
-                <Column>SURNAME</Column>
-                <Column>IDENTIFIER</Column>
-            </ValidColumns>
-            <Sentence>
+		</Query>
+		<Query id="login">
+			<ValidColumns>
+				<Column>USER_</Column>
+				<Column>EMAIL</Column>
+				<Column>PASSWORD</Column>
+				<Column>NAME</Column>
+				<Column>SURNAME</Column>
+				<Column>IDENTIFIER</Column>
+			</ValidColumns>
+			<Sentence>
                 <![CDATA[
                     SELECT 
                         #COLUMNS#
@@ -49,6 +49,42 @@
                     #WHERE#
                 ]]>
             </Sentence>
-        </Query>
-    </Queries>
+		</Query>
+
+		<Query id="user_data">
+			<AmbiguousColumns>
+    			<AmbiguousColumn name="USER_" prefix="TU"
+     			databaseName="USER_" />
+     			<AmbiguousColumn name="ID_ROLENAME" prefix="TRO"
+     			databaseName="ID_ROLENAME" />
+   			</AmbiguousColumns>
+   			<ValidColumns>
+				<Column>user_</Column>
+				<Column>email</Column>
+				<Column>name</Column>
+				<Column>surname</Column>
+				<Column>nif</Column>
+				<Column>userblocked</Column>
+				<Column>lastpasswordupdate</Column>
+				<Column>firstlogin</Column>
+				<Column>identifier</Column>
+				<Column>id_rolename</Column>
+				<Column>rolename</Column>
+				<Column>user_down_date</Column>
+			</ValidColumns>
+			<Sentence>
+   				<![CDATA[
+  					SELECT 
+  						#COLUMNS#
+					FROM 
+						TUSER TU INNER JOIN TUSER_ROLE TUR 
+							ON TU.USER_=TUR.USER_  
+						INNER JOIN TROLE TRO
+							ON TUR.ID_ROLENAME=TRO.ID_ROLENAME
+						#WHERE#
+   				]]>
+   			</Sentence>
+		</Query>
+		
+	</Queries>
 </JdbcEntitySetup>
