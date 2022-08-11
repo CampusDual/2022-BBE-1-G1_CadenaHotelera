@@ -288,7 +288,12 @@
     		<artifactId>jasperreports</artifactId>
     		<version>6.20.0</version>
 		</dependency>
-
+		
+		<dependency>
+    		<groupId>com.googlecode.libphonenumber</groupId>
+    		<artifactId>libphonenumber</artifactId>
+    		<version>8.12.53</version>
+		</dependency>
 
     </dependencies>
                     

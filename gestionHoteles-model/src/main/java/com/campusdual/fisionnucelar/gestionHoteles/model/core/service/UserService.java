@@ -149,7 +149,7 @@ public class UserService implements IUserService {
 		}
 		return updateResult;
 	}
-	
+
 	@Override
 	@Secured({"admin"})
 	public EntityResult userDelete(Map<String, Object> keyMap) {

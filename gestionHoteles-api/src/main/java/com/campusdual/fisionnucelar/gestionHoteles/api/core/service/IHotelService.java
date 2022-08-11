@@ -30,5 +30,8 @@ public interface IHotelService {
 	public EntityResult searchbylocationQuery(Map<String, Object> keyMap,List<String> attrList)
 			throws OntimizeJEERuntimeException;
 	
-	public EntityResult searchbycityQuery(Map<String, Object> keyMap,List<String> attrList) throws OntimizeJEERuntimeException; 
+	public EntityResult searchbycityQuery(Map<String, Object> keyMap,List<String> attrList) throws OntimizeJEERuntimeException;
+
+	EntityResult searchnearbyservicesQuery(Map<String, Object> keyMap, List<String> attrList)
+			throws OntimizeJEERuntimeException; 
 }

@@ -1,21 +1,19 @@
 package com.campusdual.fisionnucelar.gestionHoteles.ws.core.rest;
-
+/**
+ * Listens for requests to make a receipt og the given booking id
+ * @author Samuel Purriños
+ * @since 2/8/22
+ * @version 1.0
+ * 
+ */
 import java.io.IOException;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
 
-import javax.servlet.http.HttpServletResponse;
+import java.sql.SQLException;
+import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,43 +21,56 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IReportsService;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
-import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
-import com.ontimize.jee.common.util.remote.BytesBlock;
 
 import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JRResultSetDataSource;
-import net.sf.jasperreports.engine.JasperExportManager;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.JasperReport;
-import net.sf.jasperreports.engine.util.JRLoader;
 @Controller
 @RequestMapping("/reports")
 public class ReportsRestController {
   @Autowired
   IReportsService reportsService;
-  @GetMapping("/receipt/{id_booking}")
-    public ResponseEntity<byte[]> getReceipt(@PathVariable("id_booking") int id_booking) throws OntimizeJEERuntimeException, JRException, IOException, SQLException {
+  @GetMapping("/receipt/{bookingId}")
+    public ResponseEntity<byte[]> getReceipt(@PathVariable("bookingId") int bookingId) throws OntimizeJEERuntimeException, JRException, IOException, SQLException {
         HttpHeaders headers = new HttpHeaders();
         byte[] contents=null;
-        try {
-        contents = reportsService.getReceipt(id_booking);
-          }catch(RecordNotFoundException e ) {
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
-          }
-          headers.setContentType(MediaType.APPLICATION_PDF);
-          // Here you have to set the actual filename of your pdf
-          String filename = "output.pdf";
-          headers.setContentDispositionFormData(filename, filename);
-          headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-          ResponseEntity<byte[]> response = new ResponseEntity<>(contents, headers, HttpStatus.OK);
-          return response;    
+        contents = reportsService.getReceipt(bookingId);
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        String filename = "output.pdf";
+        headers.setContentDispositionFormData(filename, filename);
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+       
+        return new ResponseEntity<>(contents, headers, HttpStatus.OK);  
+    }
+    
+    @GetMapping("/historic/receipt/{bookingId}")
+    public ResponseEntity<byte[]> getHistoricReceipt(@PathVariable("bookingId") int bookingId) throws OntimizeJEERuntimeException, JRException, IOException, SQLException {
+    	HttpHeaders headers = new HttpHeaders();
+    	byte[] contents=null;
+    	contents = reportsService.getReceiptFromHistoric(bookingId);
+    	headers.setContentType(MediaType.APPLICATION_PDF);
+    	String filename = "output.pdf";
+    	headers.setContentDispositionFormData(filename, filename);
+    	headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+    	
+    	return new ResponseEntity<>(contents, headers, HttpStatus.OK);  
+    }
+    
+    @PostMapping("/financial")
+    public ResponseEntity<byte[]> getFinancialReport(@RequestParam("from") 
+      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date from,@RequestParam("to") 
+    	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date to) {
+        HttpHeaders headers = new HttpHeaders();
+        byte[] contents=null;
+        contents = reportsService.getFinancialReport(from, to);
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        String filename = "output.pdf";
+        headers.setContentDispositionFormData(filename, filename);
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        return new ResponseEntity<>(contents, headers, HttpStatus.OK);    
     }
 }

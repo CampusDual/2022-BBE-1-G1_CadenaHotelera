@@ -1,16 +1,15 @@
 package com.campusdual.fisionnucelar.gestionHoteles.api.core.service;
+import java.util.Date;
 
-import java.io.ByteArrayOutputStream;
-
-import java.util.List;
-import java.util.Map;
 
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
-import com.ontimize.jee.common.util.remote.BytesBlock;
 
 
 public interface IReportsService {
 
 	public byte[] getReceipt(int bookingId)
 			throws OntimizeJEERuntimeException;
+	
+	public byte[] getFinancialReport(Date from, Date to) throws OntimizeJEERuntimeException;
+	byte[] getReceiptFromHistoric(int bookingId) throws OntimizeJEERuntimeException;
 }
