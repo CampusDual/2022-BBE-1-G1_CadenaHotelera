@@ -272,10 +272,11 @@ public class ClientService implements IClientService {
 	 * @return True if the client has active bookings, false if he hasn't
 	 */
 	private boolean checkActiveReservations(Map<String, Object> keyMap) {
-
+		Map<String,Object> filter =new HashMap<>();
+		filter.put("bk_client", keyMap.get("id_client"));
 		List<String> fields = new ArrayList<>();
 		fields.add("id_booking");
-		EntityResult activeBookings = bookingService.clientactivebookingsQuery(keyMap, fields);
+		EntityResult activeBookings = bookingService.clientactivebookingsQuery(filter, fields);
 		if (!activeBookings.isEmpty())
 			throw new RecordNotFoundException("ERROR_ACTIVE_BOOKINGS_FOUND");
 		return activeBookings.isEmpty();
