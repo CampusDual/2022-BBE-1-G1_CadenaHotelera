@@ -353,7 +353,8 @@ public class BookingServiceTest {
 				assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());
 			}
 		}
-
+	}
+	
 		@Nested
 		@DisplayName("Test booking insert")
 		@TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -364,12 +365,7 @@ public class BookingServiceTest {
 				Map<String, Object> dataToInsert = getDataToInsert();
 				EntityResult insertResult = getGenericBookingER();
 				EntityResult disponibilityResult = new EntityResultMapImpl();
-				EntityResult clientResult = new EntityResultMapImpl();
-				clientResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_client", 2);
-					}
-				});
+				EntityResult clientResult = getClientVipResult();
 				EntityResult roomResult = new EntityResultMapImpl();
 				roomResult.addRecord(new HashMap<String, Object>() {
 					{
@@ -379,7 +375,24 @@ public class BookingServiceTest {
 				});
 				EntityResult activeClientResult = new EntityResultMapImpl();
 				when(daoHelper.insert(bookingDao, dataToInsert)).thenReturn(insertResult);
-				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(activeClientResult);
+		
+				
+				Mockito.doAnswer(new Answer() {
+					private int count = 0;
+
+					@Override
+					public Object answer(InvocationOnMock invocation) throws Throwable {
+						count++;
+						if (count == 1)
+							return clientResult;
+						if (count == 2)
+							return activeClientResult;
+					
+						return invocation;
+					}
+				}).when(daoHelper).query(any(), anyMap(), anyList());
+								
+				
 				Mockito.doAnswer(new Answer() {
 					private int count = 0;
 
@@ -398,14 +411,12 @@ public class BookingServiceTest {
 				EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
 				assertEquals("SUCESSFULL_INSERTION", queryResult.getMessage());
 				assertEquals(EntityResult.OPERATION_SUCCESSFUL, queryResult.getCode());
-				assertEquals(2, queryResult.getRecordValues(0).get("id_booking"));
-
+	
 			}
 
-			
 			@Test
-			@DisplayName("insert booking with a non existing room or client")
-			void test_booking_insert_with_non_existing_room_or_client_() {
+			@DisplayName("insert booking succesfully by a vip client")
+			void test_booking_insert_success_vip_client() {
 				Map<String, Object> dataToInsert = getDataToInsert();
 				EntityResult insertResult = getGenericBookingER();
 				EntityResult disponibilityResult = new EntityResultMapImpl();
@@ -413,6 +424,7 @@ public class BookingServiceTest {
 				clientResult.addRecord(new HashMap<String, Object>() {
 					{
 						put("id_client", 2);
+						put("cl_booking_count",55);
 					}
 				});
 				EntityResult roomResult = new EntityResultMapImpl();
@@ -423,7 +435,82 @@ public class BookingServiceTest {
 					}
 				});
 				EntityResult activeClientResult = new EntityResultMapImpl();
-				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(activeClientResult);
+				when(daoHelper.insert(bookingDao, dataToInsert)).thenReturn(insertResult);
+		
+				
+				Mockito.doAnswer(new Answer() {
+					private int count = 0;
+
+					@Override
+					public Object answer(InvocationOnMock invocation) throws Throwable {
+						count++;
+						if (count == 1)
+							return clientResult;
+						if (count == 2)
+							return activeClientResult;
+					
+						return invocation;
+					}
+				}).when(daoHelper).query(any(), anyMap(), anyList());
+								
+				
+				Mockito.doAnswer(new Answer() {
+					private int count = 0;
+
+					@Override
+					public Object answer(InvocationOnMock invocation) throws Throwable {
+						count++;
+						if (count == 1)
+							return disponibilityResult;
+						if (count == 2)
+							return roomResult;
+					
+						return invocation;
+					}
+				}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
+
+				EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
+				assertEquals("SUCESSFULL_INSERTION_VIP_DISCOUNT_APPLIED", queryResult.getMessage());
+				assertEquals(EntityResult.OPERATION_SUCCESSFUL, queryResult.getCode());
+	
+			}
+			
+			
+			
+			@Test
+			@DisplayName("insert booking with a non existing room or client")
+			void test_booking_insert_with_non_existing_room_or_client_() {
+				Map<String, Object> dataToInsert = getDataToInsert();
+				EntityResult insertResult = getGenericBookingER();
+				EntityResult disponibilityResult = new EntityResultMapImpl();
+				EntityResult clientResult = getClientVipResult();
+				EntityResult roomResult = new EntityResultMapImpl();
+				roomResult.addRecord(new HashMap<String, Object>() {
+					{
+						put("id_room", 2);
+						put("rmt_price", new BigDecimal(40));
+					}
+				});
+				EntityResult activeClientResult = new EntityResultMapImpl();
+				
+				
+				Mockito.doAnswer(new Answer() {
+					private int count = 0;
+
+					@Override
+					public Object answer(InvocationOnMock invocation) throws Throwable {
+						count++;
+						if (count == 1)
+							return clientResult;
+						if (count == 2)
+							return activeClientResult;
+					
+						return invocation;
+					}
+				}).when(daoHelper).query(any(), anyMap(), anyList());
+				
+				
+				
 				Mockito.doAnswer(new Answer() {
 					private int count = 0;
 
@@ -444,8 +531,7 @@ public class BookingServiceTest {
 				assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());
 	
 			}
-						
-			
+								
 			
 			@Test
 			@DisplayName("insert booking succesfully with discount code")
@@ -454,12 +540,19 @@ public class BookingServiceTest {
 				dataToInsert.put("discount_code", "CRAZY_SUMMER_2023");
 				EntityResult insertResult = getGenericBookingER();
 				EntityResult disponibilityResult = new EntityResultMapImpl();
-				EntityResult clientResult = new EntityResultMapImpl();
-				clientResult.addRecord(new HashMap<String, Object>() {
+				EntityResult clientResult = getClientVipResult();
+				
+				EntityResult discountResult = new EntityResultMapImpl();
+				
+				discountResult.addRecord(new HashMap<String, Object>() {
 					{
-						put("id_client", 2);
+						put("dc_name","CRAZY_SUMMER_2023");
+						put("dc_multiplier",new BigDecimal("0.95"));
+						put("dc_leaving_date",null);
 					}
 				});
+				
+				
 				EntityResult roomResult = new EntityResultMapImpl();
 				roomResult.addRecord(new HashMap<String, Object>() {
 					{
@@ -468,8 +561,27 @@ public class BookingServiceTest {
 					}
 				});
 				EntityResult activeClientResult = new EntityResultMapImpl();
+				
+				Mockito.doAnswer(new Answer() {
+					private int count = 0;
+
+					@Override
+					public Object answer(InvocationOnMock invocation) throws Throwable {
+						count++;
+						if (count == 1)
+							return clientResult;
+						if (count == 2)
+							return activeClientResult;
+						if (count == 3)
+							return discountResult;
+					
+						return invocation;
+					}
+				}).when(daoHelper).query(any(), anyMap(), anyList());
+				
+				
 				when(daoHelper.insert(bookingDao, dataToInsert)).thenReturn(insertResult);
-				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(activeClientResult);
+	
 				Mockito.doAnswer(new Answer() {
 					private int count = 0;
 
@@ -480,19 +592,96 @@ public class BookingServiceTest {
 							return disponibilityResult;
 						if (count == 2)
 							return roomResult;
+						
+						
 					
 						return invocation;
 					}
 				}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
 
 				EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
-				assertEquals("SUCESSFULL_INSERTION", queryResult.getMessage());
+				assertEquals("SUCESSFULL_INSERTION_DISCOUNT_CODE_APPLIED", queryResult.getMessage());
 				assertEquals(EntityResult.OPERATION_SUCCESSFUL, queryResult.getCode());
-				assertEquals(2, queryResult.getRecordValues(0).get("id_booking"));
 
 			}
 			
 			
+			@Test
+			@DisplayName("insert booking succesfully with discount code and vip discount")
+			void test_booking_insert_with_discount_code_and_vip_discount() {
+				Map<String, Object> dataToInsert = getDataToInsert();
+				dataToInsert.put("discount_code", "CRAZY_SUMMER_2023");
+				EntityResult insertResult = getGenericBookingER();
+				EntityResult disponibilityResult = new EntityResultMapImpl();
+				EntityResult clientResult = getClientVipResultDiscount();
+				
+				EntityResult discountResult = new EntityResultMapImpl();
+				
+				discountResult.addRecord(new HashMap<String, Object>() {
+					{
+						put("dc_name","CRAZY_SUMMER_2023");
+						put("dc_multiplier",new BigDecimal("0.95"));
+						put("dc_leaving_date",null);
+					}
+				});
+				
+				
+				EntityResult roomResult = new EntityResultMapImpl();
+				roomResult.addRecord(new HashMap<String, Object>() {
+					{
+						put("id_room", 2);
+						put("rmt_price", new BigDecimal(40));
+					}
+				});
+				EntityResult activeClientResult = new EntityResultMapImpl();
+				
+				Mockito.doAnswer(new Answer() {
+					private int count = 0;
+
+					@Override
+					public Object answer(InvocationOnMock invocation) throws Throwable {
+						count++;
+						if (count == 1)
+							return clientResult;
+						if (count == 2)
+							return activeClientResult;
+						if (count == 3)
+							return discountResult;
+					
+						return invocation;
+					}
+				}).when(daoHelper).query(any(), anyMap(), anyList());
+				
+				
+				when(daoHelper.insert(bookingDao, dataToInsert)).thenReturn(insertResult);
+	
+				Mockito.doAnswer(new Answer() {
+					private int count = 0;
+
+					@Override
+					public Object answer(InvocationOnMock invocation) throws Throwable {
+						count++;
+						if (count == 1)
+							return disponibilityResult;
+						if (count == 2)
+							return roomResult;
+						
+						
+					
+						return invocation;
+					}
+				}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
+
+				EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
+				assertEquals("SUCESSFULL_INSERTION_DISCOUNT_CODE_APPLIED_VIP_DISCOUNT_APPLIED", queryResult.getMessage());
+				assertEquals(EntityResult.OPERATION_SUCCESSFUL, queryResult.getCode());
+
+			}
+			
+			
+		
+					
+						
 			@Test
 			@DisplayName("insert booking succesfully with season")
 			void test_booking_insert_with_season() {
@@ -500,12 +689,7 @@ public class BookingServiceTest {
 	
 				EntityResult insertResult = getGenericBookingER();
 				EntityResult disponibilityResult = new EntityResultMapImpl();
-				EntityResult clientResult = new EntityResultMapImpl();
-				clientResult.addRecord(new HashMap<String, Object>() {
-					{
-						put("id_client", 2);
-					}
-				});
+				EntityResult clientResult = getClientVipResult();
 				EntityResult roomResult = new EntityResultMapImpl();
 				roomResult.addRecord(new HashMap<String, Object>() {
 					{
@@ -516,11 +700,7 @@ public class BookingServiceTest {
 				
 				
 				EntityResult seasonResult = getSeasonResult();
-			
-							
 				EntityResult activeClientResult = new EntityResultMapImpl();
-				when(daoHelper.insert(bookingDao, dataToInsert)).thenReturn(insertResult);
-				
 				Mockito.doAnswer(new Answer() {
 					private int count = 0;
 
@@ -528,18 +708,20 @@ public class BookingServiceTest {
 					public Object answer(InvocationOnMock invocation) throws Throwable {
 						count++;
 						if (count == 1)
-							return activeClientResult;
+							return clientResult;
 						if (count == 2)
 							return seasonResult;
-			
+					
+					
 						return invocation;
 					}
 				}).when(daoHelper).query(any(), anyMap(), anyList());
 				
+							
 				
+				when(daoHelper.insert(bookingDao, dataToInsert)).thenReturn(insertResult);
 				
-				
-				
+	
 				Mockito.doAnswer(new Answer() {
 					private int count = 0;
 
@@ -559,12 +741,11 @@ public class BookingServiceTest {
 				EntityResult queryResult = bookingService.bookingInsert(dataToInsert);
 				assertEquals("SUCESSFULL_INSERTION", queryResult.getMessage());
 				assertEquals(EntityResult.OPERATION_SUCCESSFUL, queryResult.getCode());
-				assertEquals(2, queryResult.getRecordValues(0).get("id_booking"));
+	
 
 			}
 			
-	
-			
+				
 			
 			@Test
 			@DisplayName("insert booking fails due client is not active")
@@ -670,18 +851,15 @@ public class BookingServiceTest {
 				assertEquals(EntityResult.OPERATION_WRONG, queryResult.getCode());
 
 			}
-
-			@Test
+		@Test
 			@DisplayName("insert booking with empty request")
 			void test_booking_insert_with_dates_with_empty_request() {
 				Map<String, Object> emptyMap = new HashMap<>();
 				EntityResult emptyResult = new EntityResultMapImpl();
-				when(daoHelper.insert(any(), anyMap())).thenReturn(emptyResult);
 				EntityResult insertResult = bookingService.bookingInsert(emptyMap);
 				assertEquals("FIELDS_MUST_BE_PROVIDED", insertResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, insertResult.getCode());
 			}
-
 		}
 
 //		@Nested
@@ -742,7 +920,16 @@ public class BookingServiceTest {
 				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult result = new EntityResultMapImpl();
 				EntityResult er = getChangeDatesResult();
-					
+				EntityResult clientResult=getClientVipResult();			
+				EntityResult disponibilityResult = new EntityResultMapImpl();
+				disponibilityResult.addRecord(new HashMap<String, Object>() {
+					{
+						put("rm_room_type", 2);
+						put("rm_hotel",3);
+						put("id_room",3);
+					}
+				});
+											
 				EntityResult emptyEr = new EntityResultMapImpl();				
 				
 				Mockito.doAnswer(new Answer() {
@@ -767,7 +954,7 @@ public class BookingServiceTest {
 				doReturn(false).when(userControl).controlAccessClient(anyInt());
 				doNothing().when(userControl).controlAccess(anyInt());
 						
-				
+									
 				Mockito.doAnswer(new Answer() {
 					private int count = 0;
 					@Override
@@ -776,90 +963,46 @@ public class BookingServiceTest {
 						if (count == 1)
 							return er;
 						if (count == 2)
-							return emptyEr;
+							return disponibilityResult;
 						if (count == 3)
 							return er;
 						return invocation;
 					}
 				}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
 
-				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
-				assertEquals("SUCCESSFUL_UPDATE", updateResult.getMessage());
-				assertEquals(EntityResult.OPERATION_SUCCESSFUL, updateResult.getCode());
+				
+				try (MockedStatic<EntityResultTools> utilities = Mockito.mockStatic(EntityResultTools.class)) {
+
+					utilities.when(() -> EntityResultTools.dofilter(any(), anyMap())).thenReturn(disponibilityResult);				
+					EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
+					assertEquals("SUCCESSFUL_UPDATE", updateResult.getMessage());
+					assertEquals(EntityResult.OPERATION_SUCCESSFUL, updateResult.getCode());
+				}
+				
+			
 
 			}
-			@Test
-			@DisplayName("change dates succesfully")
-			void change_dates_da() throws NotAuthorizedException {
-				Map<String, Object> attrMap = getGenericAttrMap();
-				Map<String, Object> keyMap = getBookingKeyMap();
-				EntityResult result = new EntityResultMapImpl();
-				EntityResult er = getChangeDatesResult();
-					
-				EntityResult emptyEr = new EntityResultMapImpl();				
-				
-				Mockito.doAnswer(new Answer() {
-					private int count = 0;
-					@Override
-					public Object answer(InvocationOnMock invocation) throws Throwable {
-						count++;
-						if (count == 1)
-							return er;
-						if (count == 2)
-							return er;
-						if (count == 3)
-							return emptyEr;
-											
-						return invocation;
-					}
-				}).when(daoHelper).query(any(), anyMap(), anyList());
-				
-		
-				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);	
-				
-				doReturn(false).when(userControl).controlAccessClient(anyInt());
-				doNothing().when(userControl).controlAccess(anyInt());
-						
-				
-				Mockito.doAnswer(new Answer() {
-					private int count = 0;
-					@Override
-					public Object answer(InvocationOnMock invocation) throws Throwable {
-						count++;
-						if (count == 1)
-							return er;
-						if (count == 2)
-							return emptyEr;
-						if (count == 3)
-							return er;
-						return invocation;
-					}
-				}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
-
-				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
-				assertEquals("SUCCESSFUL_UPDATE", updateResult.getMessage());
-				assertEquals(EntityResult.OPERATION_SUCCESSFUL, updateResult.getCode());
-
-			}
-			
-			
-			
 			
 			@Test
 			@DisplayName("try to change dates on a promotional booking")
-			void change_date_promotional() throws NotAuthorizedException {
+			void fail_change_promotional_booking() throws NotAuthorizedException {
 				Map<String, Object> attrMap = getGenericAttrMap();
 				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult result = new EntityResultMapImpl();
-				EntityResult er = getChangeDatesResult();
-				er.put("bk_promotional", Arrays.asList(1));
-					
+				EntityResult er = getChangeDatesResultPromotional();
+	
+				EntityResult clientResult=getClientVipResult();			
+				EntityResult disponibilityResult = new EntityResultMapImpl();
+				disponibilityResult.addRecord(new HashMap<String, Object>() {
+					{
+						put("rm_room_type", 2);
+						put("rm_hotel",3);
+						put("id_room",3);
+					}
+				});
+											
 				EntityResult emptyEr = new EntityResultMapImpl();				
 				
-	
-				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);	
-				
-
 				Mockito.doAnswer(new Answer() {
 					private int count = 0;
 					@Override
@@ -868,26 +1011,52 @@ public class BookingServiceTest {
 						if (count == 1)
 							return er;
 						if (count == 2)
-							return emptyEr;
+							return er;
 						if (count == 3)
-							return er;				doReturn(false).when(userControl).controlAccessClient(anyInt());
-
+							return emptyEr;
+											
+						return invocation;
+					}
+				}).when(daoHelper).query(any(), anyMap(), anyList());
+				
+		
+				when(daoHelper.update(any(), anyMap(), anyMap())).thenReturn(result);	
+				
+						
+									
+				Mockito.doAnswer(new Answer() {
+					private int count = 0;
+					@Override
+					public Object answer(InvocationOnMock invocation) throws Throwable {
+						count++;
+						if (count == 1)
+							return er;
+						if (count == 2)
+							return disponibilityResult;
+						if (count == 3)
+							return er;
 						return invocation;
 					}
 				}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
 
-				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
-				assertEquals("PROMOTIONAL_BOOKING_CAN'T_BE_UPDATED", updateResult.getMessage());
-				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+				
+				try (MockedStatic<EntityResultTools> utilities = Mockito.mockStatic(EntityResultTools.class)) {
+
+					utilities.when(() -> EntityResultTools.dofilter(any(), anyMap())).thenReturn(disponibilityResult);				
+					EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
+					assertEquals("PROMOTIONAL_BOOKING_CAN'T_BE_UPDATED", updateResult.getMessage());
+					assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
+				}
+				
+			
 
 			}
 			
 			
 			
-			
 			@Test
-			@DisplayName("try to change dates to an occupied room")
-			void change_dates_occupied_room() throws NotAuthorizedException {
+			@DisplayName("no room disponibility")
+			void no_room_disponibility() throws NotAuthorizedException {
 				Map<String, Object> attrMap = getGenericAttrMap();
 				Map<String, Object> keyMap = getBookingKeyMap();
 				EntityResult result = new EntityResultMapImpl();
@@ -926,7 +1095,7 @@ public class BookingServiceTest {
 						if (count == 1)
 							return er;
 						if (count == 2)
-							return er;
+							return emptyEr;
 						if (count == 3)
 							return er;
 						return invocation;
@@ -934,12 +1103,11 @@ public class BookingServiceTest {
 				}).when(daoHelper).query(any(), anyMap(), anyList(), anyString());
 
 				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
-				assertEquals("OCCUPIED_ROOM", updateResult.getMessage());
+				assertEquals("NO_ROOM_DISPONIBILITY", updateResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 
-			}
-	
-
+			}	
+				
 
 			@Test
 			@DisplayName("change dates without id_booking")
@@ -947,7 +1115,6 @@ public class BookingServiceTest {
 				Map<String, Object> attrMap = getGenericAttrMap();
 				Map<String, Object> keyMap = new HashMap<>();
 				EntityResult queryResult = new EntityResultMapImpl();
-				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getChangeDatesResult());
 				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
 				assertEquals("ID_BOOKING_REQUIRED", updateResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
@@ -1009,13 +1176,18 @@ public class BookingServiceTest {
 				assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 			}
 			
+			
+			
 			@Test
 			@DisplayName("change dates fails due not authorized client")
 			void test_change_dates_fails_due_not_authorized_client() throws NotAuthorizedException {
 				Map<String, Object> attrMap =getGenericAttrMap();
 				attrMap.put("bk_room", 2);
+				EntityResult er = getChangeDatesResult();
 				Map<String, Object> keyMap = getBookingKeyMap();
-				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getChangeDatesResult());
+				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(er);
+				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(er);
+					
 				NotAuthorizedException exception = new NotAuthorizedException("NOT_AUTHORIZED");
 				doThrow(exception).when(userControl).controlAccessClient(anyInt());
 				EntityResult updateResult = bookingService.changedatesUpdate(attrMap, keyMap);
@@ -1029,6 +1201,7 @@ public class BookingServiceTest {
 				attrMap.put("bk_room", 2);
 				Map<String, Object> keyMap = getBookingKeyMap();
 				when(daoHelper.query(any(), anyMap(), anyList(),anyString())).thenReturn(getChangeDatesResult());
+				when(daoHelper.query(any(), anyMap(), anyList())).thenReturn(getChangeDatesResult());
 				NotAuthorizedException exception = new NotAuthorizedException("NOT_AUTHORIZED");
 				doReturn(false).when(userControl).controlAccessClient(anyInt());
 				doThrow(exception).when(userControl).controlAccess(anyInt());
@@ -1091,10 +1264,9 @@ public class BookingServiceTest {
 				EntityResult deleteResult = bookingService.bookingDelete(keyMap);
 				assertEquals("BOOKING_DOESN'T_EXISTS", deleteResult.getMessage());
 				assertEquals(EntityResult.OPERATION_WRONG, deleteResult.getCode());
-
 			}
 		}
-	}
+	
 
 	@Nested
 	@DisplayName("Test booking extra update")

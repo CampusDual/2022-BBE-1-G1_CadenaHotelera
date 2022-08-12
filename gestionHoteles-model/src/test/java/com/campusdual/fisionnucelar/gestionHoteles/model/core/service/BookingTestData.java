@@ -174,6 +174,7 @@ public class BookingTestData {
 		attrMap.put("bk_check_in", checkIn);
 		attrMap.put("bk_check_out", checkOut);
 		attrMap.put("bk_price", 100);
+		attrMap.put("bk_room_type", 2);
 		return attrMap;
 	}
 
@@ -292,12 +293,36 @@ public class BookingTestData {
 				put("bk_promotional", 0);
 				put("bk_client", 3);
 				put("rm_hotel", 3);
+				put("cl_booking_count",34);
 			}
 		});
 
 		return er;
 	}
 
+	public static EntityResult getChangeDatesResultPromotional() {
+		EntityResult er = new EntityResultMapImpl();
+		er.addRecord(new HashMap<String, Object>() {
+			{
+				put("id_booking", 2);
+				put("bk_room", 2);
+				put("bk_check_in", "2000-11-11");
+				put("bk_check_out", "2000-12-12");
+				put("bk_price", 100);
+				put("rmt_price", new BigDecimal(3));
+				put("bk_promotional", 1);
+				put("bk_client", 3);
+				put("rm_hotel", 3);
+				put("cl_booking_count",34);
+			}
+		});
+
+		return er;
+	}
+	
+	
+	
+	
 	public static EntityResult getSeasonResult() {
 		Calendar calendar = Calendar.getInstance();
 		calendar.set(3922, 11, 3);
@@ -315,5 +340,30 @@ public class BookingTestData {
 		});
 		return seasonResult;
 	}
+	
+	public static EntityResult getClientVipResult() {
+	EntityResult clientResult = new EntityResultMapImpl();
+	clientResult.addRecord(new HashMap<String, Object>() {
+		{
+			put("id_client", 2);
+			put("cl_booking_count",40);
+		}
+	});
+	return clientResult;
+	}
+	
+	public static EntityResult getClientVipResultDiscount() {
+		EntityResult clientResult = new EntityResultMapImpl();
+		clientResult.addRecord(new HashMap<String, Object>() {
+			{
+				put("id_client", 2);
+				put("cl_booking_count",55);
+			}
+		});
+		return clientResult;
+		}
+	
+	
+	
 
 }

@@ -231,14 +231,14 @@ public class ReportsService implements IReportsService {
 				"bk_entry_date", "bk_last_update", "bk_extras_price", "bk_check_in", "bk_check_out", "bk_room"));
 				
 		Map<String,Object>filterClient=new HashMap<>();
-		filterClient.put("id_Client", filterClient);
+		filterClient.put("id_client", bookingResult.getRecordValues(0).get("bk_client"));
 		
-		EntityResult clientResult=daoHelper.query(clientDao, keyMap, Arrays.asList("cl_booking_count"));
+		EntityResult clientResult=daoHelper.query(clientDao, filterClient, Arrays.asList("cl_booking_count"));
 		Integer bookingCount=(Integer) clientResult.getRecordValues(0).get("cl_booking_count");
 		bookingCount++;
 		Map<String,Object>updateMap=new HashMap<>();
-		updateMap.put("cl_booking_update", bookingCount);
-		daoHelper.update(clientDao, filterClient, updateMap);
+		updateMap.put("cl_booking_count", bookingCount);
+		daoHelper.update(clientDao, updateMap,filterClient);
 			
 		keyMap.remove("id_booking");
 		keyMap.put("bk_client", bookingResult.getRecordValues(0).get("bk_client"));

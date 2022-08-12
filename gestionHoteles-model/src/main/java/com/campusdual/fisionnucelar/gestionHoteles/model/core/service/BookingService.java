@@ -529,7 +529,9 @@ public class BookingService implements IBookingService {
 
 	/**
 	 * 
-	 * Adds a new register on the bookings table.
+	 * Adds a new register on the bookings table. It calculates the price based on the dates,
+	 * the room_type price, if there is any active season on the hotel. It also takes in count
+	 * if the user introduces a valid discount code or/and is considered a vip client.
 	 * 
 	 * @since 27/06/2022
 	 * @param The fields of the new register
@@ -555,11 +557,15 @@ public class BookingService implements IBookingService {
 	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult bookingInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 
-		attrMap.put("bk_entry_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
-		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
+		
 		EntityResult insertResult = new EntityResultMapImpl();
 		EntityResult clientResult = new EntityResultMapImpl();
 		try {
+			if (attrMap.isEmpty()) {
+				throw new AllFieldsRequiredException("FIELDS_MUST_BE_PROVIDED");
+			}
+			attrMap.put("bk_entry_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
+			attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			if (attrMap.containsKey("bk_client")) {
 				clientResult = checkIfClientIsActive(attrMap);
 			}
@@ -575,17 +581,13 @@ public class BookingService implements IBookingService {
 			insertResult.put("bk_price", attrMap.get("bk_price"));
 
 			if (attrMap.get("promotions") != null && attrMap.get("vip_client") != null) {
-				insertResult.setMessage("SUCESSFULL_OPERATION_DISCOUNT_CODE_APPLIED_VIP_DISCOUNT_APPLIED");
+				insertResult.setMessage("SUCESSFULL_INSERTION_DISCOUNT_CODE_APPLIED_VIP_DISCOUNT_APPLIED");
 			} else if (attrMap.get("promotions") != null) {
-				insertResult.setMessage("SUCESSFULL_OPERATION_DISCOUNT_CODE_APPLIED");
+				insertResult.setMessage("SUCESSFULL_INSERTION_DISCOUNT_CODE_APPLIED");
 			} else if (attrMap.get("vip_client") != null) {
-				insertResult.setMessage("SUCESSFULL_OPERATION_VIP_DISCOUNT_APPLIED");
+				insertResult.setMessage("SUCESSFULL_INSERTION_VIP_DISCOUNT_APPLIED");
 			} else {
-				insertResult.setMessage("SUCESSFULL_OPERATION");
-			}
-
-			if (insertResult.isEmpty()) {
-				throw new AllFieldsRequiredException("FIELDS_MUST_BE_PROVIDED");
+				insertResult.setMessage("SUCESSFULL_INSERTION");
 			}
 
 		} catch (DataIntegrityViolationException e) {
@@ -602,6 +604,18 @@ public class BookingService implements IBookingService {
 		return insertResult;
 	}
 
+	
+	
+	/**
+	 * 
+	 * It checks it the user that is trying to insert or update a booking has more than 50
+	 * completed bookings. On that case it is considered as a vip client and has a 5% discount
+	 * on the booking price.
+	 * 
+	 * @since 12/08/2022
+	 * @param The params of the bookings and the client data
+	 */
+	
 	private void checkVipClient(Map<String, Object> attrMap, EntityResult clientResult, EntityResult result) {
 		if ((Integer) clientResult.getRecordValues(0).get("cl_booking_count") > 50) {
 			BigDecimal bk_price = (BigDecimal) attrMap.get("bk_price");
@@ -988,31 +1002,36 @@ public class BookingService implements IBookingService {
 		Map<String, Object> mapLeavingDate = new HashMap<>();
 		EntityResult updateResult = new EntityResultMapImpl();
 		EntityResult bookingResult = new EntityResultMapImpl();
-
-		EntityResult result = new EntityResultMapImpl();
-		result = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "rm_hotel", "bk_promotional","cl_booking_count"),
-				"SEARCH_BOOKING_HOTEL");
+		EntityResult freeRoomResult = new EntityResultMapImpl();
 		try {
-			if ((Integer) result.getRecordValues(0).get("bk_promotional") == 1) {
+			checkIfBookingExists(keyMap);
+
+			bookingResult = daoHelper.query(bookingDao, keyMap,
+					Arrays.asList("bk_client", "rm_hotel", "bk_promotional", "cl_booking_count", "rm_room_type"),
+					"SEARCH_BOOKING_HOTEL");
+
+			if ((Integer) bookingResult.getRecordValues(0).get("bk_promotional") == 1) {
 				throw new NotAuthorizedException("PROMOTIONAL_BOOKING_CAN'T_BE_UPDATED");
 			}
 
-			if (!userControl.controlAccessClient((int) result.getRecordValues(0).get("bk_client"))) {
-				userControl.controlAccess((int) result.getRecordValues(0).get("rm_hotel"));
+			if (!userControl.controlAccessClient((int) bookingResult.getRecordValues(0).get("bk_client"))) {
+				userControl.controlAccess((int) bookingResult.getRecordValues(0).get("rm_hotel"));
 			}
 
 			checkIfBookingActive(keyMap);
 			mapLeavingDate.put("bk_leaving_date", new Date(System.currentTimeMillis()));
 			daoHelper.update(bookingDao, mapLeavingDate, keyMap);
 
-			bookingResult = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_room"));
-			attrMap.put("bk_room", bookingResult.getRecordValues(0).get("bk_room"));
+			attrMap.put("bk_room_type", bookingResult.getRecordValues(0).get("rm_room_type"));
+			attrMap.put("bk_hotel", bookingResult.getRecordValues(0).get("rm_hotel"));
 
-			checkDisponibility(attrMap);
+			freeRoomResult = checkRoomTypeDisponibility(attrMap);
+			attrMap.put("bk_room", freeRoomResult.getRecordValues(0).get("id_room"));
+
 			calculateBookingPrice(attrMap);
-			
-			checkVipClient(attrMap, result, updateResult);		
-			
+
+			checkVipClient(attrMap, bookingResult, updateResult);
+
 			attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 
 			updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
@@ -1152,6 +1171,52 @@ public class BookingService implements IBookingService {
 
 	}
 
+	
+	/**
+	 * 
+	 * Checks if there is free rooms of a concrete roomtype, in a 
+	 * specific range of dates and hotel
+	 * 
+	 * @since 12/08/2022
+	 * @param The roomtype, the hotel and the dates
+	 * @return  A result with the free rooms
+	 * @exception OccupiedRoomException when there is not free rooms that meet the criteria
+	 * @exception InvalidDateException  when it receives an invalid date range
+	 */
+	private EntityResult checkRoomTypeDisponibility(Map<String, Object> attrMap)
+			throws ParseException, InvalidDateException {
+		Map<String, Object> filterDates = new HashMap<>();
+		Map<String, Object> filterHotel = new HashMap<>();
+		filterHotel.put("rm_room_type", attrMap.get("bk_room_type"));
+		filterHotel.put("rm_hotel", attrMap.get("bk_hotel"));
+		EntityResult result;
+
+		if (attrMap.get("bk_check_in") == null || attrMap.get("bk_check_out") == null) {
+			throw new EmptyRequestException("CHECK_IN_AND_CHECK_OUT_REQUIRED");
+		}
+
+		Date startDate = (Date) attrMap.get("bk_check_in");
+		Date endDate = (Date) attrMap.get("bk_check_out");
+		checkDates(startDate, endDate);
+
+		List<String> columns = new ArrayList<>();
+		columns.add("rm_room_type");
+		columns.add("rm_hotel");
+		columns.add("id_room");
+
+		filterDates.put(SQLStatementBuilder.ExtendedSQLConditionValuesProcessor.EXPRESSION_KEY,
+				buildExpressionToSearchRooms(startDate, endDate));
+
+		result = daoHelper.query(bookingDao, filterDates, columns, "AVAILABLE_ROOMS");
+
+		result = EntityResultTools.dofilter(result, filterHotel);
+
+		if (result.isEmpty()) {
+			throw new OccupiedRoomException("NO_ROOM_DISPONIBILITY");
+		}
+		return result;
+	}
+
 	/**
 	 * Checks if the provid id_booking exists in bookings table
 	 * 
@@ -1166,7 +1231,7 @@ public class BookingService implements IBookingService {
 			throw new RecordNotFoundException("ID_BOOKING_REQUIRED");
 		}
 		EntityResult existingBooking = this.daoHelper.query(bookingDao, keyMap,
-				Arrays.asList("id_booking", "bke_leaving_date"));
+				Arrays.asList("id_booking", "bk_leaving_date"));
 		if (existingBooking.isEmpty())
 			throw new RecordNotFoundException("BOOKING_DOESN'T_EXISTS");
 		return existingBooking.isEmpty();

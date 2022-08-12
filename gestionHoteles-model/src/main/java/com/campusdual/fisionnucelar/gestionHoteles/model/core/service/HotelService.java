@@ -208,7 +208,7 @@ public class HotelService implements IHotelService {
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (ClassCastException e) {
 		log.error("unable to insert an hotel. Request : {} ", attrMap, e);
-		control.setErrorMessage(insertResult, "INVALID_PHONE");
+		control.setErrorMessage(insertResult, "INVALID_PHONE");}
 		return insertResult;
 	}
 
