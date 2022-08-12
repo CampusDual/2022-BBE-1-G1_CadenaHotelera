@@ -20,6 +20,10 @@ public class ClientDao extends OntimizeJdbcDaoSupport {
 	public static final String ATTR_NIF = "CL_NIF";
 	public static final String ATTR_NAME = "CL_NAME";
 	public static final String ATTR_EMAIL = "CL_EMAIL";
-	public static final String ATTR_PHONE = "CL_PHONE";
-
+	public static final String ATTR_PHONE = "CL_PHONE";	
+	public static final String ATTR_ENTRY_DATE = "CL_ENTRY_DATE";
+	public static final String ATTR_LAST_UPDATE = "CL_LAST_UPDATE";
+	public static final String ATTR_LEAVING_DATE = "CL_LEAVING_DATE";
+	public static final String ATTR_BOOKING_COUNT = "CL_BOOKING_COUNT";
+	
 }

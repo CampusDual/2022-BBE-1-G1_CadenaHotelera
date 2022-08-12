@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -557,26 +558,37 @@ public class BookingService implements IBookingService {
 		attrMap.put("bk_entry_date", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		EntityResult insertResult = new EntityResultMapImpl();
+		EntityResult clientResult = new EntityResultMapImpl();
 		try {
 			if (attrMap.containsKey("bk_client")) {
-				checkIfClientIsActive(attrMap);
+				clientResult = checkIfClientIsActive(attrMap);
 			}
 			if (attrMap.containsKey("bk_room")) {
 				checkDisponibility(attrMap);
 				calculateBookingPrice(attrMap);
 			}
-
 			if (attrMap.get("discount_code") != null) {
 				checkDiscountCode(attrMap);
 			}
-
+			checkVipClient(attrMap, clientResult, insertResult);
 			insertResult = this.daoHelper.insert(this.bookingDao, attrMap);
+			insertResult.put("bk_price", attrMap.get("bk_price"));
+
+			if (attrMap.get("promotions") != null && attrMap.get("vip_client") != null) {
+				insertResult.setMessage("SUCESSFULL_OPERATION_DISCOUNT_CODE_APPLIED_VIP_DISCOUNT_APPLIED");
+			} else if (attrMap.get("promotions") != null) {
+				insertResult.setMessage("SUCESSFULL_OPERATION_DISCOUNT_CODE_APPLIED");
+			} else if (attrMap.get("vip_client") != null) {
+				insertResult.setMessage("SUCESSFULL_OPERATION_VIP_DISCOUNT_APPLIED");
+			} else {
+				insertResult.setMessage("SUCESSFULL_OPERATION");
+			}
 
 			if (insertResult.isEmpty()) {
 				throw new AllFieldsRequiredException("FIELDS_MUST_BE_PROVIDED");
 			}
-			insertResult.setMessage("SUCESSFULL_INSERTION");
-		}  catch (DataIntegrityViolationException e) {
+
+		} catch (DataIntegrityViolationException e) {
 			log.error("unable to save booking. Request : {}", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (ClassCastException e) {
@@ -588,6 +600,18 @@ public class BookingService implements IBookingService {
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
+	}
+
+	private void checkVipClient(Map<String, Object> attrMap, EntityResult clientResult, EntityResult result) {
+		if ((Integer) clientResult.getRecordValues(0).get("cl_booking_count") > 50) {
+			BigDecimal bk_price = (BigDecimal) attrMap.get("bk_price");
+			BigDecimal vipClientDiscount = new BigDecimal("0.95");
+			bk_price = bk_price.multiply(vipClientDiscount);
+			bk_price = bk_price.setScale(2, RoundingMode.HALF_EVEN);
+			attrMap.put("bk_price", bk_price);
+			attrMap.put("vip_client", "vip_client");
+		}
+
 	}
 
 	/**
@@ -613,6 +637,7 @@ public class BookingService implements IBookingService {
 			bookingPrice = bookingPrice.multiply((BigDecimal) discountResult.getRecordValues(0).get("dc_multiplier"));
 			attrMap.put("bk_promotional", 1);
 			attrMap.put("bk_price", bookingPrice);
+			attrMap.put("promotions", "code discount: " + discountResult.getRecordValues(0).get("dc_multiplier"));
 		}
 
 	}
@@ -660,7 +685,9 @@ public class BookingService implements IBookingService {
 			long days = time.convert(diff, TimeUnit.MILLISECONDS);
 			BigDecimal bookingDays = new BigDecimal(days);
 			bookingPrice = bookingDays.multiply(rmt_price);
+			bookingPrice = bookingPrice.setScale(2, RoundingMode.HALF_EVEN);
 		}
+
 		attrMap.put("bk_price", bookingPrice);
 	}
 
@@ -706,6 +733,7 @@ public class BookingService implements IBookingService {
 			}
 			bookingPrice = bookingPrice.add(priceToAdd);
 		}
+		bookingPrice = bookingPrice.setScale(2, RoundingMode.HALF_EVEN);
 
 		return bookingPrice;
 	}
@@ -962,7 +990,7 @@ public class BookingService implements IBookingService {
 		EntityResult bookingResult = new EntityResultMapImpl();
 
 		EntityResult result = new EntityResultMapImpl();
-		result = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "rm_hotel", "bk_promotional"),
+		result = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "rm_hotel", "bk_promotional","cl_booking_count"),
 				"SEARCH_BOOKING_HOTEL");
 		try {
 			if ((Integer) result.getRecordValues(0).get("bk_promotional") == 1) {
@@ -982,7 +1010,9 @@ public class BookingService implements IBookingService {
 
 			checkDisponibility(attrMap);
 			calculateBookingPrice(attrMap);
-
+			
+			checkVipClient(attrMap, result, updateResult);		
+			
 			attrMap.put("bk_last_update", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 
 			updateResult = this.daoHelper.update(this.bookingDao, attrMap, keyMap);
@@ -991,8 +1021,8 @@ public class BookingService implements IBookingService {
 		} catch (InvalidDateException | OccupiedRoomException | EmptyRequestException | NotAuthorizedException
 				| RecordNotFoundException e) {
 			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
-			control.setErrorMessage(updateResult, e.getMessage());			
-			//TODO check if ParseException ever throw
+			control.setErrorMessage(updateResult, e.getMessage());
+			// TODO check if ParseException ever throw
 		} catch (ParseException e) {
 			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, "INVALID_DATE_FORMAT");
@@ -1226,9 +1256,10 @@ public class BookingService implements IBookingService {
 	 * @exception RecordNotFoundException sends a message to the user if the client
 	 *                                    provided is not active
 	 */
-	private boolean checkIfClientIsActive(Map<String, Object> keyMap) {
+	private EntityResult checkIfClientIsActive(Map<String, Object> keyMap) {
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_client");
+		attrList.add("cl_booking_count");
 		attrList.add("cl_leaving_date");
 		Map<String, Object> attrMap = new HashMap<>();
 		attrMap.put("id_client", keyMap.get("bk_client"));
@@ -1237,7 +1268,7 @@ public class BookingService implements IBookingService {
 		if (activeClient.getRecordValues(0).get("cl_leaving_date") != null) {
 			throw new RecordNotFoundException("CLIENT_IS_NOT_ACTIVE");
 		}
-		return true;
+		return activeClient;
 	}
 
 	/**

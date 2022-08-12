@@ -40,6 +40,9 @@ public class ReportsService implements IReportsService {
 	@Autowired
 	private BookingDao bookingDao;
 	@Autowired
+	private ClientDao clientDao;
+	
+	@Autowired
 	private BookingHistDao bookingHistDao;
 	@Autowired
 	private BookingExtraDao bookingExtraDao;
@@ -226,6 +229,17 @@ public class ReportsService implements IReportsService {
 		keyMap.put("id_booking", bookingId);
 		EntityResult bookingResult = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "bk_price",
 				"bk_entry_date", "bk_last_update", "bk_extras_price", "bk_check_in", "bk_check_out", "bk_room"));
+				
+		Map<String,Object>filterClient=new HashMap<>();
+		filterClient.put("id_Client", filterClient);
+		
+		EntityResult clientResult=daoHelper.query(clientDao, keyMap, Arrays.asList("cl_booking_count"));
+		Integer bookingCount=(Integer) clientResult.getRecordValues(0).get("cl_booking_count");
+		bookingCount++;
+		Map<String,Object>updateMap=new HashMap<>();
+		updateMap.put("cl_booking_update", bookingCount);
+		daoHelper.update(clientDao, filterClient, updateMap);
+			
 		keyMap.remove("id_booking");
 		keyMap.put("bk_client", bookingResult.getRecordValues(0).get("bk_client"));
 		keyMap.put("bk_price", bookingResult.getRecordValues(0).get("bk_price"));
