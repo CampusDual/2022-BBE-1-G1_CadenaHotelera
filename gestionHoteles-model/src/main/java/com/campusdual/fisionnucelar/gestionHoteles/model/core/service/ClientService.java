@@ -22,9 +22,11 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IBookingServ
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IClientService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.BookingDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.ClientDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.AllFieldsRequiredException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidEmailException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidPhoneException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
@@ -67,7 +69,6 @@ public class ClientService implements IClientService {
 	Validator dataValidator;
 
 	public ClientService() {
-		super();
 		this.control = new Control();
 		this.dataValidator=new Validator();
 		this.userControl=new UserControl();
@@ -125,8 +126,15 @@ public class ClientService implements IClientService {
 			if (attrMap.get("cl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("cl_email").toString());
 			}
+			if(attrMap.containsKey("cl_country_code") || attrMap.containsKey("cl_phone")){
+				if(!attrMap.containsKey("cl_country_code") && attrMap.containsKey("cl_phone")) throw new AllFieldsRequiredException("CL_COUNTRY_CODE_REQUIRED");
+				if(!attrMap.containsKey("cl_phone") && attrMap.containsKey("cl_country_code")) throw new AllFieldsRequiredException("CL_PHONE_REQUIRED");
+				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("cl_country_code"), (String)attrMap.get("cl_phone"))) {
+					throw new InvalidPhoneException("INVALID_PHONE");
+				}
+			}
 			insertResult = this.daoHelper.insert(this.clientDao, attrMap);
-		} catch (InvalidEmailException e) {
+		} catch (InvalidEmailException | InvalidPhoneException | AllFieldsRequiredException e) {
 			log.error("unable to insert a client. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DuplicateKeyException e) {
@@ -170,6 +178,14 @@ public class ClientService implements IClientService {
 			
 			if (attrMap.get("cl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("cl_email").toString());
+			}
+			
+			if(attrMap.containsKey("cl_country_code") || attrMap.containsKey("cl_phone")) {
+				if(!attrMap.containsKey("cl_country_code") && attrMap.containsKey("cl_phone")) throw new AllFieldsRequiredException("CL_COUNTRY_CODE_REQUIRED");
+				if(!attrMap.containsKey("cl_phone") && attrMap.containsKey("cl_country_code")) throw new AllFieldsRequiredException("CL_PHONE_REQUIRED");
+				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"), (String)attrMap.get("htl_phone"))) {
+					throw new InvalidPhoneException("INVALID_PHONE");
+				}
 			}
 
 			updateResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
@@ -256,10 +272,11 @@ public class ClientService implements IClientService {
 	 * @return True if the client has active bookings, false if he hasn't
 	 */
 	private boolean checkActiveReservations(Map<String, Object> keyMap) {
-
+		Map<String,Object> filter =new HashMap<>();
+		filter.put("bk_client", keyMap.get("id_client"));
 		List<String> fields = new ArrayList<>();
 		fields.add("id_booking");
-		EntityResult activeBookings = bookingService.clientactivebookingsQuery(keyMap, fields);
+		EntityResult activeBookings = bookingService.clientactivebookingsQuery(filter, fields);
 		if (!activeBookings.isEmpty())
 			throw new RecordNotFoundException("ERROR_ACTIVE_BOOKINGS_FOUND");
 		return activeBookings.isEmpty();

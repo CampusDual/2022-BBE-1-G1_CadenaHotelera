@@ -35,7 +35,7 @@ public class HotelServiceTest {
 	@Mock
 	DefaultOntimizeDaoHelper daoHelper;
 
-	@Mock
+
 	GooglePlaces googleSearch;
 	
 	@InjectMocks
@@ -251,9 +251,23 @@ public class HotelServiceTest {
 			dataToInsert.put("htl_name", "FN Oviedo");
 			dataToInsert.put("htl_email", "fnoviedo@fnhotels.com");
 			dataToInsert.put("htl_address", "Calle Uria, 98");
+			dataToInsert.put("htl_country_code", 34);
 			EntityResult entityResult = hotelService.hotelInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			assertEquals("COUNTRY_CODE_AND_PHONE_REQUIRED", entityResult.getMessage());
+			assertEquals("HTL_PHONE_REQUIRED", entityResult.getMessage());
+		}
+		@Test
+		@DisplayName("Fail due empty country code field")
+		void hotel_insert_withouth_country_code() {
+			EntityResult insertResult = new EntityResultMapImpl();
+			Map<String, Object> dataToInsert = new HashMap<>();
+			dataToInsert.put("htl_name", "FN Oviedo");
+			dataToInsert.put("htl_email", "fnoviedo@fnhotels.com");
+			dataToInsert.put("htl_address", "Calle Uria, 98");
+			dataToInsert.put("htl_phone","981458989");
+			EntityResult entityResult = hotelService.hotelInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("HTL_COUNTRY_CODE_REQUIRED", entityResult.getMessage());
 		}
 		@Test
 		@DisplayName("Fail due string as country code")
@@ -286,6 +300,7 @@ public class HotelServiceTest {
 			dataToUpdate.put("htl_email", "fnoviedo@fnhotels.com");
 			dataToUpdate.put("htl_address", "Calle Uria, 98");
 			dataToUpdate.put("htl_phone", "985446789");
+			dataToUpdate.put("htl_country_code", 34);
 			List<String> attrList = new ArrayList<>();
 			attrList.add("id_hotel");
 			EntityResult er = new EntityResultMapImpl();

@@ -182,13 +182,12 @@ public class HotelService implements IHotelService {
 			if (attrMap.get("htl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
 			}
-			if (attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone")) {
-				if (!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"),
-						(String) attrMap.get("htl_phone"))) {
+			if(attrMap.containsKey("htl_country_code") || attrMap.containsKey("htl_phone")){
+				if(!attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone")) throw new AllFieldsRequiredException("HTL_COUNTRY_CODE_REQUIRED");
+				if(!attrMap.containsKey("htl_phone") && attrMap.containsKey("htl_country_code")) throw new AllFieldsRequiredException("HTL_PHONE_REQUIRED");
+				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"), (String)attrMap.get("htl_phone"))) 
 					throw new InvalidPhoneException("INVALID_PHONE");
 				}
-			} else
-				throw new AllFieldsRequiredException("COUNTRY_CODE_AND_PHONE_REQUIRED");
 			insertResult = this.daoHelper.insert(this.hotelDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
@@ -208,7 +207,12 @@ public class HotelService implements IHotelService {
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (ClassCastException e) {
 		log.error("unable to insert an hotel. Request : {} ", attrMap, e);
+<<<<<<< HEAD
 		control.setErrorMessage(insertResult, "INVALID_PHONE");}
+=======
+		control.setErrorMessage(insertResult, "INVALID_PHONE");
+		}
+>>>>>>> refs/remotes/origin/master
 		return insertResult;
 	}
 
@@ -222,7 +226,7 @@ public class HotelService implements IHotelService {
 	 * @return A message with the operation result
 	 */
 	@Override
-	@Secured({ PermissionsProviderSecured.SECURED })
+	@Secured({PermissionsProviderSecured.SECURED} )
 	public EntityResult hotelUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
@@ -232,15 +236,16 @@ public class HotelService implements IHotelService {
 			if (attrMap.get("htl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
 			}
-			if (attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone")) {
-				if (!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"),
-						(String) attrMap.get("htl_phone"))) {
+			if(attrMap.containsKey("htl_country_code") || attrMap.containsKey("htl_phone")) {
+				if(!attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone") ) throw new AllFieldsRequiredException("HTL_COUNTRY_CODE_REQUIRED");
+				if(!attrMap.containsKey("htl_phone") && attrMap.containsKey("htl_country_code")) throw new AllFieldsRequiredException("HTL_PHONE_REQUIRED");
+				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"), (String)attrMap.get("htl_phone"))) {
 					throw new InvalidPhoneException("INVALID_PHONE");
 				}
 			}
 			updateResult = this.daoHelper.update(this.hotelDao, attrMap, keyMap);
 			updateResult.setMessage("SUCESSFUL_UPDATE");
-		} catch (InvalidEmailException | InvalidPhoneException e) {
+		} catch (InvalidEmailException | InvalidPhoneException | AllFieldsRequiredException e) {
 			log.error("unable to update an hotel. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (DuplicateKeyException e) {
