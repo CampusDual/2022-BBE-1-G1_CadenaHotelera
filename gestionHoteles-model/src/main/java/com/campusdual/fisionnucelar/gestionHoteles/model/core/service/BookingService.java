@@ -576,10 +576,7 @@ public class BookingService implements IBookingService {
 				throw new AllFieldsRequiredException("FIELDS_MUST_BE_PROVIDED");
 			}
 			insertResult.setMessage("SUCESSFULL_INSERTION");
-		} catch (DuplicateKeyException e) {
-			log.error("unable to save booking. Request : {}", attrMap, e);
-			control.setErrorMessage(insertResult, "ROOM_ALREADY_EXISTS");
-		} catch (DataIntegrityViolationException e) {
+		}  catch (DataIntegrityViolationException e) {
 			log.error("unable to save booking. Request : {}", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (ClassCastException e) {
@@ -994,7 +991,8 @@ public class BookingService implements IBookingService {
 		} catch (InvalidDateException | OccupiedRoomException | EmptyRequestException | NotAuthorizedException
 				| RecordNotFoundException e) {
 			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
-			control.setErrorMessage(updateResult, e.getMessage());
+			control.setErrorMessage(updateResult, e.getMessage());			
+			//TODO check if ParseException ever throw
 		} catch (ParseException e) {
 			log.error("unable to update a booking. Request : {} {}", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, "INVALID_DATE_FORMAT");

@@ -1,5 +1,6 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
+import static org.mockito.ArgumentMatchers.anyString;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -29,11 +30,11 @@ import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidR
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.ApiKey;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.GooglePlaces;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.Place;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.PlacesQueryOptions;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.PlacesResult;
 import com.ontimize.jee.common.db.SQLStatementBuilder.SQLStatement;
 import com.ontimize.jee.common.dto.EntityResult;
@@ -63,13 +64,14 @@ public class HotelService implements IHotelService {
 	private Control control;
 	private Validator dataValidator;
 	private Logger log;
-
+	private GooglePlaces places;
 
 	public HotelService() {
 		super();
 		this.control = new Control();
 		this.dataValidator = new Validator();
 		this.log = LoggerFactory.getLogger(this.getClass());
+		this.places = new GooglePlaces(ApiKey.KEY_GOOGLE_PLACES);
 	}
 
 	/**
@@ -81,7 +83,7 @@ public class HotelService implements IHotelService {
 	 * @return The columns from the hotels table especified in the params and a
 	 *         message with the operation result
 	 */
-	
+
 	@Override
 	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult hotelQuery(Map<String, Object> keyMap, List<String> attrList)
@@ -133,8 +135,8 @@ public class HotelService implements IHotelService {
 
 			for (int i = 0; i < servicesRequired.size(); i++) {
 				if (i == 0) {
-					sqlSentence.append(
-							"(SELECT SVH_HOTEL FROM SERVICES_HOTEL WHERE SVH_SERVICE=" + servicesRequired.get(i) + " AND SVH_ACTIVE=1)");
+					sqlSentence.append("(SELECT SVH_HOTEL FROM SERVICES_HOTEL WHERE SVH_SERVICE="
+							+ servicesRequired.get(i) + " AND SVH_ACTIVE=1)");
 				} else {
 					sqlSentence.append(" AND ID_HOTEL IN (SELECT SVH_HOTEL FROM SERVICES_HOTEL WHERE SVH_SERVICE="
 							+ servicesRequired.get(i) + " AND SVH_ACTIVE=1)");
@@ -180,11 +182,13 @@ public class HotelService implements IHotelService {
 			if (attrMap.get("htl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
 			}
-			if(attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone")){
-				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"), (String)attrMap.get("htl_phone"))) {
+			if (attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone")) {
+				if (!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"),
+						(String) attrMap.get("htl_phone"))) {
 					throw new InvalidPhoneException("INVALID_PHONE");
 				}
-			}else throw new AllFieldsRequiredException("COUNTRY_CODE_AND_PHONE_REQUIRED");
+			} else
+				throw new AllFieldsRequiredException("COUNTRY_CODE_AND_PHONE_REQUIRED");
 			insertResult = this.daoHelper.insert(this.hotelDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
@@ -205,7 +209,6 @@ public class HotelService implements IHotelService {
 		} catch (ClassCastException e) {
 		log.error("unable to insert an hotel. Request : {} ", attrMap, e);
 		control.setErrorMessage(insertResult, "INVALID_PHONE");
-	} 
 		return insertResult;
 	}
 
@@ -229,8 +232,9 @@ public class HotelService implements IHotelService {
 			if (attrMap.get("htl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
 			}
-			if(attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone")) {
-				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"), (String)attrMap.get("htl_phone"))) {
+			if (attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone")) {
+				if (!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"),
+						(String) attrMap.get("htl_phone"))) {
 					throw new InvalidPhoneException("INVALID_PHONE");
 				}
 			}
@@ -329,28 +333,28 @@ public class HotelService implements IHotelService {
 
 	}
 
-	
-
 	/**
-	 * It searchs hotels in an area using a city as reference. It recover
-	 * the longitude and latitude from google maps api. If can receive just the
-	 * location or also the region
+	 * It searchs hotels in an area using a city as reference. It recover the
+	 * longitude and latitude from google maps api. If can receive just the location
+	 * or also the region
 	 * 
-	 * @param keyMap the location and the radius to the search. Optional: the region of the location
+	 * @param keyMap the location and the radius to the search. Optional: the region
+	 *               of the location
 	 * @return the hotels in the requested area
 	 * 
-	 * @exception EmptyRequestException when it doesn't receives the location or the radius
+	 * @exception EmptyRequestException   when it doesn't receives the location or
+	 *                                    the radius
 	 * 
-	 * @exception ClassCastException    when it receives an incorrect type
+	 * @exception ClassCastException      when it receives an incorrect type
 	 * 
-	 * @exception RecordNotFoundException		when it doesn't found any city or region with that matches the location param
+	 * @exception RecordNotFoundException when it doesn't found any city or region
+	 *                                    with that matches the location param
 	 * 
-	 * @exception InvalidRequestException	when it founds more than one location	
+	 * @exception InvalidRequestException when it founds more than one location
 	 * 
 	 * @throws OntimizeJEERuntimeException
 	 */
-	
-	
+
 	@Override
 	public EntityResult searchbycityQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
@@ -360,42 +364,116 @@ public class HotelService implements IHotelService {
 			if (keyMap.get("location") == null || keyMap.get("radius") == null) {
 				throw new EmptyRequestException("LOCATION_AND_RADIUS_REQUIRED");
 			}
-			
-			int counter=0;
+
+			int counter = 0;
 			String placeName = (String) keyMap.get("location");
-					
-			if(keyMap.get("region")!=null) {
-				placeName = placeName + " "+ (String)keyMap.get("region");
+
+			if (keyMap.get("region") != null) {
+				placeName = placeName + " " + (String) keyMap.get("region");
 			}
-			
-			GooglePlaces googleSearch = new GooglePlaces(ApiKey.KEY_GOOGLE_PLACES);
+
 			keyMap.remove("location");
-			PlacesResult result = googleSearch.searchText(placeName);
-			
+			PlacesResult result = places.searchText(placeName);
+
 			for (Place place : result) {
 				if (place.getTypes().contains("political")) {
 					counter++;
 					keyMap.put("latitude", Double.valueOf(place.getGeometry().getLocation().getLat()));
 					keyMap.put("longitude", Double.valueOf(place.getGeometry().getLocation().getLng()));
 				}
-			}		
-			if (counter==1) {
+			}
+			if (counter == 1) {
 				queryResult = searchbylocationQuery(keyMap, new ArrayList<>());
-			} else if(counter==0 && keyMap.get("region")==null){
+			} else if (counter == 0 && keyMap.get("region") == null) {
 				throw new RecordNotFoundException("NO_RESULTS_TRY_ADDING_REGION");
-			}else if (counter==0) {
+			} else if (counter == 0) {
 				throw new RecordNotFoundException("NO_RESULTS");
-			}else {
+			} else {
 				throw new InvalidRequestException("TOO_MANY_COINCIDENCES_TRY_TO_ADD_REGION_OR_COUNTRY");
 			}
-		} catch (RecordNotFoundException | EmptyRequestException|InvalidRequestException e) {
-			log.error("unable to search by city. Request : {} {} ", keyMap,attrList, e);
+		} catch (RecordNotFoundException | EmptyRequestException | InvalidRequestException e) {
+			log.error("unable to search by city. Request : {} {} ", keyMap, attrList, e);
 			control.setErrorMessage(queryResult, e.getMessage());
 		} catch (ClassCastException e) {
-			log.error("unable to search by city. Request : {} {} ", keyMap,attrList, e);
+			log.error("unable to search by city. Request : {} {} ", keyMap, attrList, e);
 			control.setErrorMessage(queryResult, "INVALID_TYPE");
-		} 
+		}
 		return queryResult;
+	}
+
+	@Override
+	public EntityResult searchnearbyservicesQuery(Map<String, Object> keyMap, List<String> attrList)
+			throws OntimizeJEERuntimeException {
+		List<String> allowedServices = Arrays.asList("airport", "aquarium", "art_gallery", "atm", "bakery", "bank",
+				"bar", "beauty_salon", "book_store", "bus_station", "cafe", "car_rental", "car_repair", "casino",
+				"church", "clothing_store", "drugstore", "embassy", "florist", "gym", "gas_station", "hair_care",
+				"hospital", "laundry", "library", "liquor_store", "meal_takeaway", "meal_delivery", "mosque",
+				"movie_theater", "museum", "night_club", "park", "parking", "pharmacy", "police", "post_office",
+				"restaurant", "shoe_store", "shopping_mall", "spa", "stadium", "store", "subway_station", "supermarket",
+				"synagogue", "taxi_stand", "tourist_attraction", "train_station", "veterinary_care", "zoo");
+
+		EntityResult result = new EntityResultMapImpl();
+		try {
+
+			if (keyMap.get("service") == null || keyMap.get("radius") == null || keyMap.get("id_hotel") == null) {
+				throw new EmptyRequestException("ID_HOTEL_RADIUS_AND_SERVICE_REQUIRED");
+			}
+
+			Map<String, Object> hotelFilter = new HashMap<>();
+			hotelFilter.put("id_hotel", keyMap.get("id_hotel"));
+			EntityResult hotelResult = daoHelper.query(hotelDao, hotelFilter,
+					Arrays.asList("htl_latitude", "htl_longitude"));
+			if (hotelResult.isEmpty()) {
+				throw new RecordNotFoundException("ID_HOTEL_DOESN'T_EXISTS");
+			}
+
+			String service = (String) keyMap.get("service");
+
+			if (!allowedServices.contains(service)) {
+				throw new InvalidRequestException("SERVICE_NOT_ALLOWED_ALLOWED_SERVICES_" + allowedServices);
+			}
+
+			PlacesQueryOptions filter = new PlacesQueryOptions();
+			filter.types(service);
+
+			BigDecimal latitude = (BigDecimal) hotelResult.getRecordValues(0).get("htl_latitude");
+			BigDecimal longitude = (BigDecimal) hotelResult.getRecordValues(0).get("htl_longitude");
+			int radius = (Integer) keyMap.get("radius");
+
+			PlacesResult placesResult = places.searchNearby(latitude.floatValue(), longitude.floatValue(), radius,
+					filter);
+			
+			SloppyMath distanceCalculator = new SloppyMath();
+			Double distance;
+
+			Map<String, Object> services = new HashMap<>();
+			for (Place place : placesResult) {
+				services.put("name", place.getName());
+				services.put("rating", place.getRating());
+				services.put("latitude", place.getGeometry().getLocation().getLat());
+				services.put("longitude", place.getGeometry().getLocation().getLng());
+				services.put("address", place.getVicinity());
+				distance = distanceCalculator.haversinMeters(latitude.doubleValue(), longitude.doubleValue(),
+						place.getGeometry().getLocation().getLat(), place.getGeometry().getLocation().getLng());
+				services.put("distance", distance.intValue());
+				result.addRecord(services);
+				services.clear();
+			}
+			if(result.isEmpty()) {
+				throw new RecordNotFoundException("NO_RESULTS");
+			}
+			
+			
+		} catch (InvalidRequestException | RecordNotFoundException e) {
+			log.error("unable to search nearby services. Request : {} {} ", keyMap, attrList, e);
+			control.setErrorMessage(result, e.getMessage());
+		} catch (ClassCastException|BadSqlGrammarException e) {
+			log.error("unable to search nearby services. Request : {} {} ", keyMap, attrList, e);
+			control.setErrorMessage(result, "INVALID_TYPE");
+		}
+
+		return result;
+
 	}
 
 }

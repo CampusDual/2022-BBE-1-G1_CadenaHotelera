@@ -16,6 +16,8 @@ import com.google.gson.GsonBuilder;
 
 public class GooglePlaces {
     private static final String TEXT_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/textsearch/json";
+    
+    private static final String NEARBY_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
 
 	private String apikey;
 	
@@ -62,6 +64,27 @@ public class GooglePlaces {
 	private PlacesResult parseSearchResponse( HttpResponse response ) throws IOException {
 		return this.gson.fromJson( new InputStreamReader( response.getEntity( ).getContent( ) ), PlacesResult.class );
 	}
+	
+	public PlacesResult searchNearby( float lat, float lon, int radius, PlacesQueryOptions options ) {
+		try {
+			URIBuilder url = new URIBuilder( NEARBY_SEARCH_URL );
+			url.addParameter( "key", this.apikey );
+			url.addParameter( PlacesQueryOptions.LOCATION, lat + "," + lon );
+			url.addParameter( PlacesQueryOptions.RADIUS, String.valueOf( radius ) );
+						
+			if ( options != null )
+				for ( String param : options.params( ).keySet( ) )
+					url.addParameter( param, options.param( param ) );
+						
+			HttpGet get = new HttpGet( url.build( ) );
+			return this.parseSearchResponse( this.client.execute( get ) );
+			
+		} catch( Exception e ) {
+			throw new PlacesException( e );
+		}
+	}
+	
+	
 	
 
 }

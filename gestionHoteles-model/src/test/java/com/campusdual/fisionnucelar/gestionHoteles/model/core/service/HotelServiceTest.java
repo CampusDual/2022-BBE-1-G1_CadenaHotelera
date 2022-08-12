@@ -24,6 +24,7 @@ import org.springframework.jdbc.BadSqlGrammarException;
 
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.HotelDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.GooglePlaces;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.PlacesResult;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
@@ -663,7 +664,7 @@ public class HotelServiceTest {
 		}
 
 		@Test
-		@DisplayName("Search hotels by location introducing an incorrect type")
+		@DisplayName("Search hotels by city introducing an incorrect type")
 		void search_with_incorrect_type() {
 			Map<String, Object> filter = new HashMap<>();
 			filter.put("location", 1);
@@ -677,10 +678,7 @@ public class HotelServiceTest {
 
 	}
 	
-	
-	
-	
-	
+
 	
 	
 	
