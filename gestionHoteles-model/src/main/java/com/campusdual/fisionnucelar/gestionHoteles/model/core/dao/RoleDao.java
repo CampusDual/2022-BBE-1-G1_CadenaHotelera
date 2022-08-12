@@ -1,6 +1,5 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.dao;
 
-
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Repository;
 
@@ -8,17 +7,18 @@ import com.ontimize.jee.server.dao.common.ConfigurationFile;
 import com.ontimize.jee.server.dao.jdbc.OntimizeJdbcDaoSupport;
 
 /**
- * This class represents the roles of the users
- *@since 27/06/2022
+ * This class represents the roles 
+ *@since 09/08/2022
  *@version 1.0 
  *
  */
-@Repository(value = "UserRoleDao")
+@Repository(value = "RoleDao")
 @Lazy
 @ConfigurationFile(
-	configurationFile = "dao/UserRoleDao.xml",
+	configurationFile = "dao/RoleDao.xml",
 	configurationFilePlaceholder = "dao/placeholders.properties")
-public class UserRoleDao extends OntimizeJdbcDaoSupport {
+public class RoleDao  extends OntimizeJdbcDaoSupport {
 	public static final String ID_ROLENAME = "id_rolename";
-	public static final String USER_ = "user_";
+	public static final String ROLENAME = "rolename";
+	public static final String XMLCLIENTPERMISSION = "xmlclientpermission";
 }

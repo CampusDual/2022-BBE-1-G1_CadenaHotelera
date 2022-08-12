@@ -153,11 +153,7 @@ public class HotelServiceTest {
 		@Test
 		@DisplayName("Insert a hotel successfully")
 		void hotel_insert_success() {
-			Map<String, Object> dataToInsert = new HashMap<>();
-			dataToInsert.put("htl_name", "FN Oviedo");
-			dataToInsert.put("htl_email", "fnoviedo@fnhotels.com");
-			dataToInsert.put("htl_address", "Calle Uria, 98");
-			dataToInsert.put("htl_phone", "985446789");
+			Map<String, Object> dataToInsert = getDataToInsert();
 			EntityResult er = new EntityResultMapImpl(Arrays.asList("ID_HOTEL"));
 			er.addRecord(new HashMap<String, Object>() {
 				{
@@ -179,11 +175,7 @@ public class HotelServiceTest {
 		@Test
 		@DisplayName("Fail trying to insert duplicated email")
 		void hotel_insert_duplicated_mail() {
-			Map<String, Object> dataToInsert = new HashMap<>();
-			dataToInsert.put("htl_name", "FN Oviedo");
-			dataToInsert.put("htl_email", "fnoviedo@fnhotels.com");
-			dataToInsert.put("htl_address", "Calle Uria, 98");
-			dataToInsert.put("htl_phone", "985446789");
+			Map<String, Object> dataToInsert = getDataToInsert();
 			List<String> columnList = Arrays.asList("ID_HOTEL");
 			EntityResult insertResult = new EntityResultMapImpl(columnList);
 			insertResult.addRecord(new HashMap<String, Object>() {
@@ -207,6 +199,8 @@ public class HotelServiceTest {
 		void hotel_insert_without_mail_or_hotel_name() {
 			Map<String, Object> dataToInsert = new HashMap<>();
 			dataToInsert.put("htl_address", "Calle Uria, 98");
+			dataToInsert.put("htl_phone", "985446789");
+			dataToInsert.put("htl_country_code", 34);
 			dataToInsert.put("htl_phone", "985446789");
 			DataIntegrityViolationException DataIntegrityException = new DataIntegrityViolationException(
 					"RunTimeMessage");
@@ -236,14 +230,44 @@ public class HotelServiceTest {
 		}
 
 		@Test
-		@DisplayName("Fail trying to insert with no data")
-		void hotel_insert_withouth_data() {
+		@DisplayName("Fail due invalid phone")
+		void hotel_insert_fails_due_invalid_phone() {
 			EntityResult insertResult = new EntityResultMapImpl();
 			Map<String, Object> dataToInsert = new HashMap<>();
-			when(daoHelper.insert(hotelDao, dataToInsert)).thenReturn(insertResult);
+			dataToInsert.put("htl_name", "FN Oviedo");
+			dataToInsert.put("htl_email", "fnoviedo@fnhotels.com");
+			dataToInsert.put("htl_address", "Calle Uria, 98");
+			dataToInsert.put("htl_phone", "9854467");
+			dataToInsert.put("htl_country_code", 34);
 			EntityResult entityResult = hotelService.hotelInsert(dataToInsert);
-			// assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			assertEquals("FIELDS_REQUIRED", entityResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("INVALID_PHONE", entityResult.getMessage());
+		}
+		@Test
+		@DisplayName("Fail due empty phone field")
+		void hotel_insert_withouth_phone() {
+			EntityResult insertResult = new EntityResultMapImpl();
+			Map<String, Object> dataToInsert = new HashMap<>();
+			dataToInsert.put("htl_name", "FN Oviedo");
+			dataToInsert.put("htl_email", "fnoviedo@fnhotels.com");
+			dataToInsert.put("htl_address", "Calle Uria, 98");
+			EntityResult entityResult = hotelService.hotelInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("COUNTRY_CODE_AND_PHONE_REQUIRED", entityResult.getMessage());
+		}
+		@Test
+		@DisplayName("Fail due string as country code")
+		void hotel_insert_with_country_code_as_string() {
+			EntityResult insertResult = new EntityResultMapImpl();
+			Map<String, Object> dataToInsert = new HashMap<>();
+			dataToInsert.put("htl_name", "FN Oviedo");
+			dataToInsert.put("htl_email", "fnoviedo@fnhotels.com");
+			dataToInsert.put("htl_address", "Calle Uria, 98");
+			dataToInsert.put("htl_phone", "981458787");
+			dataToInsert.put("htl_country_code", "Calle Uria, 98");
+			EntityResult entityResult = hotelService.hotelInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("INVALID_PHONE", entityResult.getMessage());
 		}
 	}
 
@@ -377,6 +401,54 @@ public class HotelServiceTest {
 			EntityResult entityResult = hotelService.hotelUpdate(dataToUpdate, filter);
 			// assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("INVALID_EMAIL", entityResult.getMessage());
+		}
+		@Test
+		@DisplayName("Fail trying to update with invalid phone")
+		void hotel_insert_with_invalid_phone() {
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("id_hotel", 222);
+			Map<String, Object> dataToUpdate = new HashMap<>();
+			dataToUpdate.put("htl_name", "FN Oviedo");
+			dataToUpdate.put("htl_email", "fnoviedo@fnhotels.com");
+			dataToUpdate.put("htl_address", "Calle Uria, 98");
+			dataToUpdate.put("htl_phone", "9854");
+			dataToUpdate.put("htl_country_code", 34);
+			List<String> attrList = new ArrayList<>();
+			attrList.add("id_hotel");
+			EntityResult queryResult = new EntityResultMapImpl(attrList);
+			queryResult.addRecord(new HashMap<String, Object>() {
+				{
+					put("ID_HOTEL", 2);
+				}
+			});
+			when(daoHelper.query(hotelDao, filter, attrList)).thenReturn(queryResult);
+			EntityResult entityResult = hotelService.hotelUpdate(dataToUpdate, filter);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("INVALID_PHONE", entityResult.getMessage());
+		}
+		@Test
+		@DisplayName("Fail trying to update with a string as country code")
+		void hotel_insert_with_string_as_country_code() {
+			Map<String, Object> filter = new HashMap<>();
+			filter.put("id_hotel", 222);
+			Map<String, Object> dataToUpdate = new HashMap<>();
+			dataToUpdate.put("htl_name", "FN Oviedo");
+			dataToUpdate.put("htl_email", "fnoviedo@fnhotels.com");
+			dataToUpdate.put("htl_address", "Calle Uria, 98");
+			dataToUpdate.put("htl_phone", "9854");
+			dataToUpdate.put("htl_country_code", "ssss");
+			List<String> attrList = new ArrayList<>();
+			attrList.add("id_hotel");
+			EntityResult queryResult = new EntityResultMapImpl(attrList);
+			queryResult.addRecord(new HashMap<String, Object>() {
+				{
+					put("ID_HOTEL", 2);
+				}
+			});
+			when(daoHelper.query(hotelDao, filter, attrList)).thenReturn(queryResult);
+			EntityResult entityResult = hotelService.hotelUpdate(dataToUpdate, filter);
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+			assertEquals("INVALID_PHONE", entityResult.getMessage());
 		}
 	}
 

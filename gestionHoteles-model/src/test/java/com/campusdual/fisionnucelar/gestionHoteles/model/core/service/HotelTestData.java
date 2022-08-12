@@ -176,4 +176,15 @@ public static EntityResult getHotelsWithLocation2() {
 		return filter;
 	}
 	
+	public static Map<String,Object> getDataToInsert(){
+		Map<String, Object> dataToInsert = new HashMap<>();
+		dataToInsert.put("htl_name", "FN Oviedo");
+		dataToInsert.put("htl_email", "fnoviedo@fnhotels.com");
+		dataToInsert.put("htl_address", "Calle Uria, 98");
+		dataToInsert.put("htl_phone", "985446789");
+		dataToInsert.put("htl_country_code", 34);
+		dataToInsert.put("htl_phone", "985446789");
+		return dataToInsert;
+	}
+	
 }
