@@ -219,13 +219,15 @@ public class BookingService implements IBookingService {
 	public EntityResult bookingQuery(Map<String, Object> keyMap, List<String> attrList)
 			throws OntimizeJEERuntimeException {
 		EntityResult searchResult = new EntityResultMapImpl();
+		EntityResult hotelResult = new EntityResultMapImpl();
 		try {
-
-			checkIfHotel(keyMap);
-			userControl.controlAccess((int) keyMap.get("rm_hotel"));
+			checkIfBookingExists(keyMap);
+			hotelResult=daoHelper.query(bookingDao, keyMap, Arrays.asList("rm_hotel"),"SEARCH_BOOKING_HOTEL");	
+			userControl.controlAccess((int) hotelResult.getRecordValues(0).get("rm_hotel"));
+			
 			searchResult = daoHelper.query(bookingDao, keyMap, attrList);
 			control.checkResults(searchResult);
-		} catch (NoResultsException | NotAuthorizedException e) {
+		} catch (NoResultsException | NotAuthorizedException|RecordNotFoundException e) {
 			log.error("unable to retrieve bookings. Request : {} {}", keyMap, attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
