@@ -16,10 +16,11 @@ import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 public interface IUserService {
 
 	public EntityResult userQuery(Map<String, Object> keyMap, List<String> attrList) ;
-	//public EntityResult userUpdate(Map<?, ?> attrMap, Map<?, ?> keyMap);
 	public EntityResult userUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap) throws OntimizeJEERuntimeException;
 	public EntityResult userDelete(Map<String, Object> keyMap);
 	public EntityResult userAdminInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException;
 	public EntityResult userWorkerInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException;
-	EntityResult userClientInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException;
+	public EntityResult userClientInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException;
+	public EntityResult userClientByManagersInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException;
+	
 }
