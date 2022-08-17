@@ -649,6 +649,7 @@ public class BookingService implements IBookingService {
 
 		if (!discountResult.isEmpty() && discountResult.getRecordValues(0).get("dc_leaving_date") == null) {
 			bookingPrice = bookingPrice.multiply((BigDecimal) discountResult.getRecordValues(0).get("dc_multiplier"));
+			bookingPrice = bookingPrice.setScale(2, RoundingMode.HALF_EVEN);
 			attrMap.put("bk_promotional", 1);
 			attrMap.put("bk_price", bookingPrice);
 			attrMap.put("promotions", "code discount: " + discountResult.getRecordValues(0).get("dc_multiplier"));

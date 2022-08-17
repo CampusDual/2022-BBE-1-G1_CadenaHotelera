@@ -1,0 +1,223 @@
+{
+	"info": {
+		"_postman_id": "f086b738-dfaa-42d2-adac-e224d858c742",
+		"name": "Discount code management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "search all discount codes",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "abc123",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "masterchief",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/discountcodes/discountcode?columns=id_code,dc_name,dc_multiplier",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"discountcodes",
+						"discountcode"
+					],
+					"query": [
+						{
+							"key": "columns",
+							"value": "id_code,dc_name,dc_multiplier"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search discount code",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"id_code\":1\r\n    },\r\n    \"columns\": [\"id_code\",\"dc_name\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/discountcodes/discountcode/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"discountcodes",
+						"discountcode",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert discount code",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {\r\n        \"dc_name\": \"CRAZY_SUMMER_2024\",\r\n        \"dc_multiplier\": 0.95\r\n    },\r\n   \"sqltypes\": {\r\n        \"dc_name\": 12,\r\n        \"id_code\": 4,\r\n        \"dc_multiplier\": 2\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/discountcodes/discountcode",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"discountcodes",
+						"discountcode"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update discount code",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_code\" : 1\r\n },\r\n    \"data\": {\r\n        \"dc_name\": \"CRAZY_WINTER_2023\"\r\n    },\r\n     \"sqltypes\": {\r\n        \"dc_name\": 12,\r\n        \"dc_multiplier\": 2,\r\n        \"id_code\": 4,\r\n        \"dc_leaving_date\":91\r\n\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/discountcodes/discountcode",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"discountcodes",
+						"discountcode"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete discount code",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n        \"id_code\": 6\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/discountcodes/discountcode",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"discountcodes",
+						"discountcode"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

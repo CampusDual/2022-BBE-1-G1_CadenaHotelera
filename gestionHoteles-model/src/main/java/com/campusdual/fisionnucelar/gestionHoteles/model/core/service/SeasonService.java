@@ -300,13 +300,13 @@ public class SeasonService implements ISeasonService {
 	public EntityResult hotelseasonsDelete(Map<String, Object> keyMap) throws OntimizeJEERuntimeException {
 		EntityResult deleteResult = new EntityResultMapImpl();
 		try {
-			if (keyMap.isEmpty()) {
+			if (!keyMap.containsKey("ss_hotel")) {
 				throw new EmptyRequestException("SS_HOTEL_REQUIRED");
 			}
 			deleteResult = daoHelper.query(seasonDao, keyMap, Arrays.asList("id_season"), "OLD_SEASONS");
 			
 			control.checkResults(deleteResult);
-			userControl.controlAccess((int) deleteResult.getRecordValues(0).get("ss_hotel"));
+			userControl.controlAccess((int) keyMap.get("ss_hotel"));
 		
 			Map<String, Object> deleteFilter = new HashMap<>();
 

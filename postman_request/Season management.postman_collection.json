@@ -1,0 +1,202 @@
+{
+	"info": {
+		"_postman_id": "e787dec8-421b-40b1-9e30-acfe99f5faa0",
+		"name": "Season management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "search seasons by hotel",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"ss_hotel\":1\r\n    },\r\n    \"columns\": [\"id_season\",\"ss_hotel\",\"ss_multiplier\",\"ss_start_date\",\"ss_end_date\",\"ss_name\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/seasons/season/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"seasons",
+						"season",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert season",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "abc123",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "masterchief",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {\r\n        \"ss_hotel\": 1,\r\n        \"ss_multiplier\": 1.1,\r\n         \"ss_name\": \"VIGO_DECEMBER_2018\",\r\n        \"ss_start_date\": \"2018-12-01\",\r\n        \"ss_end_date\": \"2018-12-30\"\r\n    },\r\n   \"sqltypes\": {\r\n        \"ss_end_date\": 91,\r\n        \"ss_start_date\": 91,\r\n        \"ss_name\": 12,\r\n        \"id_season\": 4,\r\n        \"ss_hotel\": 4,\r\n        \"ss_multiplier\": 2\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/seasons/season",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"seasons",
+						"season"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update season",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_season\" : 1\r\n },\r\n    \"data\": {\r\n        \"ss_multiplier\": 0.90\r\n    },\r\n     \"sqltypes\": {\r\n        \"ss_end_date\": 91,\r\n        \"ss_start_date\": 91,\r\n        \"ss_name\": 12,\r\n        \"id_season\": 4,\r\n        \"ss_hotel\": 4,\r\n        \"ss_multiplier\": 2\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/seasons/season",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"seasons",
+						"season"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete season",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/seasons/season",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"seasons",
+						"season"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete old seasons in hotel",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n        \"ss_hotel\": 1\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/seasons/hotelseasons",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"seasons",
+						"hotelseasons"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -207,12 +207,9 @@ public class HotelService implements IHotelService {
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (ClassCastException e) {
 		log.error("unable to insert an hotel. Request : {} ", attrMap, e);
-<<<<<<< HEAD
-		control.setErrorMessage(insertResult, "INVALID_PHONE");}
-=======
+
 		control.setErrorMessage(insertResult, "INVALID_PHONE");
 		}
->>>>>>> refs/remotes/origin/master
 		return insertResult;
 	}
 
@@ -435,7 +432,14 @@ public class HotelService implements IHotelService {
 			String service = (String) keyMap.get("service");
 
 			if (!allowedServices.contains(service)) {
-				throw new InvalidRequestException("SERVICE_NOT_ALLOWED_ALLOWED_SERVICES_" + allowedServices);
+				String allowedServicesMessage="SERVICE_NOT_ALLOWED_ALLOWED_SERVICES_airport_aquarium_art_gallery_"
+						+ "atm_bakery_bank_bar_beauty_salon_book_store_bus_station_cafe_car_rental_car_repair_"
+						+ "casino_church_clothing_store_drugstore_embassy_florist_gym_gas_station_hair_care_"
+						+ "hospital_laundry_library_liquor_store_meal_takeaway_meal_delivery_mosque_movie_theater_"
+						+ "museum_night_club_park_parking_pharmacy_police_post_office_restaurant_shoe_store_"
+						+ "shopping_mall_spa_stadium_store_subway_station_supermarket_synagogue_"
+						+ "taxi_stand_tourist_attraction_train_station_veterinary_care_zoo";
+;				throw new InvalidRequestException(allowedServicesMessage.toUpperCase());
 			}
 
 			PlacesQueryOptions filter = new PlacesQueryOptions();
@@ -452,6 +456,7 @@ public class HotelService implements IHotelService {
 			Double distance;
 
 			Map<String, Object> services = new HashMap<>();
+			result.setCode(EntityResult.OPERATION_SUCCESSFUL);
 			for (Place place : placesResult) {
 				services.put("name", place.getName());
 				services.put("rating", place.getRating());
@@ -469,7 +474,7 @@ public class HotelService implements IHotelService {
 			}
 			
 			
-		} catch (InvalidRequestException | RecordNotFoundException e) {
+		} catch (InvalidRequestException | RecordNotFoundException | EmptyRequestException e) {
 			log.error("unable to search nearby services. Request : {} {} ", keyMap, attrList, e);
 			control.setErrorMessage(result, e.getMessage());
 		} catch (ClassCastException|BadSqlGrammarException e) {
