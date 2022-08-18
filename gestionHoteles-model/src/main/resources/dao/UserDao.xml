@@ -20,6 +20,7 @@
 				<Column>name</Column>
 				<Column>surname</Column>
 				<Column>identifier</Column>
+				<Column>user_down_date</Column>
 			</ValidColumns>
 			<Sentence>
                 <![CDATA[
@@ -46,7 +47,8 @@
                         #COLUMNS#
                     FROM                        
                         ${mainschema}.TUSER
-                    #WHERE#
+                        WHERE user_down_date IS NULL
+                    #WHERE_CONCAT#
                 ]]>
             </Sentence>
 		</Query>
