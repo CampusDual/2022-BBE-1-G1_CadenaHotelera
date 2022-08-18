@@ -413,11 +413,9 @@ public class UserService implements IUserService {
 		} catch (DataIntegrityViolationException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
-<<<<<<< HEAD
+
 		} catch (EmptyRequestException | NotAuthorizedException  | RecordNotFoundException e) {
-=======
-		} catch (EmptyRequestException | NotAuthorizedException e) {
->>>>>>> d5a72e6b7df8a25acf17fd58e8895ead53593786
+
 			log.error("unable to insert a user. Request : {} {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}catch (ClassCastException e) {
@@ -481,14 +479,8 @@ public class UserService implements IUserService {
 		} catch (DataIntegrityViolationException  | RecordNotFoundException | EmptyRequestException | InvalidEmailException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
-<<<<<<< HEAD
 		} catch (ClassCastException e) {
-=======
-		} catch (EmptyRequestException e) {
-			log.error("unable to insert a user. Request : {} {} ", attrMap, e);
-			control.setErrorMessage(insertResult, e.getMessage());
-		}catch (ClassCastException e) {
->>>>>>> d5a72e6b7df8a25acf17fd58e8895ead53593786
+
 			log.error("unable to insert an user. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, "INVALID_Type");
 			}
