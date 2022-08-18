@@ -27,8 +27,7 @@ public class SeasonTestData {
 		
 		List<String> columnList = Arrays.asList("id_season", "ss_hotel", "ss_multiplier", "ss_start_date",
 				"ss_end_date", "ss_name");
-		EntityResult er = new EntityResultMapImpl(columnList);
-		
+		EntityResult er = new EntityResultMapImpl(columnList);		
 
 		er.addRecord(new HashMap<String, Object>() {
 			{

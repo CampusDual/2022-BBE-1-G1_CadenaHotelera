@@ -168,6 +168,22 @@ public class DiscountCodeServiceTest {
 			assertEquals("SUCCESSFUL_INSERTION", resultSuccess.getMessage());
 
 		}
+		
+		@Test
+		@DisplayName("Insert a discount code with a multiplier below 0")
+		void discount_code_insert_multiplier_below_0() {
+			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
+			dataToInsert.put("dc_multiplier", -1.1);
+			List<String> columnList = Arrays.asList("id_season");
+			EntityResult insertResult = getGenericInsertResult();
+			when(daoHelper.query(any(), any(), any())).thenReturn(new EntityResultMapImpl());
+			when(daoHelper.insert(discountCodeDao, dataToInsert)).thenReturn(insertResult);
+			EntityResult result = discountCodeService.discountcodeInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, result.getCode());
+			assertEquals("DC_MULTIPLIER_MUST_BE_HIGHER_THAN_0", result.getMessage());
+
+		}
+		
 
 		@Test
 		@DisplayName("Fail trying to insert duplicated name")
@@ -219,7 +235,7 @@ public class DiscountCodeServiceTest {
 			when(daoHelper.insert(any(), anyMap())).thenThrow(BadSqlGrammarException.class);
 			EntityResult entityResult = discountCodeService.discountcodeInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			verify(daoHelper).insert(any(), anyMap());
+	
 		}
 		
 	}

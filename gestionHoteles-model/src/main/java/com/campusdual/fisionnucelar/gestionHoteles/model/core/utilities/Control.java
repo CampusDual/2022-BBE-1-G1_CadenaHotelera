@@ -103,7 +103,10 @@ public class Control {
 			int index = exceptionSplit[1].indexOf("violates");
 			message = exceptionSplit[1].substring(2, index - 2).toUpperCase() + "_MUST_BE_PROVIDED";
 			result.setMessage(message);
-		} else if (exception.contains("nested")) {
+		} else if (exception.contains("value too long")) {
+			result.setMessage("STRING_FIELD_TOO_LONG");		
+		}	
+		else if (exception.contains("violates foreign key")) {
 			exceptionSplit = exception.split("Key");
 			int index = exceptionSplit[1].indexOf("nested");
 			message = exceptionSplit[1].substring(2, index - 3).replace(")", "").replace("\"", "").replace("(", "")
@@ -112,8 +115,9 @@ public class Control {
 			int first = message.indexOf("_");
 			int second = message.indexOf("_",first+1);
 			message = message.substring(0,second)+"_"+message.substring(valueIndex);
-			result.setMessage(message);
-		} else {
+			result.setMessage(message);}
+					
+		else {
 			result.setMessage(exception);
 		}
 		return result;

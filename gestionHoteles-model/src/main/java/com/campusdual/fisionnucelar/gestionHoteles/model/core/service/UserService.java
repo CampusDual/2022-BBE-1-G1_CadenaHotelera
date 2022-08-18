@@ -296,6 +296,8 @@ public class UserService implements IUserService {
 		return insertResult;
 	}
 	
+	
+	
 	public void checkIfHotelExists(Map<String, Object> attrMap) {
 		if ( !(attrMap.get("identifier")instanceof Integer)) {
 			throw new RecordNotFoundException("ID_HOTEL_REQUIRED");
