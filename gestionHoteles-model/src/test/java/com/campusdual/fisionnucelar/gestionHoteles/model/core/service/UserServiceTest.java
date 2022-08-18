@@ -19,7 +19,6 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,7 +28,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -105,7 +103,6 @@ public class UserServiceTest {
 			assertEquals("NO_RESULTS", entityResult.getMessage());
 			verify(daoHelper).query(any(), anyMap(), anyList(), eq("user_data"));
 		}
-		//Falla
 		@Test
 		@DisplayName("Fail when sends a string in a number field")
 		void when_send_string_as_id_throws_exception() {
@@ -115,11 +112,11 @@ public class UserServiceTest {
 			columns.add("USER_");
 			columns.add("NAME");
 			columns.add("IDENTIFIER");
-			when(daoHelper.query(userDao, filter, columns)).thenThrow(BadSqlGrammarException.class);
+			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenThrow(BadSqlGrammarException.class);
 			EntityResult entityResult = userService.userQuery(filter, columns);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
 			assertEquals("INCORRECT_REQUEST", entityResult.getMessage());
-			verify(daoHelper).query(any(), anyMap(), anyList());
+			verify(daoHelper).query(any(), anyMap(), anyList(), eq("user_data"));
 		}
 
 		@Test
@@ -166,14 +163,15 @@ public class UserServiceTest {
 			HashMap<String, Object> keyMap = new HashMap<>();
 			keyMap.put("USER_", "jaimito");
 			when(daoHelper.insert(userDao, dataToInsert)).thenReturn(er);
+			EntityResult existuser= new EntityResultMapImpl();
+			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(existuser);
 
 			EntityResult entityResult = userService.userAdminInsert(dataToInsert);
-			assertEquals("", entityResult.getMessage());
+			assertEquals("SUCCESSFULLY_INSERT", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			int recordIndex = entityResult.getRecordIndex(keyMap);
-			assertEquals(2, entityResult.getRecordValues(recordIndex).get("USER_"));
+			assertEquals("jaimito", entityResult.getRecordValues(recordIndex).get("USER_"));
 			verify(daoHelper).insert(userDao, dataToInsert);
-
 		}
 
 		@Test
@@ -182,20 +180,20 @@ public class UserServiceTest {
 			Map<String, Object> dataToInsert = getGenericAdminDataToInsertOrUpdate();
 			dataToInsert.put("email", "jaimito@gmail.com");
 			dataToInsert.put("user_", "jaimito");
-			Map<String, Object> attrMap = new HashMap<>();
-			attrMap.put("0", dataToInsert);
-			// List<String> columnList = Arrays.asList("ID_CLIENT");
 			EntityResult insertResult = getGenericInsertResult();
 
 			when(daoHelper.insert(userDao, dataToInsert)).thenReturn(insertResult);
+			EntityResult existuser= new EntityResultMapImpl();
+			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(existuser);
+			
 			EntityResult resultSuccess = userService.userAdminInsert(dataToInsert);
-			assertEquals("", resultSuccess.getMessage());
+			assertEquals("SUCCESSFULLY_INSERT", resultSuccess.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, resultSuccess.getCode());
 			when(daoHelper.insert(userDao, dataToInsert)).thenThrow(DuplicateKeyException.class);
 			EntityResult resultFail = userService.userAdminInsert(dataToInsert);
 			assertEquals("EMAIL_ALREADY_EXISTS", resultFail.getMessage());
 			assertEquals(EntityResult.OPERATION_WRONG, resultFail.getCode());
-			verify(daoHelper, times(2)).insert(any(), anyMap());
+			verify(daoHelper, times(3)).insert(any(), anyMap());
 		}
 
 		@Test
@@ -204,10 +202,9 @@ public class UserServiceTest {
 			Map<String, Object> dataToInsert = new HashMap<>();
 			dataToInsert.put("NAME", "Isidoro");
 			dataToInsert.put("EMAIL", "isidoro@outlook.com");
-			when(daoHelper.insert(userDao, dataToInsert)).thenThrow(new RecordNotFoundException("USER_OR_EMAIL_REQUIRED"));
 			EntityResult entityResult = userService.userAdminInsert(dataToInsert);
 			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
-			verify(daoHelper).insert(any(), anyMap());
+			assertEquals("USER_OR_EMAIL_REQUIRED", entityResult.getMessage());
 		}
 
 		@Test
@@ -221,6 +218,8 @@ public class UserServiceTest {
 			});
 			Map<String, Object> dataToInsert = new HashMap<>();
 			dataToInsert.put("email", "isidorooutlook.com");
+			EntityResult existuser= new EntityResultMapImpl();
+			when(daoHelper.query(any(), anyMap(), anyList(), anyString())).thenReturn(existuser);
 
 			EntityResult resultFail = userService.userAdminInsert(dataToInsert);
 			assertEquals("INVALID_EMAIL", resultFail.getMessage());

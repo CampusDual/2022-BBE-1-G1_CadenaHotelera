@@ -172,6 +172,18 @@ public class UserTestData {
 		dataToInsert.put("NIF", "69462853G");
 		return dataToInsert;
 	}
+	public static Map<String, Object> getGenericWorkerDataToInsertOrUpdate() {
+		Map<String, Object> dataToInsert = new HashMap<>();
+		dataToInsert.put("USER_", "jaimito");
+		dataToInsert.put("PASSWORD", "1234");
+		dataToInsert.put("NAME", "Jaime");
+		dataToInsert.put("SURNAME", "Janer");
+		dataToInsert.put("EMAIL", "jaimito@gmail.com");
+		dataToInsert.put("NIF", "69462853G");
+		dataToInsert.put("IDENTIFIER", 1);
+		dataToInsert.put("ID_ROLENAME", 5);
+		return dataToInsert;
+	}
 	public static EntityResult getGenericInsertResult() {
 		EntityResult er = new EntityResultMapImpl(Arrays.asList("USER_"));
 		er.addRecord(new HashMap<String, Object>() {{put("USER_", "jaimito");}});
