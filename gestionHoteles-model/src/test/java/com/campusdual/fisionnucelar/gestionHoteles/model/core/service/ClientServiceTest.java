@@ -190,7 +190,7 @@ public class ClientServiceTest {
 			when(daoHelper.insert(clientDao, dataToInsert)).thenReturn(er);
 
 			EntityResult entityResult = clientService.clientInsert(dataToInsert);
-			assertEquals("", entityResult.getMessage());
+			assertEquals("SUCCESSFUL_INSERTION", entityResult.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, entityResult.getCode());
 			int recordIndex = entityResult.getRecordIndex(keyMap);
 			assertEquals(2, entityResult.getRecordValues(recordIndex).get("ID_CLIENT"));
@@ -209,7 +209,7 @@ public class ClientServiceTest {
 
 			when(daoHelper.insert(clientDao, dataToInsert)).thenReturn(insertResult);
 			EntityResult resultSuccess = clientService.clientInsert(dataToInsert);
-			assertEquals("", resultSuccess.getMessage());
+			assertEquals("SUCCESSFUL_INSERTION", resultSuccess.getMessage());
 			assertEquals(EntityResult.OPERATION_SUCCESSFUL, resultSuccess.getCode());
 			when(daoHelper.insert(clientDao, dataToInsert)).thenThrow(DuplicateKeyException.class);
 			EntityResult resultFail = clientService.clientInsert(dataToInsert);

@@ -1,7 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -19,12 +19,10 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IDiscountCodeService;
-
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.DiscountCodeDao;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.EmptyRequestException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidDateException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.InvalidRequestException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NotAuthorizedException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
@@ -98,7 +96,7 @@ public class DiscountCodeService implements IDiscountCodeService {
 	 * Adds a new register on the discount_codes table.
 	 * 
 	 * @since 10/08/2022
-	 * @param The fields of the new register
+	 * @param The name and the multiplier of the discount code
 	 * @return The id of the new discount_code and a message with the operation
 	 *         result
 	 * 
@@ -112,6 +110,9 @@ public class DiscountCodeService implements IDiscountCodeService {
 	 * 
 	 * @exception BadSqlGrammarException          when it receives an incorrect type
 	 * 
+	 * @exception InvalidRequestException         when it receives a multiplier
+	 *                                            below or equal to 0
+	 * 
 	 * 
 	 * 
 	 * 
@@ -123,15 +124,16 @@ public class DiscountCodeService implements IDiscountCodeService {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
 			validator.checkIfMapIsEmpty(attrMap);
+			checkPositiveMultiplier(attrMap);			
 			insertResult = this.daoHelper.insert(discountCodeDao, attrMap);
 			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		} catch (DuplicateKeyException e) {
 			log.error("unable to insert a discount code. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, "DISCOUNT_CODE_NAME_ALREADY_EXISTS");
-		} catch (EmptyRequestException e) {
+		} catch (EmptyRequestException | InvalidRequestException e) {
 			log.error("unable to insert a discount code. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
-		} catch (BadSqlGrammarException e) {
+		} catch (BadSqlGrammarException|ClassCastException e) {
 			log.error("unable to insert a discount code : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, "INCORRECT_TYPE");
 		} catch (DataIntegrityViolationException e) {
@@ -141,6 +143,8 @@ public class DiscountCodeService implements IDiscountCodeService {
 
 		return insertResult;
 	}
+
+
 
 	/**
 	 * 
@@ -171,23 +175,26 @@ public class DiscountCodeService implements IDiscountCodeService {
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		try {
-
 			validator.checkIfMapIsEmpty(attrMap);
 			checkIfDiscountCodeExists(keyMap);
+			checkPositiveMultiplier(attrMap);
 			updateResult = this.daoHelper.update(discountCodeDao, attrMap, keyMap);
 			updateResult.setMessage("SUCESSFUL_UPDATE");
 		} catch (DuplicateKeyException e) {
 			log.error("unable to update an discount code. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, "DISCOUNT_CODE_NAME_ALREADY_EXISTS");
-		} catch (RecordNotFoundException e) {
+		} catch (RecordNotFoundException|InvalidRequestException e) {
 			log.error("unable to update an discount code. Request : {} {} ", keyMap, attrMap, e);
 			control.setMessageFromException(updateResult, e.getMessage());
 		} catch (EmptyRequestException e) {
 			log.error("unable to update an discount code. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
-		} catch (BadSqlGrammarException e) {
+		} catch (BadSqlGrammarException|ClassCastException e) {
 			log.error("unable to update an discount code. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, "INCORRECT_REQUEST");
+		}catch (DataIntegrityViolationException e) {
+			log.error("unable to update a discount code. Request : {}", attrMap, e);
+			control.setMessageFromException(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
@@ -222,7 +229,6 @@ public class DiscountCodeService implements IDiscountCodeService {
 		return deleteResult;
 	}
 
-	
 	/**
 	 * Check if it has received an id_code and if it exists in the database
 	 * 
@@ -236,5 +242,20 @@ public class DiscountCodeService implements IDiscountCodeService {
 		if (existingCode.isEmpty())
 			throw new RecordNotFoundException("CODE_DOESN'T_EXISTS");
 	}
-
+	
+	/**
+	 * It throws an exception if the received multiplier is equal or below zero
+	 * 
+	 * @param attrMap with a multiplier
+	 * @throws InvalidRequestException
+	 */
+	private void checkPositiveMultiplier(Map<String, Object> attrMap) throws InvalidRequestException {
+		if (attrMap.containsKey("dc_multiplier")) {
+			Double multiplier = (Double) attrMap.get("dc_multiplier");
+			if (multiplier <= 0) {
+				throw new InvalidRequestException("DC_MULTIPLIER_MUST_BE_HIGHER_THAN_0");
+			}
+		}
+		
+	}
 }

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.util.SloppyMath;
+import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -182,12 +183,15 @@ public class HotelService implements IHotelService {
 			if (attrMap.get("htl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
 			}
-			if(attrMap.containsKey("htl_country_code") || attrMap.containsKey("htl_phone")){
-				if(!attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone")) throw new AllFieldsRequiredException("HTL_COUNTRY_CODE_REQUIRED");
-				if(!attrMap.containsKey("htl_phone") && attrMap.containsKey("htl_country_code")) throw new AllFieldsRequiredException("HTL_PHONE_REQUIRED");
-				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"), (String)attrMap.get("htl_phone"))) 
+			if (attrMap.containsKey("htl_country_code") || attrMap.containsKey("htl_phone")) {
+				if (!attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone"))
+					throw new AllFieldsRequiredException("HTL_COUNTRY_CODE_REQUIRED");
+				if (!attrMap.containsKey("htl_phone") && attrMap.containsKey("htl_country_code"))
+					throw new AllFieldsRequiredException("HTL_PHONE_REQUIRED");
+				if (!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"),
+						(String) attrMap.get("htl_phone")))
 					throw new InvalidPhoneException("INVALID_PHONE");
-				}
+			}
 			insertResult = this.daoHelper.insert(this.hotelDao, attrMap);
 			if (insertResult.isEmpty())
 				throw new AllFieldsRequiredException("FIELDS_REQUIRED");
@@ -206,10 +210,11 @@ public class HotelService implements IHotelService {
 			log.error("unable to insert an hotel. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (ClassCastException e) {
-		log.error("unable to insert an hotel. Request : {} ", attrMap, e);
-
-		control.setErrorMessage(insertResult, "INVALID_PHONE");
+			log.error("unable to insert an hotel. Request : {} ", attrMap, e);
+			control.setErrorMessage(insertResult, "INVALID_PHONE");
 		}
+		
+		
 		return insertResult;
 	}
 
@@ -223,7 +228,7 @@ public class HotelService implements IHotelService {
 	 * @return A message with the operation result
 	 */
 	@Override
-	@Secured({PermissionsProviderSecured.SECURED} )
+	@Secured({ PermissionsProviderSecured.SECURED })
 	public EntityResult hotelUpdate(Map<String, Object> attrMap, Map<String, Object> keyMap)
 			throws OntimizeJEERuntimeException {
 		EntityResult updateResult = new EntityResultMapImpl();
@@ -233,10 +238,13 @@ public class HotelService implements IHotelService {
 			if (attrMap.get("htl_email") != null) {
 				control.checkIfEmailIsValid(attrMap.get("htl_email").toString());
 			}
-			if(attrMap.containsKey("htl_country_code") || attrMap.containsKey("htl_phone")) {
-				if(!attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone") ) throw new AllFieldsRequiredException("HTL_COUNTRY_CODE_REQUIRED");
-				if(!attrMap.containsKey("htl_phone") && attrMap.containsKey("htl_country_code")) throw new AllFieldsRequiredException("HTL_PHONE_REQUIRED");
-				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"), (String)attrMap.get("htl_phone"))) {
+			if (attrMap.containsKey("htl_country_code") || attrMap.containsKey("htl_phone")) {
+				if (!attrMap.containsKey("htl_country_code") && attrMap.containsKey("htl_phone"))
+					throw new AllFieldsRequiredException("HTL_COUNTRY_CODE_REQUIRED");
+				if (!attrMap.containsKey("htl_phone") && attrMap.containsKey("htl_country_code"))
+					throw new AllFieldsRequiredException("HTL_PHONE_REQUIRED");
+				if (!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"),
+						(String) attrMap.get("htl_phone"))) {
 					throw new InvalidPhoneException("INVALID_PHONE");
 				}
 			}
@@ -254,10 +262,10 @@ public class HotelService implements IHotelService {
 		} catch (EmptyRequestException e) {
 			log.error("unable to update an hotel. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
-		}catch (ClassCastException e) {
+		} catch (ClassCastException e) {
 			log.error("unable to insert an hotel. Request : {} ", attrMap, e);
 			control.setErrorMessage(updateResult, "INVALID_PHONE");
-		} 
+		}
 		return updateResult;
 	}
 
@@ -432,14 +440,15 @@ public class HotelService implements IHotelService {
 			String service = (String) keyMap.get("service");
 
 			if (!allowedServices.contains(service)) {
-				String allowedServicesMessage="SERVICE_NOT_ALLOWED_ALLOWED_SERVICES_airport_aquarium_art_gallery_"
+				String allowedServicesMessage = "SERVICE_NOT_ALLOWED_ALLOWED_SERVICES_airport_aquarium_art_gallery_"
 						+ "atm_bakery_bank_bar_beauty_salon_book_store_bus_station_cafe_car_rental_car_repair_"
 						+ "casino_church_clothing_store_drugstore_embassy_florist_gym_gas_station_hair_care_"
 						+ "hospital_laundry_library_liquor_store_meal_takeaway_meal_delivery_mosque_movie_theater_"
 						+ "museum_night_club_park_parking_pharmacy_police_post_office_restaurant_shoe_store_"
 						+ "shopping_mall_spa_stadium_store_subway_station_supermarket_synagogue_"
 						+ "taxi_stand_tourist_attraction_train_station_veterinary_care_zoo";
-;				throw new InvalidRequestException(allowedServicesMessage.toUpperCase());
+				;
+				throw new InvalidRequestException(allowedServicesMessage.toUpperCase());
 			}
 
 			PlacesQueryOptions filter = new PlacesQueryOptions();
@@ -451,7 +460,7 @@ public class HotelService implements IHotelService {
 
 			PlacesResult placesResult = places.searchNearby(latitude.floatValue(), longitude.floatValue(), radius,
 					filter);
-			
+
 			SloppyMath distanceCalculator = new SloppyMath();
 			Double distance;
 
@@ -469,19 +478,35 @@ public class HotelService implements IHotelService {
 				result.addRecord(services);
 				services.clear();
 			}
-			if(result.isEmpty()) {
+			if (result.isEmpty()) {
 				throw new RecordNotFoundException("NO_RESULTS");
 			}
-			
-			
+
 		} catch (InvalidRequestException | RecordNotFoundException | EmptyRequestException e) {
 			log.error("unable to search nearby services. Request : {} {} ", keyMap, attrList, e);
 			control.setErrorMessage(result, e.getMessage());
-		} catch (ClassCastException|BadSqlGrammarException e) {
+		} catch (ClassCastException | BadSqlGrammarException e) {
 			log.error("unable to search nearby services. Request : {} {} ", keyMap, attrList, e);
 			control.setErrorMessage(result, "INVALID_TYPE");
 		}
+		return result;
+	}
 
+	@Override
+	public EntityResult showvalidservicesQuery(Map<String, Object> keyMap, List<String> attrList) throws OntimizeJEERuntimeException {
+		EntityResult result = new EntityResultMapImpl();
+		result.addRecord(new HashMap<String, Object>() {
+			{
+				put("services", Arrays.asList("airport", "aquarium", "art_gallery", "atm", "bakery", "bank",
+						"bar", "beauty_salon", "book_store", "bus_station", "cafe", "car_rental", "car_repair",
+						"casino", "church", "clothing_store", "drugstore", "embassy", "florist", "gym", "gas_station",
+						"hair_care", "hospital", "laundry", "library", "liquor_store", "meal_takeaway", "meal_delivery",
+						"mosque", "movie_theater", "museum", "night_club", "park", "parking", "pharmacy", "police",
+						"post_office", "restaurant", "shoe_store", "shopping_mall", "spa", "stadium", "store",
+						"subway_station", "supermarket", "synagogue", "taxi_stand", "tourist_attraction",
+						"train_station", "veterinary_care", "zoo"));
+			}
+		});
 		return result;
 
 	}

@@ -154,7 +154,11 @@ public class ServiceService implements IServiceService {
 		} catch (RecordNotFoundException | EmptyRequestException e) {
 			log.error("unable to update a service. Request : {}  {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
+		}catch (DataIntegrityViolationException e) {
+			log.error("unable to update a service. Request : {}  {} ",keyMap,attrMap, e);
+			control.setMessageFromException(updateResult, e.getMessage());
 		}
+		
 		return updateResult;
 	}
 
