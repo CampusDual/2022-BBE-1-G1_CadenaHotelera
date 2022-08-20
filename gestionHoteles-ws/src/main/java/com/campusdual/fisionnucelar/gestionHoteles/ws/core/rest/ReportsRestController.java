@@ -34,11 +34,11 @@ import net.sf.jasperreports.engine.JRException;
 public class ReportsRestController {
   @Autowired
   IReportsService reportsService;
-  @GetMapping("/receipt/{bookingId}")
-    public ResponseEntity<byte[]> getReceipt(@PathVariable("bookingId") int bookingId) throws OntimizeJEERuntimeException, JRException, IOException, SQLException {
+  @GetMapping("/receipt")
+    public ResponseEntity<byte[]> getReceipt(@RequestParam("id_booking") int bookingId,@RequestParam("currency_code")String currencyCode) throws OntimizeJEERuntimeException, JRException, IOException, SQLException {
         HttpHeaders headers = new HttpHeaders();
         byte[] contents=null;
-        contents = reportsService.getReceipt(bookingId);
+        contents = reportsService.getReceipt(bookingId,currencyCode);
         headers.setContentType(MediaType.APPLICATION_PDF);
         String filename = "output.pdf";
         headers.setContentDispositionFormData(filename, filename);
@@ -47,11 +47,11 @@ public class ReportsRestController {
         return new ResponseEntity<>(contents, headers, HttpStatus.OK);  
     }
     
-    @GetMapping("/historic/receipt/{bookingId}")
-    public ResponseEntity<byte[]> getHistoricReceipt(@PathVariable("bookingId") int bookingId) throws OntimizeJEERuntimeException, JRException, IOException, SQLException {
+    @GetMapping("/historic/receipt")
+    public ResponseEntity<byte[]> getHistoricReceipt(@RequestParam("id_booking") int bookingId,@RequestParam("currency_code")String currencyCode) throws OntimizeJEERuntimeException, JRException, IOException, SQLException {
     	HttpHeaders headers = new HttpHeaders();
     	byte[] contents=null;
-    	contents = reportsService.getReceiptFromHistoric(bookingId);
+    	contents = reportsService.getReceiptFromHistoric(bookingId,currencyCode);
     	headers.setContentType(MediaType.APPLICATION_PDF);
     	String filename = "output.pdf";
     	headers.setContentDispositionFormData(filename, filename);
@@ -63,10 +63,11 @@ public class ReportsRestController {
     @PostMapping("/financial")
     public ResponseEntity<byte[]> getFinancialReport(@RequestParam("from") 
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date from,@RequestParam("to") 
-    	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date to) {
+    	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date to,
+    	@RequestParam("currency_code") String currencyCode) {
         HttpHeaders headers = new HttpHeaders();
         byte[] contents=null;
-        contents = reportsService.getFinancialReport(from, to);
+        contents = reportsService.getFinancialReport(from, to,currencyCode);
         headers.setContentType(MediaType.APPLICATION_PDF);
         String filename = "output.pdf";
         headers.setContentDispositionFormData(filename, filename);

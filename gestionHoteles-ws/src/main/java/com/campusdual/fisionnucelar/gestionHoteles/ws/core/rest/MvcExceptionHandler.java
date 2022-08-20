@@ -24,5 +24,11 @@ public class MvcExceptionHandler {
 		errorResult.setMessage(e.getMessage());
 		return new ResponseEntity<EntityResult>(errorResult,HttpStatus.NOT_FOUND);
 	}
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<EntityResult> currencyCodeError(IllegalArgumentException e){
+		EntityResult errorResult = new EntityResultMapImpl();
+		errorResult.setMessage("CURRENCY_CODE_DOESN´T_EXISTS");
+		return new ResponseEntity<EntityResult>(errorResult,HttpStatus.BAD_REQUEST);
+	}
 
 }

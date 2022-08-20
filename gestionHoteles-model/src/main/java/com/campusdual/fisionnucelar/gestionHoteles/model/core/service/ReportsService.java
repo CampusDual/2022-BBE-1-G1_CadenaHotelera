@@ -19,12 +19,17 @@ import org.springframework.transaction.annotation.Transactional;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IReportsService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.EntityResultUtils;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.ApiKey;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.common.security.PermissionsProviderSecured;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
+import com.posadskiy.currencyconverter.CurrencyConverter;
+import com.posadskiy.currencyconverter.config.ConfigBuilder;
 
 import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.data.JRTableModelDataSource;
 import net.sf.jasperreports.engine.util.JRLoader;
 
 /**
@@ -51,9 +56,15 @@ public class ReportsService implements IReportsService {
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
 	org.slf4j.Logger log;
+	CurrencyConverter converter;
 
 	public ReportsService() {
 		this.log = LoggerFactory.getLogger(this.getClass());
+		this.converter=converter = new CurrencyConverter(
+		    new ConfigBuilder()
+		        .currencyConverterApiApiKey(ApiKey.KEY_CURRENCY_CONVERTER)
+		        .build()
+		);
 	}
 	
 	/**
@@ -67,11 +78,14 @@ public class ReportsService implements IReportsService {
 	 */
 	@Override
 	@Secured({"admin","hotel_manager","hotel_recepcionist"})
-	public byte[] getReceipt(int bookingId) throws OntimizeJEERuntimeException {
+	public byte[] getReceipt(int bookingId, String currencyCode) throws OntimizeJEERuntimeException,IllegalArgumentException {
 		Map<String, Object> params = new HashMap<>();
 		int parameter = bookingId;
 		params.put("Parameter1", parameter);
-		InputStream jasperStream = this.getClass().getResourceAsStream("billReport.jasper");
+		params.put("Parameter2", getCurrencyRate(currencyCode));
+		Currency currency = Currency.getInstance(currencyCode);
+		params.put("Parameter3", currency.getSymbol());
+		InputStream jasperStream = this.getClass().getResourceAsStream("receipt.jasper");
 		JasperReport jasperReport;
 		JasperPrint jasperPrint;
 		if (!checkIfQueryReturnsResults(getReceiptQuery(bookingId)))
@@ -112,10 +126,13 @@ public class ReportsService implements IReportsService {
 	 */
 	@Override
 	@Secured({"admin","hotel_manager","hotel_recepcionist"})
-	public byte[] getReceiptFromHistoric(int bookingId) throws OntimizeJEERuntimeException {
+	public byte[] getReceiptFromHistoric(int bookingId, String currencyCode) throws OntimizeJEERuntimeException,IllegalArgumentException {
 		Map<String, Object> params = new HashMap<>();
 		int parameter = bookingId;
 		params.put("Parameter1", parameter);
+		params.put("Parameter2", getCurrencyRate(currencyCode));
+		Currency currency = Currency.getInstance(currencyCode);
+		params.put("Parameter3", currency.getSymbol());
 		InputStream jasperStream = this.getClass().getResourceAsStream("invoice.jasper");
 		JasperReport jasperReport;
 		JasperPrint jasperPrint;
@@ -288,12 +305,14 @@ public class ReportsService implements IReportsService {
 	 */
 	@Override
 	@Secured({"admin"})
-	public byte[] getFinancialReport(Date from, Date to) throws OntimizeJEERuntimeException {
+	public byte[] getFinancialReport(Date from, Date to,String currencyCode) throws OntimizeJEERuntimeException,IllegalArgumentException {
 		Map<String, Object> params = new HashMap<>();
 		params.put("Parameter1", from);
 		params.put("Parameter2", to);
-		System.out.println(this.getClass().getResource("").getPath());
-		InputStream jasperStream = this.getClass().getResourceAsStream("financialReport.jasper");
+		params.put("Parameter3",getCurrencyRate(currencyCode));
+		Currency currency = Currency.getInstance(currencyCode);
+		params.put("Parameter4",currency.getSymbol());
+		InputStream jasperStream = this.getClass().getResourceAsStream("BillingReport.jasper");
 		JasperReport jasperReport;
 		JasperPrint jasperPrint;
 		if (!checkIfQueryReturnsResults(getFinancialReportQuery(from,to)))
@@ -308,10 +327,10 @@ public class ReportsService implements IReportsService {
 		byte[] contents = null;
 		try {
 			jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
-			jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+			jasperPrint = JasperFillManager.fillReport(jasperReport, params, new JRTableModelDataSource(EntityResultUtils.createTableModel(financialResult)));
 			contents = JasperExportManager.exportReportToPdf(jasperPrint);
 		} catch (JRException e) {
-			log.error("unable to build receipt ", e.getMessage());
+			log.error("unable to build financial report ", e.getMessage());
 		} finally {
 			try {
 				conn.close();
@@ -320,6 +339,10 @@ public class ReportsService implements IReportsService {
 			}
 		}
 		return contents;
+	}
+	
+	public double getCurrencyRate(String currencyCode) throws IllegalArgumentException{ 
+		return converter.rate("EUR", currencyCode);
 	}
 	
 }
