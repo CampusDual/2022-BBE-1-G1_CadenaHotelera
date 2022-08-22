@@ -27,7 +27,7 @@ ontimize:
          upper-like: true
    security:
       mode: default
-      ignore-paths: /app/**, /bookings/availablerooms/search, /hotels/hotelsbyservices/search, /hotels/searchbylocation/search, /hotels/searchbycity/search, /extrahotel/extrahotel/search, /users/userClient
+      ignore-paths: /app/**, /bookings/availablerooms/search, /hotels/hotelsbyservices/search, /hotels/searchbylocation/search, /hotels/searchbycity/search, /extrahotel/extrahotel/search, /users/userClient, /reviews/review/search
       role-information-service:
          role-repository: UserRoleDao
          role-name-column: ROLENAME
