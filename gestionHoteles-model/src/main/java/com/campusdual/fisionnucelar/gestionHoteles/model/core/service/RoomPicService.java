@@ -13,10 +13,13 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IHotelServic
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomPicService;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomTypeService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.RoomPicDao;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.NoResultsException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Control;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.UserControl;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.Validator;
 import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 import com.ontimize.jee.common.util.remote.BytesBlock;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
@@ -55,8 +58,24 @@ public class RoomPicService implements IRoomPicService {
 	@Override
 	public byte[] roompicQuery(Map<String, Object> keyMap, List<String> attrList) throws OntimizeJEERuntimeException {
 		EntityResult result = daoHelper.query(roomPicDao, keyMap, attrList);
-		BytesBlock image=(BytesBlock) result.getRecordValues(0).get("rp_image");				
+		BytesBlock image = null;
+		image = (BytesBlock) result.getRecordValues(0).get("rp_image");
 		return image.getBytes();
+
+	}
+
+	@Override
+	public EntityResult roomtypepicsQuery(Map<String, Object> keyMap, List<String> attrList)
+			throws OntimizeJEERuntimeException {
+		EntityResult result = new EntityResultMapImpl();
+
+		result = daoHelper.query(roomPicDao, keyMap, attrList);
+		try {
+			control.checkResults(result);
+		} catch (NoResultsException e) {
+			control.setErrorMessage(result, e.getMessage());
+		}
+		return result;
 	}
 
 	@Override

@@ -1,10 +1,6 @@
 package com.campusdual.fisionnucelar.gestionHoteles.ws.core.rest;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,8 +26,6 @@ import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IRoomPicServ
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
 
-import net.sf.jasperreports.engine.JRException;
-
 /**
  * This class listens the incoming requests related with the room pics table
  * 
@@ -47,64 +41,57 @@ public class RoomPicRestController {
 	private IRoomPicService roomPicService;
 
 	@RequestMapping(value = "/uploadFile", method = RequestMethod.POST)
-	public @ResponseBody ResponseEntity<?> uploadFileHandler(@RequestParam("name") String name,
-			@RequestParam("file") MultipartFile file, HttpServletRequest request, HttpServletResponse response) {
+	public @ResponseBody ResponseEntity<?> uploadFileHandler(@RequestParam("rp_hotel") int hotel,
+			@RequestParam("rp_room_type") int roomType, @RequestParam("file") MultipartFile file,
+			HttpServletRequest request, HttpServletResponse response) {
 
 		if (!file.isEmpty()) {
-
 			byte[] bytes;
 			try {
 				bytes = file.getBytes();
-
 				Map<String, Object> attrMap = new HashMap<>();
-				attrMap.put("rp_room", 1);
+				attrMap.put("rp_room_type", roomType);
+				attrMap.put("rp_hotel", hotel);
 				attrMap.put("rp_image", bytes);
-				
 				roomPicService.roompicInsert(attrMap);
 
-//             // Creating the directory to store file
-//             String rootPath = System.getProperty("catalina.home");
-//             File dir = new File(rootPath + File.separator + "tmpFiles");
-//             if (!dir.exists()) {
-//                 dir.mkdirs();
-//             }
-//
-//             // Create the file on server
-//             File serverFile = new File(dir.getAbsolutePath() + File.separator + name);
-//             BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(serverFile));
-//             stream.write(bytes);
-//             stream.close();
-//
-//             System.out.println("Server File Location=" + serverFile.getAbsolutePath());
-
-//             return null;
-//         } catch (Exception e) {
-//             return null;
-//         }
-
 			} catch (IOException e) {
-
 				e.printStackTrace();
 			}
-
 		}
 		return ResponseEntity.ok(null);
 	}
 
 	@GetMapping("/{id_room_pic}")
-	public ResponseEntity<byte[]> getReceipt(@PathVariable("id_room_pic") int roomPicId)
-			throws OntimizeJEERuntimeException, JRException, IOException, SQLException {
+	public ResponseEntity<byte[]> getImage(@PathVariable("id_room_pic") int roomPicId)
+			throws OntimizeJEERuntimeException {
 		HttpHeaders headers = new HttpHeaders();
 		byte[] contents = null;
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_room_pic", roomPicId);
-
 		contents = roomPicService.roompicQuery(keyMap, Arrays.asList("rp_image"));
+
 		headers.setContentType(MediaType.IMAGE_JPEG);
-		String filename = "output.pdf";
+		String filename = "image.jpg";
 		headers.setContentDispositionFormData(filename, filename);
 		headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-
 		return new ResponseEntity<>(contents, headers, HttpStatus.OK);
 	}
+
+	
+	@GetMapping()
+	public ResponseEntity<EntityResult> getRoomTypeImages(@RequestParam("rp_hotel") Integer hotel,
+			@RequestParam(value = "rp_room_type", required = false) Integer roomType)
+			throws OntimizeJEERuntimeException {
+		HttpHeaders headers = new HttpHeaders();
+		Map<String, Object> keyMap = new HashMap<>();
+		keyMap.put("rp_hotel", hotel);
+		if (!(roomType == null)) {
+			keyMap.put("rp_room_type", roomType);
+		}
+		EntityResult result = roomPicService.roomtypepicsQuery(keyMap, Arrays.asList("rp_image"));
+
+		return new ResponseEntity<>(result, headers, HttpStatus.OK);
+	}
+
 }

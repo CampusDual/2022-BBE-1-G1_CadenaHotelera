@@ -19,7 +19,8 @@ import com.ontimize.jee.server.dao.jdbc.OntimizeJdbcDaoSupport;
 	public class RoomPicDao extends OntimizeJdbcDaoSupport {
 
 	 public static final String ATTR_ID = "ID_ROOM_PIC";
-	 public static final String ATTR_ROOM = "RP_ROOM"; 
+	 public static final String ATTR_ROOM_TYPE = "RP_ROOM_TYPE"; 
+	 public static final String ATTR_HOTEL = "RP_HOTEL"; 	 
 	 public static final String ATTR_IMAGE = "RP_IMAGE";
 
 }

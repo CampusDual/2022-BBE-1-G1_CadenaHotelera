@@ -17,6 +17,8 @@ public interface IRoomPicService {
 	 // ROOM PICS
 	 public byte[] roompicQuery(Map<String, Object> keyMap, List<String> attrList) throws OntimizeJEERuntimeException;
 	 public EntityResult roompicInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException;
+	EntityResult roomtypepicsQuery(Map<String, Object> keyMap, List<String> attrList)
+			throws OntimizeJEERuntimeException;
 	
 	
 	}
