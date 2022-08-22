@@ -40,7 +40,7 @@ public class ReportsRestController {
         byte[] contents=null;
         contents = reportsService.getReceipt(bookingId,currencyCode);
         headers.setContentType(MediaType.APPLICATION_PDF);
-        String filename = "output.pdf";
+        String filename = "receipt.pdf";
         headers.setContentDispositionFormData(filename, filename);
         headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
        
@@ -53,14 +53,14 @@ public class ReportsRestController {
     	byte[] contents=null;
     	contents = reportsService.getReceiptFromHistoric(bookingId,currencyCode);
     	headers.setContentType(MediaType.APPLICATION_PDF);
-    	String filename = "output.pdf";
+    	String filename = "receipt.pdf";
     	headers.setContentDispositionFormData(filename, filename);
     	headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
     	
     	return new ResponseEntity<>(contents, headers, HttpStatus.OK);  
     }
     
-    @PostMapping("/financial")
+    @GetMapping("/financial")
     public ResponseEntity<byte[]> getFinancialReport(@RequestParam("from") 
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date from,@RequestParam("to") 
     	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date to,
@@ -69,7 +69,7 @@ public class ReportsRestController {
         byte[] contents=null;
         contents = reportsService.getFinancialReport(from, to,currencyCode);
         headers.setContentType(MediaType.APPLICATION_PDF);
-        String filename = "output.pdf";
+        String filename = "financialReport.pdf";
         headers.setContentDispositionFormData(filename, filename);
         headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
         return new ResponseEntity<>(contents, headers, HttpStatus.OK);    
