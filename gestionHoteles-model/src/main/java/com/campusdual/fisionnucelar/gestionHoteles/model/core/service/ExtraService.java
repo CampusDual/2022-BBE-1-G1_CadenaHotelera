@@ -151,6 +151,9 @@ public class ExtraService implements IExtraService{
 		}catch (EmptyRequestException e) {
 			log.error("unable to update an extra. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
+		}catch (DataIntegrityViolationException e) {
+			log.error("unable to update an extra. Request : {} ",attrMap, e);
+			control.setMessageFromException(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}

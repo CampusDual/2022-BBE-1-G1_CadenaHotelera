@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.jdbc.SQLWarningException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 
@@ -128,8 +129,9 @@ public class SeasonService implements ISeasonService {
 	 * @exception NotAuthorizedException          when a hotel manager try to insert
 	 *                                            a season in a different hotel
 	 * 
-	 * @exception InvalidDateException			when the start date is after the end date or before the
-	 * 											current date
+	 * @exception InvalidDateException            when the start date is after the
+	 *                                            end date or before the current
+	 *                                            date
 	 * 
 	 * 
 	 * 
@@ -140,6 +142,7 @@ public class SeasonService implements ISeasonService {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
 			dataValidator.checkIfMapIsEmpty(attrMap);
+			checkPositiveMultiplier(attrMap);
 			userControl.controlAccess((int) attrMap.get("ss_hotel"));
 			checkDates(attrMap);
 			checkCoincidentSeasons(attrMap);
@@ -149,12 +152,16 @@ public class SeasonService implements ISeasonService {
 		} catch (DuplicateKeyException e) {
 			log.error("unable to insert a season. Request : {} ", attrMap, e);
 			control.setMessageFromException(insertResult, "SS_NAME_ALREADY_EXISTS");
-		} catch (NotAuthorizedException | DataIntegrityViolationException | InvalidRequestException|InvalidDateException e) {
+		} catch (NotAuthorizedException | DataIntegrityViolationException | InvalidRequestException
+				| InvalidDateException e) {
 			log.error("unable to insert a season. Request : {} ", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		} catch (EmptyRequestException e) {
-			log.error("unable to insert an hotel. Request : {} ", attrMap, e);
+			log.error("unable to insert an season. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
+		} catch (ClassCastException e) {
+			log.error("unable to insert an season. Request : {} ", attrMap, e);
+			control.setErrorMessage(insertResult, "INVALID_TYPE");
 		}
 		return insertResult;
 	}
@@ -167,16 +174,17 @@ public class SeasonService implements ISeasonService {
 	 * @param The fields to update
 	 * @return A message with the result of the update
 	 * 
-	 * @exception EmptyRequestException           when it doesn't receive any of the
-	 *                                            register fields
-	 * @exception DuplicateKeyException           when it receives a season with a
-	 *                                            already registered name
+	 * @exception EmptyRequestException   when it doesn't receive any of the
+	 *                                    register fields
+	 * @exception DuplicateKeyException   when it receives a season with a already
+	 *                                    registered name
 	 * 
 	 * 
-	 * @exception NotAuthorizedException          when an hotel manager tries to
-	 *                                            update a season on another hotel
-	 *                                            
-	 * @exception RecordNotFoundException			when it receiveis an id_season that doesn't exists                                           
+	 * @exception NotAuthorizedException  when an hotel manager tries to update a
+	 *                                    season on another hotel
+	 * 
+	 * @exception RecordNotFoundException when it receiveis an id_season that
+	 *                                    doesn't exists
 	 * 
 	 * 
 	 * 
@@ -191,17 +199,18 @@ public class SeasonService implements ISeasonService {
 			if (keyMap.isEmpty()) {
 				throw new EmptyRequestException("ID_SEASON_REQUIRED");
 			}
-			if(attrMap.get("ss_hotel")!=null) {
+			if (attrMap.get("ss_hotel") != null) {
 				throw new NotAuthorizedException("SS_HOTEL_CAN'T_BE_UPDATED");
 			}
-			
+
 			dataValidator.checkIfMapIsEmpty(attrMap);
+			checkPositiveMultiplier(attrMap);
 			searchResult = daoHelper.query(seasonDao, keyMap,
 					Arrays.asList("ss_hotel", "ss_start_date", "ss_end_date"));
-			if(searchResult.isEmpty()) {
+			if (searchResult.isEmpty()) {
 				throw new RecordNotFoundException("SEASON_DON'T_EXISTS");
-			}		
-		
+			}
+
 			int hotel = (int) searchResult.getRecordValues(0).get("ss_hotel");
 			userControl.controlAccess(hotel);
 
@@ -219,13 +228,20 @@ public class SeasonService implements ISeasonService {
 
 			updateResult = this.daoHelper.update(seasonDao, attrMap, keyMap);
 			updateResult.setMessage("SUCESSFUL_UPDATE");
-		} catch (EmptyRequestException | NotAuthorizedException | InvalidRequestException|RecordNotFoundException e) {
-			log.error("unable to update a season. Request : {} ", attrMap, e);
-			control.setMessageFromException(updateResult, e.getMessage());
-		}  catch (DuplicateKeyException e) {
+		} catch (DuplicateKeyException e) {
 			log.error("unable to update a season. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, "SS_NAME_ALREADY_EXISTS");
-		} 
+		} catch (EmptyRequestException | NotAuthorizedException | InvalidRequestException | RecordNotFoundException
+				| DataIntegrityViolationException e) {
+			log.error("unable to update a season. Request : {} ", attrMap, e);
+			control.setMessageFromException(updateResult, e.getMessage());
+		} catch (ClassCastException | SQLWarningException e) {
+			log.error("unable to update a season. Request : {} {} ", keyMap, attrMap, e);
+			control.setErrorMessage(updateResult, "INVALID_REQUEST");
+		} catch (InvalidDateException e) {
+			log.error("unable to update a season. Request : {} {} ", keyMap, attrMap, e);
+			control.setErrorMessage(updateResult, "START_DATE_MUST_BE_BEFORE_END_DATE");
+		}
 		return updateResult;
 	}
 
@@ -259,7 +275,7 @@ public class SeasonService implements ISeasonService {
 			}
 			deleteResult = daoHelper.query(seasonDao, keyMap, Arrays.asList("id_season", "ss_hotel"));
 			control.checkResults(deleteResult);
-			userControl.controlAccess((int) deleteResult.getRecordValues(0).get("ss_hotel"));			
+			userControl.controlAccess((int) deleteResult.getRecordValues(0).get("ss_hotel"));
 			deleteResult = daoHelper.delete(seasonDao, keyMap);
 			deleteResult.setMessage("SUCCESSFULL_DELETE");
 
@@ -304,10 +320,10 @@ public class SeasonService implements ISeasonService {
 				throw new EmptyRequestException("SS_HOTEL_REQUIRED");
 			}
 			deleteResult = daoHelper.query(seasonDao, keyMap, Arrays.asList("id_season"), "OLD_SEASONS");
-			
+
 			control.checkResults(deleteResult);
 			userControl.controlAccess((int) keyMap.get("ss_hotel"));
-		
+
 			Map<String, Object> deleteFilter = new HashMap<>();
 
 			for (int i = 0; i < deleteResult.calculateRecordNumber(); i++) {
@@ -394,6 +410,22 @@ public class SeasonService implements ISeasonService {
 		BasicExpression rule1_2 = new BasicExpression(rule1, BasicOperator.OR_OP, rule2);
 
 		return new BasicExpression(rule1_2, BasicOperator.OR_OP, rule3);
+	}
+
+	/**
+	 * It throws an exception if the received multiplier is equal or below zero
+	 * 
+	 * @param attrMap with a multiplier
+	 * @throws InvalidRequestException
+	 */
+	private void checkPositiveMultiplier(Map<String, Object> attrMap) throws InvalidRequestException {
+		if (attrMap.containsKey("ss_multiplier")) {
+			Double multiplier = (Double) attrMap.get("ss_multiplier");
+			if (multiplier <= 0) {
+				throw new InvalidRequestException("SS_MULTIPLIER_MUST_BE_HIGHER_THAN_0");
+			}
+		}
+
 	}
 
 }

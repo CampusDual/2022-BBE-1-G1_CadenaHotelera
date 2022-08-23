@@ -92,7 +92,17 @@ public class UserService implements IUserService {
 
 	public void loginQuery(Map<?, ?> key, List<?> attr) {
 	}
-
+	/**
+	 * 
+	 * Executes a generic query over the users table
+	 * 
+	 * @since 08/08/2022
+	 * @param The filters and the fields of the query
+	 * @return The columns from the users table especified in the params and a
+	 *         message with the operation result
+	 *@exception BadSqlGrammarException when it introduces a string instead of a numeric on id
+     *@exception NoResultsException when the query doesn´t return results   
+	 */
 	@Override
 	@Secured({ "admin" })
 	public EntityResult userQuery(Map<String, Object> keyMap, List<String> attrList)
@@ -102,16 +112,30 @@ public class UserService implements IUserService {
 			searchResult = this.daoHelper.query(this.userDao, keyMap, attrList, "user_data");
 			control.checkResults(searchResult);
 		} catch (NoResultsException e) {
-			log.error("unable to retrieve a hotel. Request : {} {} ", keyMap, attrList, e);
+			log.error("unable to retrieve a user. Request : {} {} ", keyMap, attrList, e);
 			control.setErrorMessage(searchResult, e.getMessage());
 		} catch (BadSqlGrammarException e) {
-			log.error("unable to retrieve a hotel. Request : {} {} ", keyMap, attrList, e);
+			log.error("unable to retrieve a user. Request : {} {} ", keyMap, attrList, e);
 			control.setErrorMessage(searchResult, "INCORRECT_REQUEST");
 			e.printStackTrace();
 		}
 		return searchResult;
 	}
-
+	/**
+	 * 
+	 * Updates a existing register on the user table. 
+	 * 
+	 * @since 11/08/2022
+	 * @param The fields to be updated
+	 * @return A message with the operation result
+	 * @exception InvalidEmailException when it introduces a email  that it is invalid
+	 * @exception DuplicateKeyException when it introduces a email  that it exists
+	 * @exception RecordNotFoundException when it doesn´t introduce a not null field 
+	 * @exception EmptyRequestException when it doesn´t introduce any field
+	 * @exception BadSqlGrammarException when it receives an incorrect type in the params
+	 * @exception DataIntegrityViolationException when the params don't include the
+	 *                                            not null fields
+	 */
 	@Override
 	@Transactional
 	@Secured({ "admin", "hotel_manager", "client" })
@@ -155,7 +179,16 @@ public class UserService implements IUserService {
 		}
 		return updateResult;
 	}
-
+	/**
+	 * 
+	 * Puts a user_down_date on a user. If the user doesn't exists returns an error message
+	 * 
+	 * @since 10/08/2022
+	 * @param The user_ of the user
+	 * @return A message with the operation result
+	 * @exception RecordNotFoundException when it doesn´t introduce a not null field
+	 * @exception EmptyRequestException when it doesn´t introduce any field
+	 */
 	@Override
 	@Secured({ "admin" })
 	public EntityResult userDelete(Map<String, Object> keyMap) {
@@ -175,6 +208,7 @@ public class UserService implements IUserService {
 			deleteResult.setMessage("SUCCESSFULLY_DELETE");
 			return deleteResult;
 		} catch (RecordNotFoundException e) {
+			log.error("unable to insert a user. Request : {} {} ",keyMap, e);
 			control.setErrorMessage(deleteResult, e.getMessage());
 		}catch (EmptyRequestException e) {
 			log.error("unable to insert a user. Request : {} {} ",keyMap, e);
@@ -182,7 +216,30 @@ public class UserService implements IUserService {
 		}
 		return deleteResult;
 	}
-
+	/**
+	 * 
+<<<<<<< HEAD
+	 * Adds a new admin register on the user table.
+	 * 
+	 * @since 12/08/2022
+=======
+	 * Adds a new register on the user table.
+	 * 
+	 * @since 19/08/2022
+>>>>>>> d5a72e6b7df8a25acf17fd58e8895ead53593786
+	 * @param The fields of the new register
+	 * @return The id of the new register and a message with the operation result
+	 * @exception InvalidEmailException when it introduces a email that it is invalid
+	 * @exception DuplicateKeyException when it introduces a email that it exists
+	 * @exception DataIntegrityViolationException when it doesn´t introduce a not null field 
+	 * @exception EmptyRequestException when it doesn´t introduce any field
+<<<<<<< HEAD
+	 * @exception NotAuthorizedException when it introduce a user not authorized
+=======
+	 * @exception InvalidEmailException when it 
+>>>>>>> d5a72e6b7df8a25acf17fd58e8895ead53593786
+	 * @exception RecordNotFoundException when it doesn´t introduce a not null field
+	 */
 	@Override
 	@Transactional
 	@Secured({ "admin" })
@@ -210,14 +267,29 @@ public class UserService implements IUserService {
 		} catch (DuplicateKeyException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, "EMAIL_ALREADY_EXISTS");
-		} catch (DataIntegrityViolationException | EmptyRequestException | InvalidEmailException
+		} catch (DataIntegrityViolationException | EmptyRequestException | InvalidEmailException | RecordNotFoundException
 				| NotAuthorizedException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		}
 		return insertResult;
 	}
-
+	/**
+	 * 
+	 * Adds a new worker register on the user table.
+	 * 
+	 * @since 12/08/2022
+	 * @param The fields of the new register
+	 * @return The id of the new register and a message with the operation result
+	 * @exception InvalidEmailException when it introduces a email that it is invalid
+	 * @exception DuplicateKeyException when it introduces a email that it exists
+	 * @exception DataIntegrityViolationException when it doesn´t introduce a not null field 
+	 * @exception EmptyRequestException when it doesn´t introduce any field
+	 * @exception NotAuthorizedException when it introduces a user not authorized
+	 * @exception RecordNotFoundException when it doesn´t introduce a not null field
+	 * @exception InvalidRolException when it introduces a rol not authorized
+	 *  @exception AllFieldsRequiredException when it doesn´t introduce a field required
+	 */
 	@Override
 	@Transactional
 	@Secured({ "admin", "hotel_manager" })
@@ -242,7 +314,7 @@ public class UserService implements IUserService {
 				insertResult.setMessage("USER_EXISTING_UP_SUCCESSFULLY_UPDATE");
 			}
 
-		} catch (InvalidEmailException | AllFieldsRequiredException | InvalidRolException | NotAuthorizedException e) {
+		} catch (InvalidEmailException | InvalidRolException | NotAuthorizedException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		} catch (DuplicateKeyException e) {
@@ -251,18 +323,34 @@ public class UserService implements IUserService {
 		} catch (DataIntegrityViolationException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
-		} catch (EmptyRequestException | RecordNotFoundException e) {
+		} catch (EmptyRequestException | RecordNotFoundException | AllFieldsRequiredException e) {
 			log.error("unable to insert a user. Request : {} {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
 		return insertResult;
 	}
-
+	/**
+	 * 
+	 * Adds a new client register on the user table by admins or hotel managers.
+	 * 
+	 * @since 11/08/2022
+	 * @param The fields of the new register
+	 * @return The id of the new register and a message with the operation result
+	 * @exception InvalidEmailException when it introduces a email that it is invalid
+	 * @exception DuplicateKeyException when it introduces a email that it exists
+	 * @exception DataIntegrityViolationException when it doesn´t introduce a not null field 
+	 * @exception EmptyRequestException when it doesn´t introduce any field
+	 * @exception NotAuthorizedException when it introduces a user not authorized
+	 * @exception RecordNotFoundException when it doesn´t introduce a not null field
+	 * @exception ClassCastException when it introduces a type field not valid
+	 */
+	
 	@Override
 	@Transactional
 	@Secured({ "admin", "hotel_manager" })
 	public EntityResult userClientByManagersInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
+		Map<String, Object> columnsTuser_id = new HashMap<String, Object>();
 		try {
 			dataValidator.checkIfMapIsEmpty(attrMap);
 			if (attrMap.get("email") == null) {
@@ -302,14 +390,17 @@ public class UserService implements IUserService {
 				// Insertado en la tabla tuser
 				if (!checkIfUserDown(attrMap)) {
 					insertResult = this.daoHelper.insert(userDao, attrMap);
-
 					// Insertado en la tabla tuser_role
 					Map<String, Object> columnsTuser_role = new HashMap<String, Object>();
 					columnsTuser_role.put("id_rolename", 2);
 					columnsTuser_role.put("user_", attrMap.get("user_"));
 					daoHelper.insert(userroleDao, columnsTuser_role);
+					columnsTuser_id.put("id_client",(int) attrMap.get("identifier"));
+					insertResult.addRecord(columnsTuser_id);
 					insertResult.setMessage("SUCCESSFULLY_INSERT");
 				} else {
+					columnsTuser_id.put("id_client",(int) attrMap.get("identifier"));
+					insertResult.addRecord(columnsTuser_id);
 					insertResult.setMessage("USER_EXISTING_UP_SUCCESSFULLY_UPDATE");
 				}
 			}
@@ -322,13 +413,31 @@ public class UserService implements IUserService {
 		} catch (DataIntegrityViolationException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
-		} catch (EmptyRequestException | NotAuthorizedException e) {
-			log.error("unable to insert a client. Request : {} {} ", attrMap, e);
+
+		} catch (EmptyRequestException | NotAuthorizedException  | RecordNotFoundException e) {
+
+			log.error("unable to insert a user. Request : {} {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
-		}
+		}catch (ClassCastException e) {
+			log.error("unable to insert an user. Request : {} ", attrMap, e);
+			control.setErrorMessage(insertResult, "INVALID_PHONE");
+			}
 		return insertResult;
 	}
-
+	/**
+	 * 
+	 * Adds a new client register on the user table by clients.
+	 * 
+	 * @since 10/08/2022
+	 * @param The fields of the new register
+	 * @return The id of the new register and a message with the operation result
+	 * @exception InvalidEmailException when it introduces a email that it is invalid
+	 * @exception DuplicateKeyException when it introduces a email that it exists
+	 * @exception DataIntegrityViolationException when it doesn´t introduce a not null field 
+	 * @exception EmptyRequestException when it doesn´t introduce any field
+	 * @exception RecordNotFoundException when it doesn´t introduce a not null field
+	 * @exception ClassCastException when it introduces a type field not valid
+	 */	
 	@Override
 	@Transactional
 	public EntityResult userClientInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
@@ -359,24 +468,30 @@ public class UserService implements IUserService {
 				columnsTuser_role.put("id_rolename", 2);
 				columnsTuser_role.put("user_", attrMap.get("user_"));
 				daoHelper.insert(userroleDao, columnsTuser_role);
+				Map<String, Object> columnsTuser_id = new HashMap<String, Object>();
+				columnsTuser_id.put("id_client",(int) insertClient.get("id_client"));
+				insertResult.addRecord(columnsTuser_id);
 				insertResult.setMessage("SUCCESSFULLY_INSERT");
 			}
-		} catch (InvalidEmailException e) {
-			log.error("unable to insert a user. Request : {} ", attrMap, e);
-			control.setErrorMessage(insertResult, e.getMessage());
-		} catch (DuplicateKeyException e) {
+		}  catch (DuplicateKeyException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, "EMAIL_ALREADY_EXISTS. ");
-		} catch (DataIntegrityViolationException e) {
+		} catch (DataIntegrityViolationException  | RecordNotFoundException | EmptyRequestException | InvalidEmailException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
-		} catch (EmptyRequestException e) {
-			log.error("unable to insert a client. Request : {} {} ", attrMap, e);
-			control.setErrorMessage(insertResult, e.getMessage());
-		}
+		} catch (ClassCastException e) {
+
+			log.error("unable to insert an user. Request : {} ", attrMap, e);
+			control.setErrorMessage(insertResult, "INVALID_Type");
+			}
 		return insertResult;
 	}
-
+	/**
+	 * Search a concrete Hotel. It throws an exception if it doesn't exists
+	 * 
+	 * @param attrMap with the id hotel to search
+	 * @exception RecordNotFoundException If it doesn't find any result
+	 */
 	public void checkIfHotelExists(Map<String, Object> attrMap) {
 		if (!(attrMap.get("identifier") instanceof Integer)) {
 			throw new RecordNotFoundException("ID_HOTEL_REQUIRED");
@@ -389,7 +504,14 @@ public class UserService implements IUserService {
 		if (existingHotelResult.isEmpty())
 			throw new RecordNotFoundException("ERROR_HOTEL_NOT_FOUND");
 	}
-
+	/**
+	 * Search a concrete Rol. It throws an exception if it doesn't exists
+	 * 
+	 * @param attrMap with the id rolename to search
+	 * @exception RecordNotFoundException If it doesn't find any result
+	 * @exception InvalidRolException when it introduces a rol not authorized
+	 * @exception AllFieldsRequiredException when it doesn´t introduce a field required
+	 */
 	public void checkIfRolExists(Map<String, Object> attrMap) throws InvalidRolException {
 		if (!(attrMap.get("id_rolename") instanceof Integer)) {
 			throw new AllFieldsRequiredException("ID_ROLENAME_NEEDED");
@@ -405,7 +527,12 @@ public class UserService implements IUserService {
 		if (existingRolResult.isEmpty())
 			throw new RecordNotFoundException("ERROR_ID_ROLENAME_NOT_FOUND");
 	}
-
+	/**
+	 * Search a concrete User. It throws an exception if it doesn't exists
+	 * 
+	 * @param attrMap with the user_ to search
+	 * @exception RecordNotFoundException If it doesn't find any result
+	 */
 	public void checkIfUserExists(Map<String, Object> keyMap) {
 		if ((keyMap.get("user_") == null)) {
 			throw new RecordNotFoundException("USER_REQUIRED");
@@ -419,7 +546,13 @@ public class UserService implements IUserService {
 			throw new RecordNotFoundException("ERROR_USER_NOT_FOUND");
 		}
 	}
-
+	/**
+	 * Search a field user_down_date in a table User. It throws an exception if it doesn't exists
+	 * 
+	 * @param attrMap with the user_ and email to search
+	 * @exception RecordNotFoundException If it doesn't find any result
+	 * @exception NotAuthorizedException if the user doesn´t down and not permise insert
+	 */
 	public boolean checkIfUserDown(Map<String, Object> attrMap) throws NotAuthorizedException {
 		EntityResult updateResult = new EntityResultMapImpl();
 		boolean flat = false;
@@ -450,3 +583,4 @@ public class UserService implements IUserService {
 		return flat;
 	}
 }
+

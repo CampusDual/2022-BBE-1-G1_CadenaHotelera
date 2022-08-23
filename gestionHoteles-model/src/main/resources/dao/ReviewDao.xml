@@ -3,25 +3,30 @@
  xmlns="http://www.ontimize.com/schema/jdbc"
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
  xsi:schemaLocation="http://www.ontimize.com/schema/jdbc http://www.ontimize.com/schema/jdbc/ontimize-jdbc-dao.xsd"
- catalog="" schema="${mainschema}" table="bookings_hist"
+ catalog="" schema="${mainschema}" table="REVIEWS"
  datasource="mainDataSource" sqlhandler="dbSQLStatementHandler">
  <DeleteKeys>
-  <Column>id_booking</Column>
+  <Column>id_review</Column>
  </DeleteKeys>
  <UpdateKeys>
-  <Column>id_booking</Column>
+  <Column>id_review</Column>
  </UpdateKeys>
- <GeneratedKey>id_booking</GeneratedKey>
+ <GeneratedKey>id_review</GeneratedKey>
+ 
  
  <Queries>
-    <Query id="HISTORIC_BOOKING_WITH_HOTEL">
+  
+ <Query id="REVIEWS_DATA">
    <Sentence>
    <![CDATA[
   SELECT #COLUMNS#
-	FROM BOOKINGS_HIST BH INNER JOIN ROOMS R ON BH.BK_ROOM=R.ID_ROOM 
-	INNER JOIN HOTELS H ON R.RM_HOTEL=H.ID_HOTEL #WHERE#
+	FROM REVIEWS RV INNER JOIN HOTELS H ON RV.RV_HOTEL=H.ID_HOTEL 
+	INNER JOIN CLIENTS C ON RV.RV_CLIENT=C.ID_CLIENT  #WHERE#
    ]]>
    </Sentence>
-  </Query> 
+  </Query>
+ 
  </Queries>
+ 
+ 
 </JdbcEntitySetup>

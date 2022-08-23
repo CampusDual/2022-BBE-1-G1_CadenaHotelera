@@ -194,7 +194,35 @@ public class SeasonTest {
 			assertEquals("SUCESSFULL_INSERTION", resultSuccess.getMessage());
 
 		}
+		
+		@Test
+		@DisplayName("Trying to insert wih an incorrect type")
+		void season_insert_incorrect_type() {
+			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
+			dataToInsert.put("ss_multiplier", "sss");
+			List<String> columnList = Arrays.asList("id_season");
+			EntityResult insertResult = getGenericInsertResult();
+			EntityResult resultSuccess = seasonService.seasonInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, resultSuccess.getCode());
+			assertEquals("INVALID_TYPE", resultSuccess.getMessage());
 
+		}
+
+		@Test
+		@DisplayName("Trying to insert with a multiplier below 0")
+		void season_insert_multiplier_below_0() {
+			Map<String, Object> dataToInsert = getGenericDataToInsertOrUpdate();
+			dataToInsert.put("ss_multiplier", -1.1);
+			List<String> columnList = Arrays.asList("id_season");
+			EntityResult insertResult = getGenericInsertResult();
+			EntityResult resultSuccess = seasonService.seasonInsert(dataToInsert);
+			assertEquals(EntityResult.OPERATION_WRONG, resultSuccess.getCode());
+			assertEquals("SS_MULTIPLIER_MUST_BE_HIGHER_THAN_0", resultSuccess.getMessage());
+		}
+		
+		
+		
+		
 		@Test
 		@DisplayName("Fail trying to insert duplicated name")
 		void season_insert_duplicated_name() {
@@ -323,6 +351,47 @@ public class SeasonTest {
 			verify(daoHelper,times(2)).query(any(), anyMap(), anyList());
 		}
 
+		
+		@Test
+		@DisplayName("Trying to update with an invalid type")
+		void season_update_invalid_type() {
+			Map<String, Object> filter = getGenericFilter();
+			Map<String, Object> dataToUpdate = getGenericDataToUpdate();	
+			dataToUpdate.put("ss_multiplier", "sss");	
+			EntityResult entityResult = seasonService.seasonUpdate(dataToUpdate, filter);
+			assertEquals("INVALID_REQUEST", entityResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+		
+		}
+		
+		@Test
+		@DisplayName("Trying to update with an invalid date" )
+		void season_update_invalid_date() {
+			Map<String, Object> filter = getGenericFilter();
+			
+			Date startDate=new Date();
+			Date endDate=new Date();	
+			Calendar calendar = Calendar.getInstance();
+			calendar.set(2024, 6, 6);
+			startDate = calendar.getTime();
+			calendar.set(2023, 9, 9);
+			endDate = calendar.getTime();			
+			
+			Map<String, Object> dataToUpdate = getGenericDataToUpdate();					
+			
+			dataToUpdate.put("ss_start_date", startDate);	
+			dataToUpdate.put("ss_start_date", endDate);						
+			
+			doReturn(getGenericUpdateResult()).when(daoHelper).query(any(), anyMap(), anyList());
+		
+			EntityResult entityResult = seasonService.seasonUpdate(dataToUpdate, filter);
+			assertEquals("START_DATE_MUST_BE_BEFORE_END_DATE", entityResult.getMessage());
+			assertEquals(EntityResult.OPERATION_WRONG, entityResult.getCode());
+		
+		}
+		
+		
+		
 		@Test
 		@DisplayName("Season update successful without start date")
 		void season_update_success_without_start_date() {
@@ -467,6 +536,8 @@ public class SeasonTest {
 			assertEquals(EntityResult.OPERATION_WRONG, updateResult.getCode());
 			assertEquals("SS_HOTEL_CAN'T_BE_UPDATED", updateResult.getMessage());
 		}
+		
+		
 				
 		@Test
 		@DisplayName("Fail trying to update a season that doesn´t exists")
@@ -501,6 +572,8 @@ public class SeasonTest {
 			
 			
 		}
+		
+	
 		@Test
 		@DisplayName("Trying to delete a season from another hotel")
 		void not_authorized() throws NotAuthorizedException {
@@ -559,6 +632,7 @@ public class SeasonTest {
 		@DisplayName("Trying to delete the seasons from another hotel")
 		void not_authorized() throws NotAuthorizedException {
 			Map<String, Object> filter = getGenericFilter();
+			filter.put("ss_hotel", 1);
 			when(daoHelper.query(any(), any(), any(),anyString())).thenReturn(getGenericUpdateResult());
 			doThrow(new NotAuthorizedException("NOT_AUTHORIZED")).when(userControl).controlAccess(anyInt());	
 			EntityResult er=seasonService.hotelseasonsDelete(filter);			

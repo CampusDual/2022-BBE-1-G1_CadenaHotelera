@@ -134,6 +134,7 @@ public class ClientService implements IClientService {
 				}
 			}
 			insertResult = this.daoHelper.insert(this.clientDao, attrMap);
+			insertResult.setMessage("SUCCESSFUL_INSERTION");
 		} catch (InvalidEmailException | InvalidPhoneException | AllFieldsRequiredException e) {
 			log.error("unable to insert a client. Request : {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
@@ -146,6 +147,9 @@ public class ClientService implements IClientService {
 		}catch (EmptyRequestException e) {
 			log.error("unable to insert a client. Request : {} {} ",attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
+		}catch (ClassCastException e) {
+			log.error("unable to insert a client. Request : {} {} ",attrMap, e);
+			control.setErrorMessage(insertResult,"INVALID_TYPE");
 		}
 		return insertResult;
 	}
@@ -203,6 +207,9 @@ public class ClientService implements IClientService {
 		} catch (EmptyRequestException e) {
 			log.error("unable to update a client. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
+		}catch (ClassCastException e) {
+			log.error("unable to update a client. Request : {} {} ",attrMap, e);
+			control.setErrorMessage(updateResult,"INVALID_TYPE");
 		}
 		return updateResult;
 	}
