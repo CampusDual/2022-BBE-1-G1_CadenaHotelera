@@ -1,5 +1,9 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 
 
@@ -27,6 +31,7 @@ import com.ontimize.jee.common.security.PermissionsProviderSecured;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 import com.posadskiy.currencyconverter.CurrencyConverter;
 import com.posadskiy.currencyconverter.config.ConfigBuilder;
+import com.posadskiy.currencyconverter.exception.CurrencyConverterException;
 
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRTableModelDataSource;
@@ -47,6 +52,8 @@ public class ReportsService implements IReportsService {
 	@Autowired
 	private ClientDao clientDao;
 	private Connection connection;
+	private FileInputStream fis;
+	private File logo;
 	@Autowired
 	private BookingHistDao bookingHistDao;
 	@Autowired
@@ -65,6 +72,7 @@ public class ReportsService implements IReportsService {
 		        .currencyConverterApiApiKey(ApiKey.KEY_CURRENCY_CONVERTER)
 		        .build()
 		);
+		this.logo=new File("fnlogo.jpg");
 	}
 	
 	/**
@@ -82,13 +90,22 @@ public class ReportsService implements IReportsService {
 		Map<String, Object> params = new HashMap<>();
 		int parameter = bookingId;
 		params.put("Parameter1", parameter);
+		try {
 		params.put("Parameter2", getCurrencyRate(currencyCode));
 		Currency currency = Currency.getInstance(currencyCode);
 		params.put("Parameter3", currency.getSymbol());
+		}catch(CurrencyConverterException e) {
+			params.put("Parameter2", CurrencyRates.EUR);
+			Currency currency = Currency.getInstance("EUR");
+			params.put("Parameter3", currency.getSymbol());
+		}
+		params.put("Parameter4", getLogoStream());
 		if (!checkIfQueryReturnsResults(getReceiptQuery(bookingId)))
 			throw new RecordNotFoundException("BOOKING_NOT_FOUND");
+		byte[] contents = buildReport("receipt.jasper",params);
 		this.moveBookingToBookingHistoric(bookingId);
-		return buildReport("receipt.jasper",params);
+		closeLogoStream();
+		return contents;
 	}
 	
 	/**
@@ -106,12 +123,21 @@ public class ReportsService implements IReportsService {
 		Map<String, Object> params = new HashMap<>();
 		int parameter = bookingId;
 		params.put("Parameter1", parameter);
+		try {
 		params.put("Parameter2", getCurrencyRate(currencyCode));
 		Currency currency = Currency.getInstance(currencyCode);
 		params.put("Parameter3", currency.getSymbol());
+		}catch(CurrencyConverterException e) {
+			params.put("Parameter2", CurrencyRates.EUR);
+			Currency currency = Currency.getInstance("EUR");
+			params.put("Parameter3", currency.getSymbol());
+		}
+		params.put("Parameter4", getLogoStream());
 		if (!checkIfQueryReturnsResults(getHistoricReceiptQuery(bookingId)))
 			throw new RecordNotFoundException("BOOKING_NOT_FOUND");
-		return buildReport("invoice.jasper",params);
+		byte[] receipt =buildReport("Invoice.jasper",params);
+		closeLogoStream();
+		return receipt;
 	}
 
 	private String getHistoricReceiptQuery(int bookingId) {
@@ -253,15 +279,24 @@ public class ReportsService implements IReportsService {
 		Map<String, Object> params = new HashMap<>();
 		params.put("Parameter1", from);
 		params.put("Parameter2", to);
-		params.put("Parameter3",getCurrencyRate(currencyCode));
+		try {
+		params.put("Parameter3", getCurrencyRate(currencyCode));
 		Currency currency = Currency.getInstance(currencyCode);
-		params.put("Parameter4",currency.getSymbol());
+		params.put("Parameter4", currency.getSymbol());
+		}catch(CurrencyConverterException e) {
+			params.put("Parameter3", CurrencyRates.EUR);
+			Currency currency = Currency.getInstance("EUR");
+			params.put("Parameter4", currency.getSymbol());
+		}
+		params.put("Parameter5", getLogoStream());
 		if (!checkIfQueryReturnsResults(getFinancialReportQuery(from,to)))
 			throw new RecordNotFoundException("THERE_ARE_NOT_BOOKINGS_IN_THESE_DATES");
-		return buildReport("BillingReport.jasper",params);
+		byte[] contents = buildReport("BillingReport.jasper",params);
+		closeLogoStream();
+		return contents;
 	}
 	
-	public double getCurrencyRate(String currencyCode) throws IllegalArgumentException{ 
+	public double getCurrencyRate(String currencyCode) throws IllegalArgumentException,CurrencyConverterException{
 		return converter.rate("EUR", currencyCode);
 	}
 	/**
@@ -314,5 +349,22 @@ public class ReportsService implements IReportsService {
 		}
 	}
 	
+	public FileInputStream getLogoStream() {
+		try {
+			this.fis=new FileInputStream(logo);
+		} catch (FileNotFoundException e) {
+			log.error("logo not found in path  "+logo.getAbsolutePath()+"{}", e.getMessage());
+		}
+		return fis;
+	}
+
+	private void closeLogoStream() {
+		try {
+			this.fis.close();
+		} catch (IOException e) {
+			log.error("unable to close logo stream {}", e.getMessage());
+		}
+		
+	}
 	
 }

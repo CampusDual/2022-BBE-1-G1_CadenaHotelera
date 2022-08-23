@@ -30,5 +30,13 @@ public class MvcExceptionHandler {
 		errorResult.setMessage("CURRENCY_CODE_DOESN´T_EXISTS");
 		return new ResponseEntity<EntityResult>(errorResult,HttpStatus.BAD_REQUEST);
 	}
+	
+	@ExceptionHandler(NullPointerException.class)
+	 public ResponseEntity<EntityResult> imageNoutFound(NullPointerException e){
+	  EntityResult errorResult = new EntityResultMapImpl();
+	  errorResult.setMessage("NOT_FOUND");
+	  errorResult.setCode(EntityResult.OPERATION_WRONG);
+	  return new ResponseEntity<EntityResult>(errorResult,HttpStatus.NOT_FOUND);
+	 }
 
 }
