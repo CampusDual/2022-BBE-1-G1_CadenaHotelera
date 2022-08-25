@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
 import java.io.File;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -23,18 +24,16 @@ import org.springframework.transaction.annotation.Transactional;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IReportsService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
-import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.EntityResultUtils;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.CurrencyRates;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.ApiKey;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
-import com.ontimize.jee.common.security.PermissionsProviderSecured;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
 import com.posadskiy.currencyconverter.CurrencyConverter;
 import com.posadskiy.currencyconverter.config.ConfigBuilder;
 import com.posadskiy.currencyconverter.exception.CurrencyConverterException;
 
 import net.sf.jasperreports.engine.*;
-import net.sf.jasperreports.engine.data.JRTableModelDataSource;
 import net.sf.jasperreports.engine.util.JRLoader;
 
 /**
@@ -63,15 +62,9 @@ public class ReportsService implements IReportsService {
 	@Autowired
 	private DefaultOntimizeDaoHelper daoHelper;
 	org.slf4j.Logger log;
-	CurrencyConverter converter;
 
 	public ReportsService() {
 		this.log = LoggerFactory.getLogger(this.getClass());
-		this.converter=converter = new CurrencyConverter(
-		    new ConfigBuilder()
-		        .currencyConverterApiApiKey(ApiKey.KEY_CURRENCY_CONVERTER)
-		        .build()
-		);
 		this.logo=new File("fnlogo.jpg");
 	}
 	
@@ -91,13 +84,12 @@ public class ReportsService implements IReportsService {
 		int parameter = bookingId;
 		params.put("Parameter1", parameter);
 		try {
-		params.put("Parameter2", getCurrencyRate(currencyCode));
-		Currency currency = Currency.getInstance(currencyCode);
-		params.put("Parameter3", currency.getSymbol());
+		params.put("Parameter2", CurrencyRates.getCurrencyRate(currencyCode));
+		params.put("Parameter3",  CurrencyRates.getCurrencySymbol(currencyCode));
 		}catch(CurrencyConverterException e) {
-			params.put("Parameter2", CurrencyRates.EUR);
-			Currency currency = Currency.getInstance("EUR");
-			params.put("Parameter3", currency.getSymbol());
+			log.error("unable to reach currency converter api {} {} {}",bookingId,currencyCode, e.getMessage());
+			params.put("Parameter2", CurrencyRates.getHardCodedRate(currencyCode));
+			params.put("Parameter3", CurrencyRates.getCurrencySymbol(currencyCode));
 		}
 		params.put("Parameter4", getLogoStream());
 		if (!checkIfQueryReturnsResults(getReceiptQuery(bookingId)))
@@ -119,18 +111,17 @@ public class ReportsService implements IReportsService {
 	 */
 	@Override
 	@Secured({"admin","hotel_manager","hotel_recepcionist"})
-	public byte[] getReceiptFromHistoric(int bookingId, String currencyCode) throws OntimizeJEERuntimeException,IllegalArgumentException {
+	public byte[] getReceiptFromHistoric(int bookingId, String currencyCode) throws OntimizeJEERuntimeException {
 		Map<String, Object> params = new HashMap<>();
 		int parameter = bookingId;
 		params.put("Parameter1", parameter);
 		try {
-		params.put("Parameter2", getCurrencyRate(currencyCode));
-		Currency currency = Currency.getInstance(currencyCode);
-		params.put("Parameter3", currency.getSymbol());
+		params.put("Parameter2", CurrencyRates.getCurrencyRate(currencyCode));
+		params.put("Parameter3", CurrencyRates.getCurrencySymbol(currencyCode));
 		}catch(CurrencyConverterException e) {
-			params.put("Parameter2", CurrencyRates.EUR);
-			Currency currency = Currency.getInstance("EUR");
-			params.put("Parameter3", currency.getSymbol());
+			log.error("unable to reach currency converter api {} {} {}",bookingId,currencyCode, e.getMessage());
+			params.put("Parameter2", CurrencyRates.getHardCodedRate(currencyCode));
+			params.put("Parameter3", CurrencyRates.getCurrencySymbol(currencyCode));
 		}
 		params.put("Parameter4", getLogoStream());
 		if (!checkIfQueryReturnsResults(getHistoricReceiptQuery(bookingId)))
@@ -280,13 +271,12 @@ public class ReportsService implements IReportsService {
 		params.put("Parameter1", from);
 		params.put("Parameter2", to);
 		try {
-		params.put("Parameter3", getCurrencyRate(currencyCode));
-		Currency currency = Currency.getInstance(currencyCode);
-		params.put("Parameter4", currency.getSymbol());
+		params.put("Parameter3", CurrencyRates.getCurrencyRate(currencyCode));
+		params.put("Parameter4",  CurrencyRates.getCurrencySymbol(currencyCode));
 		}catch(CurrencyConverterException e) {
-			params.put("Parameter3", CurrencyRates.EUR);
-			Currency currency = Currency.getInstance("EUR");
-			params.put("Parameter4", currency.getSymbol());
+			log.error("unable to reach currency converter api {} {} {} {}",from,to,currencyCode, e.getMessage());
+			params.put("Parameter3", CurrencyRates.getHardCodedRate(currencyCode));
+			params.put("Parameter4", CurrencyRates.getCurrencySymbol(currencyCode));
 		}
 		params.put("Parameter5", getLogoStream());
 		if (!checkIfQueryReturnsResults(getFinancialReportQuery(from,to)))
@@ -294,10 +284,6 @@ public class ReportsService implements IReportsService {
 		byte[] contents = buildReport("BillingReport.jasper",params);
 		closeLogoStream();
 		return contents;
-	}
-	
-	public double getCurrencyRate(String currencyCode) throws IllegalArgumentException,CurrencyConverterException{
-		return converter.rate("EUR", currencyCode);
 	}
 	/**
 	 * Builds a report from a compiled report as a file in the classpath and a series of given params
@@ -349,6 +335,10 @@ public class ReportsService implements IReportsService {
 		}
 	}
 	
+	/**
+	 * Gets logo to be used in the reports
+	 * @return a FileInputStream with the logo of the hotel resort
+	 */
 	public FileInputStream getLogoStream() {
 		try {
 			this.fis=new FileInputStream(logo);
@@ -358,6 +348,9 @@ public class ReportsService implements IReportsService {
 		return fis;
 	}
 
+	/**
+	 * Closes the stream used by getLogo method
+	 */
 	private void closeLogoStream() {
 		try {
 			this.fis.close();
@@ -365,6 +358,6 @@ public class ReportsService implements IReportsService {
 			log.error("unable to close logo stream {}", e.getMessage());
 		}
 		
-	}
+	}	
 	
 }
