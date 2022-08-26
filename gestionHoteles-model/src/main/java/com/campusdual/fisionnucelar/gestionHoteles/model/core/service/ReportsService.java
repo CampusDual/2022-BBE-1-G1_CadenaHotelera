@@ -1,5 +1,10 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.service;
 
+import java.io.File;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 
 
@@ -19,16 +24,20 @@ import org.springframework.transaction.annotation.Transactional;
 import com.campusdual.fisionnucelar.gestionHoteles.api.core.service.IReportsService;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.dao.*;
 import com.campusdual.fisionnucelar.gestionHoteles.model.core.exception.RecordNotFoundException;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.CurrencyRates;
+import com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities.google.places.ApiKey;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.OntimizeJEERuntimeException;
-import com.ontimize.jee.common.security.PermissionsProviderSecured;
 import com.ontimize.jee.server.dao.DefaultOntimizeDaoHelper;
+import com.posadskiy.currencyconverter.CurrencyConverter;
+import com.posadskiy.currencyconverter.config.ConfigBuilder;
+import com.posadskiy.currencyconverter.exception.CurrencyConverterException;
 
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.util.JRLoader;
 
 /**
- * This class generates a booking receipt
+ * This class generates reports, a receipt from a booking id and a financial report between two dates
  * 
  * @since 2/8/22
  * @version 1.0
@@ -41,7 +50,9 @@ public class ReportsService implements IReportsService {
 	private BookingDao bookingDao;
 	@Autowired
 	private ClientDao clientDao;
-	
+	private Connection connection;
+	private FileInputStream fis;
+	private File logo;
 	@Autowired
 	private BookingHistDao bookingHistDao;
 	@Autowired
@@ -54,6 +65,7 @@ public class ReportsService implements IReportsService {
 
 	public ReportsService() {
 		this.log = LoggerFactory.getLogger(this.getClass());
+		this.logo=new File("fnlogo.jpg");
 	}
 	
 	/**
@@ -67,37 +79,24 @@ public class ReportsService implements IReportsService {
 	 */
 	@Override
 	@Secured({"admin","hotel_manager","hotel_recepcionist"})
-	public byte[] getReceipt(int bookingId) throws OntimizeJEERuntimeException {
+	public byte[] getReceipt(int bookingId, String currencyCode) throws OntimizeJEERuntimeException,IllegalArgumentException {
 		Map<String, Object> params = new HashMap<>();
 		int parameter = bookingId;
 		params.put("Parameter1", parameter);
-		InputStream jasperStream = this.getClass().getResourceAsStream("billReport.jasper");
-		JasperReport jasperReport;
-		JasperPrint jasperPrint;
+		try {
+		params.put("Parameter2", CurrencyRates.getCurrencyRate(currencyCode));
+		params.put("Parameter3",  CurrencyRates.getCurrencySymbol(currencyCode));
+		}catch(CurrencyConverterException e) {
+			log.error("unable to reach currency converter api {} {} {}",bookingId,currencyCode, e.getMessage());
+			params.put("Parameter2", CurrencyRates.getHardCodedRate(currencyCode));
+			params.put("Parameter3", CurrencyRates.getCurrencySymbol(currencyCode));
+		}
+		params.put("Parameter4", getLogoStream());
 		if (!checkIfQueryReturnsResults(getReceiptQuery(bookingId)))
 			throw new RecordNotFoundException("BOOKING_NOT_FOUND");
-		Connection conn = null;
-		try {
-			conn = DriverManager.getConnection("jdbc:postgresql://45.84.210.174:65432/Backend_2022_G1",
-					"Backend_2022_G1", "iexaicaef1iaQuotea");
-		} catch (SQLException e1) {
-			log.error("unable to connect to database ", e1.getMessage());
-		}
-		byte[] contents = null;
-		try {
-			jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
-			jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
-			contents = JasperExportManager.exportReportToPdf(jasperPrint);
-		} catch (JRException e) {
-			log.error("unable to build receipt ", e.getMessage());
-		} finally {
-			try {
-				conn.close();
-			} catch (SQLException e) {
-				log.error("unable to disconnect from database ", e.getMessage());
-			}
-		}
-		this.moveBookingToBookingOld(bookingId);
+		byte[] contents = buildReport("receipt.jasper",params);
+		this.moveBookingToBookingHistoric(bookingId);
+		closeLogoStream();
 		return contents;
 	}
 	
@@ -112,37 +111,24 @@ public class ReportsService implements IReportsService {
 	 */
 	@Override
 	@Secured({"admin","hotel_manager","hotel_recepcionist"})
-	public byte[] getReceiptFromHistoric(int bookingId) throws OntimizeJEERuntimeException {
+	public byte[] getReceiptFromHistoric(int bookingId, String currencyCode) throws OntimizeJEERuntimeException {
 		Map<String, Object> params = new HashMap<>();
 		int parameter = bookingId;
 		params.put("Parameter1", parameter);
-		InputStream jasperStream = this.getClass().getResourceAsStream("invoice.jasper");
-		JasperReport jasperReport;
-		JasperPrint jasperPrint;
+		try {
+		params.put("Parameter2", CurrencyRates.getCurrencyRate(currencyCode));
+		params.put("Parameter3", CurrencyRates.getCurrencySymbol(currencyCode));
+		}catch(CurrencyConverterException e) {
+			log.error("unable to reach currency converter api {} {} {}",bookingId,currencyCode, e.getMessage());
+			params.put("Parameter2", CurrencyRates.getHardCodedRate(currencyCode));
+			params.put("Parameter3", CurrencyRates.getCurrencySymbol(currencyCode));
+		}
+		params.put("Parameter4", getLogoStream());
 		if (!checkIfQueryReturnsResults(getHistoricReceiptQuery(bookingId)))
 			throw new RecordNotFoundException("BOOKING_NOT_FOUND");
-		Connection conn = null;
-		try {
-			conn = DriverManager.getConnection("jdbc:postgresql://45.84.210.174:65432/Backend_2022_G1",
-					"Backend_2022_G1", "iexaicaef1iaQuotea");
-		} catch (SQLException e1) {
-			log.error("unable to connect to database ", e1.getMessage());
-		}
-		byte[] contents = null;
-		try {
-			jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
-			jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
-			contents = JasperExportManager.exportReportToPdf(jasperPrint);
-		} catch (JRException e) {
-			log.error("unable to build receipt ", e.getMessage());
-		} finally {
-			try {
-				conn.close();
-			} catch (SQLException e) {
-				log.error("unable to disconnect from database ", e.getMessage());
-			}
-		}
-		return contents;
+		byte[] receipt =buildReport("Invoice.jasper",params);
+		closeLogoStream();
+		return receipt;
 	}
 
 	private String getHistoricReceiptQuery(int bookingId) {
@@ -156,38 +142,29 @@ public class ReportsService implements IReportsService {
 	 * Check if the booking provided by the user exists in the database
 	 * @param bookingId the id of the booking provided by the user
 	 * @return true if exists false if not
-	 * @exception RecordNotFoundException if the booking id not exists in the database
+	 * @exception SQLException if there are some errors connecting to the database
 	 * @since 4/8/22
 	 */
 	private boolean checkIfQueryReturnsResults(String query) {
 		boolean results = false;
-		Connection conn = null;
+		Connection conn = getConnection();
 		ResultSet rs = null;
 		try {
-			conn = DriverManager.getConnection("jdbc:postgresql://45.84.210.174:65432/Backend_2022_G1",
-					"Backend_2022_G1", "iexaicaef1iaQuotea");
 			Statement stmt = conn.createStatement();
 			rs = stmt.executeQuery(query);
 			if (rs.next()) {
 				do {
 					results = true;
-					System.out.println("Query returning data");
 				} while (rs.next());
 			} else {
-				System.out.println("empty results");
 				results = false;
 			}
 			
 		} catch (SQLException e) {
-			log.error("unable to connect from database ", e.getMessage());
-		}finally {
-			try {
-				conn.close();
-			} catch (SQLException e) {
-				log.error("unable to close connection to database ", e.getMessage());
-			}
+			log.error("unable to connect from database {}", e.getMessage());
 		}
-
+		
+		closeConnection();
 		return results;
 	}
 
@@ -220,11 +197,12 @@ public class ReportsService implements IReportsService {
 	}
 
 	/**
-	 * Puts the booking and its related booking extras in bookings_old and booking_extra_old, once the booking its completed
+	 * Puts the booking and its related booking extras in bookings_hist and booking_extra_hist database tables, 
+	 * once the booking its completed
 	 * @param bookingId
 	 */
 	@Transactional
-	public void moveBookingToBookingOld(int bookingId) {
+	public void moveBookingToBookingHistoric(int bookingId) {
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("id_booking", bookingId);
 		EntityResult bookingResult = daoHelper.query(bookingDao, keyMap, Arrays.asList("bk_client", "bk_price",
@@ -288,38 +266,91 @@ public class ReportsService implements IReportsService {
 	 */
 	@Override
 	@Secured({"admin"})
-	public byte[] getFinancialReport(Date from, Date to) throws OntimizeJEERuntimeException {
+	public byte[] getFinancialReport(Date from, Date to,String currencyCode) throws OntimizeJEERuntimeException,IllegalArgumentException {
 		Map<String, Object> params = new HashMap<>();
 		params.put("Parameter1", from);
 		params.put("Parameter2", to);
-		System.out.println(this.getClass().getResource("").getPath());
-		InputStream jasperStream = this.getClass().getResourceAsStream("financialReport.jasper");
-		JasperReport jasperReport;
-		JasperPrint jasperPrint;
+		try {
+		params.put("Parameter3", CurrencyRates.getCurrencyRate(currencyCode));
+		params.put("Parameter4",  CurrencyRates.getCurrencySymbol(currencyCode));
+		}catch(CurrencyConverterException e) {
+			log.error("unable to reach currency converter api {} {} {} {}",from,to,currencyCode, e.getMessage());
+			params.put("Parameter3", CurrencyRates.getHardCodedRate(currencyCode));
+			params.put("Parameter4", CurrencyRates.getCurrencySymbol(currencyCode));
+		}
+		params.put("Parameter5", getLogoStream());
 		if (!checkIfQueryReturnsResults(getFinancialReportQuery(from,to)))
 			throw new RecordNotFoundException("THERE_ARE_NOT_BOOKINGS_IN_THESE_DATES");
-		Connection conn = null;
-		try {
-			conn = DriverManager.getConnection("jdbc:postgresql://45.84.210.174:65432/Backend_2022_G1",
-					"Backend_2022_G1", "iexaicaef1iaQuotea");
-		} catch (SQLException e1) {
-			log.error("unable to connect to database ", e1.getMessage());
-		}
-		byte[] contents = null;
-		try {
-			jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
-			jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
-			contents = JasperExportManager.exportReportToPdf(jasperPrint);
-		} catch (JRException e) {
-			log.error("unable to build receipt ", e.getMessage());
-		} finally {
-			try {
-				conn.close();
-			} catch (SQLException e) {
-				log.error("unable to disconnect from database ", e.getMessage());
-			}
-		}
+		byte[] contents = buildReport("BillingReport.jasper",params);
+		closeLogoStream();
 		return contents;
 	}
+	/**
+	 * Builds a report from a compiled report as a file in the classpath and a series of given params
+	 * @param file The name of the file that contains the compiled report
+	 * @param params params needed to build the report
+	 * @return the generated report as an array of bytes to be send to the user
+	 * @exception JRException
+	 */
+	public byte[] buildReport(String file, Map<String, Object> params) {
+		byte[] contents = null;
+		try {
+		InputStream jasperStream = this.getClass().getResourceAsStream(file);
+		JasperReport jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
+		JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, getConnection());
+		contents =JasperExportManager.exportReportToPdf(jasperPrint);
+		} catch (JRException e) {
+		log.error("unable to build financial report {}", e.getMessage());
+		}
+		closeConnection();
+		return contents;
+	}
+
+	/**
+	 * Builds a database connection needed to build the reports
+	 * @return A connection object
+	 * @exception SQLException if the program can´t connect to the given database
+	 */
+	public Connection getConnection() {
+		try {
+			connection = DriverManager.getConnection("jdbc:postgresql://45.84.210.174:65432/Backend_2022_G1",
+					"Backend_2022_G1", "iexaicaef1iaQuotea");
+		} catch (SQLException e1) {
+			log.error("unable to connect to database {}", e1.getMessage());
+		}
+		return connection;
+	}
+	
+	/**
+	 * Closes the report´s database connection
+	 * @return A connection object
+	 * @exception SQLException if the program can´t disconnect from the database
+	 */
+	
+	public void closeConnection() {
+		try {
+			connection.close();
+		} catch (SQLException e) {
+			log.error("unable to disconnect from database {}", e.getMessage());
+		}
+	}
+	
+	public FileInputStream getLogoStream() {
+		try {
+			this.fis=new FileInputStream(logo);
+		} catch (FileNotFoundException e) {
+			log.error("logo not found in path  "+logo.getAbsolutePath()+"{}", e.getMessage());
+		}
+		return fis;
+	}
+
+	private void closeLogoStream() {
+		try {
+			this.fis.close();
+		} catch (IOException e) {
+			log.error("unable to close logo stream {}", e.getMessage());
+		}
+		
+	}	
 	
 }
