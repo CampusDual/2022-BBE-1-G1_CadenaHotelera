@@ -154,12 +154,14 @@ public class UserTestData {
 		dataToInsert.put("USER_DOWN_DATE", null);
 		dataToInsert.put("LASTPASSWORDUPDATE", null);
 		dataToInsert.put("FIRSTLOGIN", true);
-		dataToInsert.put("IDENTIFIER", 1);
+		dataToInsert.put("IDENTIFIER", 38);
 		dataToInsert.put("ID_ROLENAME", 2);
 		dataToInsert.put("ROLENAME", "client");
 		dataToInsert.put("USER_DOWN_DATE", "2022-08-12 11:13:20.094");
-		dataToInsert.put("CL_PHONE", "645079124");
-		dataToInsert.put("CL_COUNTRY_CODE", 34);
+		dataToInsert.put("cl_phone", "645079124");
+		dataToInsert.put("cl_country_code", 34);
+		dataToInsert.put("cl_name", "Jaime");
+		dataToInsert.put("cl_nif", "69462853G");
 		return dataToInsert;
 	}
 	public static Map<String, Object> getGenericAdminDataToInsertOrUpdate() {
@@ -170,6 +172,18 @@ public class UserTestData {
 		dataToInsert.put("SURNAME", "Janer");
 		dataToInsert.put("EMAIL", "jaimito@gmail.com");
 		dataToInsert.put("NIF", "69462853G");
+		dataToInsert.put("USER_DOWN_DATE",null);
+		return dataToInsert;
+	}
+	public static Map<String, Object> getGenericAdminDownDataToInsertOrUpdate() {
+		Map<String, Object> dataToInsert = new HashMap<>();
+		dataToInsert.put("USER_", "jaimito");
+		dataToInsert.put("PASSWORD", "1234");
+		dataToInsert.put("NAME", "Jaime");
+		dataToInsert.put("SURNAME", "Janer");
+		dataToInsert.put("EMAIL", "jaimito@gmail.com");
+		dataToInsert.put("NIF", "69462853G");
+		dataToInsert.put("USER_DOWN_DATE", "2022-08-12 11:13:20.094");
 		return dataToInsert;
 	}
 	public static Map<String, Object> getGenericWorkerDataToInsertOrUpdate() {
@@ -189,7 +203,11 @@ public class UserTestData {
 		er.addRecord(new HashMap<String, Object>() {{put("USER_", "jaimito");}});
 		return er;
 	}
-	
+	public static EntityResult getGenericQueryClientResult() {
+		EntityResult er = new EntityResultMapImpl(Arrays.asList("id_client","cl_leaving_date"));
+		er.addRecord(new HashMap<String, Object>() {{put("id_client", 38);put("cl_leaving_date", null);}});
+		return er;
+	}
 	
 	public static Map<String, Object> getGenericFilter() {
 		Map<String, Object> filter = new HashMap<>();

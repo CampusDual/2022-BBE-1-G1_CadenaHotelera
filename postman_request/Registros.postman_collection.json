@@ -1,0 +1,555 @@
+{
+	"info": {
+		"_postman_id": "378c392c-d742-4fcf-b3e1-79ea47281582",
+		"name": "Registros",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21017428"
+	},
+	"item": [
+		{
+			"name": "get user",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/users/user?columns=user_,password,name,surname,email,nif,userblocked,lastpasswordupdate,firstlogin,identifier,id_rolename,rolename,user_down_date",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"user"
+					],
+					"query": [
+						{
+							"key": "columns",
+							"value": "user_,password,name,surname,email,nif,userblocked,lastpasswordupdate,firstlogin,identifier,id_rolename,rolename,user_down_date"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search user",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"user_\": \"anacleto\"\r\n    },\r\n    \"columns\": [\"user_\",\"name\",\"surname\",\"email\",\"nif\",\"userblocked\",\"lastpasswordupdate\",\"firstlogin\",\"identifier\",\"id_rolename\",\"rolename\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/user/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"user",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert tuser admin",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"data\": {\r\n        \"user_\": \"paulo\",\r\n        \"password\": \"abc123\",\r\n        \"name\": \"Paulo\",\r\n        \"surname\": \"González\",\r\n        \"email\": \"paulogonzalez@fnhotels.com\",\r\n        \"nif\": \"6327672F\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"user_\": 12,\r\n        \"password\": 12,\r\n        \"name\": 12,\r\n        \"surname\": 12,\r\n        \"email\": 12,\r\n        \"nif\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/userAdmin",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"userAdmin"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert tuser worker",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"data\": {\r\n        \"user_\": \"susana\",\r\n        \"password\": \"1234\",\r\n        \"name\": \"Susana\",\r\n        \"surname\": \"Aldao\",\r\n        \"email\": \"susanaaldao@fnhotels.com\",\r\n        \"nif\": \"6217675C\",\r\n        \"identifier\": 2,\r\n        \"id_rolename\": 3\r\n    },\r\n    \"sqltypes\": {\r\n        \"user_\": 12,\r\n        \"password\": 12,\r\n        \"name\": 12,\r\n        \"surname\": 12,\r\n        \"email\": 12,\r\n        \"nif\": 12,\r\n        \"identifier\": 4,\r\n        \"id_rolename\": 4\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/userWorker",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"userWorker"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert tuser client new by clients",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"data\": {\r\n        \"user_\": \"elva\",\r\n        \"password\": \"1234\",\r\n        \"name\": \"Elva\",\r\n        \"surname\": \"González\",\r\n        \"email\": \"elvaG@fnhotels.com\",\r\n        \"nif\": \"68247232F\",\r\n        \"cl_phone\": \"685068124\",\r\n        \"cl_country_code\": \"34\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"user_\": 12,\r\n        \"password\": 12,\r\n        \"name\": 12,\r\n        \"surname\": 12,\r\n        \"email\": 12,\r\n        \"nif\": 12,\r\n        \"cl_phone\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/userClient",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"userClient"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert tuser client new by admin or manager",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"data\": {\r\n        \"user_\": \"aleixo\",\r\n        \"password\": \"1234\",\r\n        \"name\": \"Aleixo\",\r\n        \"surname\": \"Otero\",\r\n        \"email\": \"aleixootero@fnhotels.com\",\r\n        \"nif\": \"64547502F\",\r\n        \"cl_phone\": \"689079124\",\r\n        \"cl_country_code\": \"34\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"user_\": 12,\r\n        \"password\": 12,\r\n        \"name\": 12,\r\n        \"surname\": 12,\r\n        \"email\": 12,\r\n        \"nif\": 12,\r\n        \"cl_phone\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/userClientByManagers",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"userClientByManagers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert tuser client existing by admin or manager",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"data\": {\r\n        \"user_\": \"cesar\",\r\n        \"password\": \"1234\",\r\n        \"name\": \"César\",\r\n        \"surname\": \"Bouzas\",\r\n        \"email\": \"cesar.bouzas@outlook.com\",\r\n        \"nif\": \"76898889T\",\r\n        \"cl_phone\": \"981543123\",\r\n        \"cl_country_code\": \"34\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"user_\": 12,\r\n        \"password\": 12,\r\n        \"name\": 12,\r\n        \"surname\": 12,\r\n        \"email\": 12,\r\n        \"nif\": 12,\r\n        \"cl_phone\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/userClientByManagers",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"userClientByManagers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert tuser client with cl_leaving_date by admin or manager",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"data\": {\r\n        \"user_\": \"emiliano\",\r\n        \"password\": \"1234\",\r\n        \"name\": \"Emiliano\",\r\n        \"surname\": \"López\",\r\n        \"email\": \"emilianolopez@gmail.com\",\r\n        \"nif\": \"34444447N\",\r\n        \"cl_phone\": \"956656565\",\r\n        \"cl_country_code\": \"34\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"user_\": 12,\r\n        \"password\": 12,\r\n        \"name\": 12,\r\n        \"surname\": 12,\r\n        \"email\": 12,\r\n        \"nif\": 12,\r\n        \"cl_phone\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/userClientByManagers",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"userClientByManagers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert tuser client with user_down_date by admin or manager",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"data\": {\r\n       \"user_\": \"ignacio\",\r\n        \"password\": \"1234\",\r\n        \"name\": \"Ignacio\",\r\n        \"surname\": \"Trigo\",\r\n        \"email\": \"ignacioTrigo@gmail.com\",\r\n        \"nif\": \"34456447N\",\r\n        \"cl_phone\": \"908524967\",\r\n        \"cl_country_code\": \"hola\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"user_\": 12,\r\n        \"password\": 12,\r\n        \"name\": 12,\r\n        \"surname\": 12,\r\n        \"email\": 12,\r\n        \"nif\": 12,\r\n        \"cl_phone\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/userClientByManagers",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"userClientByManagers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete user",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n        \"user_\": \"paquito\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/user",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update tuser admin",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"user_\" : \"Mario\"\r\n },\r\n    \"data\": {\r\n        \"surname\" : \"Domínguez\",\r\n        \"email\": \"mario.domínguez@fnhotels.com\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"identifier\": 4,\r\n        \"user_\": 12,\r\n        \"userblocked\": 93,\r\n        \"surname\": 12,\r\n        \"firstlogin\": -7,\r\n        \"name\": 12,\r\n        \"nif\": 12,\r\n        \"lastpasswordupdate\": 93,\r\n        \"email\": 12,\r\n        \"user_down_date\": 93\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/user",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update tuser manager",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "jmdiaz",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"user_\" : \"jmdiaz\"\r\n },\r\n    \"data\": {\r\n        \"nif\": \"62315370K\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"identifier\": 4,\r\n        \"user_\": 12,\r\n        \"userblocked\": 93,\r\n        \"surname\": 12,\r\n        \"firstlogin\": -7,\r\n        \"name\": 12,\r\n        \"nif\": 12,\r\n        \"lastpasswordupdate\": 93,\r\n        \"email\": 12,\r\n        \"user_down_date\": 93\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/user",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update tuser client",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "4321",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "martaotero",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"user_\" : \"martaotero\"\r\n },\r\n    \"data\": {\r\n        \"surname\" : \"Otero\",\r\n        \"password\": \"1234\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"identifier\": 4,\r\n        \"user_\": 12,\r\n        \"userblocked\": 93,\r\n        \"surname\": 12,\r\n        \"firstlogin\": -7,\r\n        \"name\": 12,\r\n        \"nif\": 12,\r\n        \"lastpasswordupdate\": 93,\r\n        \"email\": 12,\r\n        \"user_down_date\": 93\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/user",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"user"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

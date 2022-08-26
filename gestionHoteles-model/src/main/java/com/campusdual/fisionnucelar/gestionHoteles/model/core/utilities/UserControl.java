@@ -1,6 +1,7 @@
 package com.campusdual.fisionnucelar.gestionHoteles.model.core.utilities;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,6 +45,19 @@ public class UserControl {
 		return flag;
 	}
 	
-	
+	public void checkUserPermission(Map<String, Object> keyMap) throws NotAuthorizedException {
+		List<GrantedAuthority> userRole = (List<GrantedAuthority>) SecurityContextHolder.getContext()
+				.getAuthentication().getAuthorities();
+		for (GrantedAuthority x : userRole) {
+			if (x.getAuthority().compareTo("admin") != 0) {
+				UserInformation user = ((UserInformation) SecurityContextHolder.getContext().getAuthentication()
+						.getPrincipal());
+				if (user.getLogin().compareTo((String) keyMap.get("user_")) != 0) {
+					throw new NotAuthorizedException("NOT_AUTHORIZED");
+				}
+			}
+		}
+		
+	}
 	
 }
