@@ -1,0 +1,186 @@
+{
+	"info": {
+		"_postman_id": "728e6fc4-1b55-4cfa-8199-39d052113708",
+		"name": "1. Hotel search",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "search hotels by city vigo",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"location\":\"vigo\",\r\n     \"radius\":40\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hotels/searchbycity/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"searchbycity",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search hotels by city aranda",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"location\":\"aranda\",\r\n     \"radius\":50\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hotels/searchbycity/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"searchbycity",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search hotels by city aranda region",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"location\":\"aranda\",\r\n     \"region\":\"burgos\",\r\n     \"radius\":100\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hotels/searchbycity/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"searchbycity",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "(op)search hotels by services Copy",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"services\":[1,2]\r\n    },\r\n    \"columns\": [\"id_hotel\",\"htl_name\",\"htl_phone\",\"htl_email\"]\r\n} ",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hotels/hotelsbyservices/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"hotelsbyservices",
+						"search"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

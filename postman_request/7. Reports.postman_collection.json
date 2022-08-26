@@ -1,0 +1,67 @@
+{
+	"info": {
+		"_postman_id": "df294b7b-73ed-4553-b461-2908e4d162ae",
+		"name": "7. Reports",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "Receipts Copy",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "jmdiaz",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/reports/receipt/",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"reports",
+						"receipt",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Financial report Copy",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "(op) Historic receipt Copy",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		}
+	]
+}

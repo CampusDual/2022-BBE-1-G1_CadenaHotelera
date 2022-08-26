@@ -1,0 +1,225 @@
+{
+	"info": {
+		"_postman_id": "19dd6daf-43c3-43fd-9377-a2d5e9367a60",
+		"name": "4. Promotions",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "insert booking low season",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {   \r\n   \"bk_room\": 40,\r\n    \"bk_client\": 41,\r\n    \"bk_check_in\": \"2022-11-06\",\r\n    \"bk_check_out\": \"2022-11-08\"\r\n    \r\n    },\r\n    \"sqltypes\": {\r\n        \"id_booking\": 4,\r\n        \"bk_client\": 4,\r\n        \"bk_room\": 4,\r\n        \"bk_check_in\": 91,\r\n        \"bk_check_out\": 91,\r\n        \"bk_price\":4\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/booking",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"booking"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert booking discount code",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {   \r\n      \"bk_room\": 40,\r\n        \"bk_client\": 41,\r\n        \"bk_check_in\": \"2022-11-09\",\r\n        \"bk_check_out\": \"2022-11-11\",\r\n        \"discount_code\":\"CRAZY_SUMMER_2022\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_booking\": 4,\r\n        \"bk_client\": 4,\r\n        \"bk_room\": 4,\r\n        \"bk_check_in\": 91,\r\n        \"bk_check_out\": 91,\r\n        \"bk_price\":4\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/booking",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"booking"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert booking vip discount",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {   \r\n      \"bk_room\": 240,\r\n        \"bk_client\": 35,\r\n        \"bk_check_in\": \"2022-05-21\",\r\n        \"bk_check_out\": \"2022-05-24\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_booking\": 4,\r\n        \"bk_client\": 4,\r\n        \"bk_room\": 4,\r\n        \"bk_check_in\": 91,\r\n        \"bk_check_out\": 91,\r\n        \"bk_price\":4\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/booking",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"booking"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "insert booking code and vip",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {   \r\n      \"bk_room\": 40,\r\n        \"bk_client\": 35,\r\n        \"bk_check_in\": \"2022-11-11\",\r\n        \"bk_check_out\": \"2022-11-13\",\r\n        \"discount_code\":\"CRAZY_SUMMER_2022\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_booking\": 4,\r\n        \"bk_client\": 4,\r\n        \"bk_room\": 4,\r\n        \"bk_check_in\": 91,\r\n        \"bk_check_out\": 91,\r\n        \"bk_price\":4\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/booking",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"booking"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete booking",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "jmdiaz",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n        \"id_booking\": 154\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/booking",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"booking"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

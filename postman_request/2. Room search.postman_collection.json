@@ -1,0 +1,185 @@
+{
+	"info": {
+		"_postman_id": "ef92add6-f8a6-4156-80a8-72ec25b5b2d7",
+		"name": "2. Room search",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "search available rooms",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n    \"id_hotel\":1,\r\n    \"bk_check_in\": \"2022-12-07\",\r\n     \"bk_check_out\": \"2022-12-09\"\r\n    \r\n    },\r\n    \"columns\": [\"id_hotel\",\"id_room\",\"rm_number\",\"rmt_name\",\"htl_name\",\"price\",\"rmt_price\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/availablerooms/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"availablerooms",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search available rooms max price",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n    \"id_hotel\":1,\r\n    \"bk_check_in\": \"2022-12-07\",\r\n     \"bk_check_out\": \"2022-12-09\",\r\n     \"max_price\":150\r\n    },\r\n    \"columns\": [\"id_hotel\",\"id_room\",\"rm_number\",\"rmt_name\",\"htl_name\",\"price\",\"rmt_price\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/availablerooms/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"availablerooms",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "(op) search available rooms by roomtype",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n    \"id_hotel\":1,\r\n    \"bk_check_in\": \"2022-12-07\",\r\n     \"bk_check_out\": \"2022-12-09\",\r\n     \"id_room_type\":1\r\n    \r\n    },\r\n    \"columns\": [\"id_hotel\",\"id_room\",\"rm_number\",\"rmt_name\",\"htl_name\",\"price\",\"rmt_price\",\"id_room_type\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/availablerooms/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"availablerooms",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "op search pics by roomtype",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "abc123",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "masterchief",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/roompics?rp_hotel=1&rp_room_type=1",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"roompics"
+					],
+					"query": [
+						{
+							"key": "rp_hotel",
+							"value": "1"
+						},
+						{
+							"key": "rp_room_type",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

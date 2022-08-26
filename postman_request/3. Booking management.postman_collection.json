@@ -1,0 +1,96 @@
+{
+	"info": {
+		"_postman_id": "f3c72991-d91e-41c3-bf20-70a4d80d9dcc",
+		"name": "3. Booking management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "insert booking",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {   \r\n        \"bk_room\": 40,\r\n        \"bk_client\": 41,\r\n        \"bk_check_in\": \"2022-12-07\",\r\n        \"bk_check_out\": \"2022-12-09\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_booking\": 4,\r\n        \"bk_client\": 4,\r\n        \"bk_room\": 4,\r\n        \"bk_check_in\": 91,\r\n        \"bk_check_out\": 91,\r\n        \"bk_price\":4\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/booking",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"booking"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update dates on booking Copy",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "masterchief",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "abc123",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_booking\" : 285\r\n },\r\n    \"data\": {\r\n      \"bk_check_in\":\"2022-12-06\",\r\n      \"bk_check_out\":\"2022-12-08\"\r\n    },\r\n     \"sqltypes\": {\r\n        \"svh_hotel\": 4,\r\n        \"svh_active\": -7,\r\n        \"id_services_hotel\": 4,\r\n        \"svh_service\": 4,\r\n        \"bk_check_in\": 91,\r\n        \"bk_check_out\": 91\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/changedates",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"changedates"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

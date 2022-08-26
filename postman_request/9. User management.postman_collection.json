@@ -1,0 +1,53 @@
+{
+	"info": {
+		"_postman_id": "9edeec7b-3d46-4b3e-92be-12bbc825177c",
+		"name": "9. User management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "insert user new client",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"data\": {\r\n        \"user_\": \"aleixo\",\r\n        \"password\": \"1234\",\r\n        \"name\": \"Aleixo\",\r\n        \"surname\": \"Otero\",\r\n        \"email\": \"aleixootero@fnhotels.com\",\r\n        \"nif\": \"64547502F\",\r\n        \"cl_phone\": \"689079124\",\r\n        \"cl_country_code\": \"34\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"user_\": 12,\r\n        \"password\": 12,\r\n        \"name\": 12,\r\n        \"surname\": 12,\r\n        \"email\": 12,\r\n        \"nif\": 12,\r\n        \"cl_phone\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/users/userClientByManagers",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"users",
+						"userClientByManagers"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

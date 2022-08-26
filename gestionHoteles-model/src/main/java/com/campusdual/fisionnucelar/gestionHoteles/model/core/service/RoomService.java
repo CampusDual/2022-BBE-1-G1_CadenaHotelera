@@ -218,7 +218,7 @@ public class RoomService implements IRoomService {
 		}
 		List<String> attrList = new ArrayList<>();
 		attrList.add("id_room");
-		EntityResult existingRoom = roomQuery(attrMap, attrList);
+		EntityResult existingRoom = daoHelper.query(roomDao, attrMap, attrList);
 		if (existingRoom.isEmpty())
 			throw new RecordNotFoundException("ROOM_DOESN'T_EXISTS");
 		return existingRoom.isEmpty();

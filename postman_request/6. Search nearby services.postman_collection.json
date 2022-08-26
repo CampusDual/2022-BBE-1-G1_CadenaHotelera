@@ -1,0 +1,94 @@
+{
+	"info": {
+		"_postman_id": "9b34f850-3413-4bc2-92b8-40bf90501e36",
+		"name": "6. Search nearby services",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "get allowed services",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "masterchief",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "abc123",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:33333/hotels/showvalidservices?columns=services",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"showvalidservices"
+					],
+					"query": [
+						{
+							"key": "columns",
+							"value": "services"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search nearby services",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "jmdiaz",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"id_hotel\":1,\r\n     \"service\":\"restaurant\",\r\n     \"radius\":1000\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/hotels/searchnearbyservices/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"hotels",
+						"searchnearbyservices",
+						"search"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
