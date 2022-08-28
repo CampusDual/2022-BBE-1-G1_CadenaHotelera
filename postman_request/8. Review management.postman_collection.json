@@ -1,0 +1,171 @@
+{
+	"info": {
+		"_postman_id": "f3a3878f-1348-4edf-a5fe-92577dfccd84",
+		"name": "8. Review management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "insert review",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "rebecca",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"data\": {\r\n        \"rv_hotel\":1,\r\n        \"rv_client\": 41,\r\n        \"rv_rating\": 5,\r\n        \"rv_comment\": \"Habitaciones cómodas y muy bien ubicado. Recomendable\"\r\n    },\r\n    \"sqltypes\": {\r\n        \"id_review\": 4,\r\n        \"rv_comment\": 12,\r\n        \"rv_rating\": 4,\r\n        \"rv_client\": 4,\r\n        \"rv_date\": 91\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/reviews/review",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"reviews",
+						"review"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add response to a review",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "jmdiaz",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_review\" : 47\r\n },\r\n    \"data\": {\r\n        \"rv_response\": \"Gracias por tu valoración, esperamos verte de nuevo\"\r\n    },\r\n     \"sqltypes\": {\r\n       \"rv_response\": 12\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/reviews/reviewresponse",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"reviews",
+						"reviewresponse"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search reviews",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n     \"rv_hotel\": 1\r\n    },\r\n    \"columns\": [\"id_review\",\"rv_rating,rv_comment\",\"rv_date\",\"htl_name\",\"cl_name\",\"rv_response\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/reviews/review/search",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"reviews",
+						"review",
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete review",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "rebecca",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"filter\": {\r\n        \"id_review\": 47\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/reviews/review",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"reviews",
+						"review"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

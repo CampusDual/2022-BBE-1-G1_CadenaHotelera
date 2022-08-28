@@ -75,10 +75,10 @@ public class RoomPicRestController {
 		String filename = "image.jpg";
 		headers.setContentDispositionFormData(filename, filename);
 		headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
 		return new ResponseEntity<>(contents, headers, HttpStatus.OK);
 	}
 
-	
 	@GetMapping()
 	public ResponseEntity<EntityResult> getRoomTypeImages(@RequestParam("rp_hotel") Integer hotel,
 			@RequestParam(value = "rp_room_type", required = false) Integer roomType)

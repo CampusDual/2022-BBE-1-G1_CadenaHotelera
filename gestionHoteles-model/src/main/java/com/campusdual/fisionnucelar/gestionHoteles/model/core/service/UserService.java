@@ -132,7 +132,6 @@ public class UserService implements IUserService {
 	 * @exception DuplicateKeyException when it introduces a email  that it exists
 	 * @exception RecordNotFoundException when it doesn´t introduce a not null field 
 	 * @exception EmptyRequestException when it doesn´t introduce any field
-	 * @exception BadSqlGrammarException when it receives an incorrect type in the params
 	 * @exception DataIntegrityViolationException when the params don't include the
 	 *                                            not null fields
 	 */
@@ -150,35 +149,23 @@ public class UserService implements IUserService {
 				throw new NotAuthorizedException("NO_AUTORIZED_UPDATE_FIELD");
 			}
 			checkIfUserExists(keyMap);
-			List<GrantedAuthority> userRole = (List<GrantedAuthority>) SecurityContextHolder.getContext()
-					.getAuthentication().getAuthorities();
-			for (GrantedAuthority x : userRole) {
-				if (x.getAuthority().compareTo("admin") != 0) {
-					UserInformation user = ((UserInformation) SecurityContextHolder.getContext().getAuthentication()
-							.getPrincipal());
-					if (user.getLogin().compareTo((String) keyMap.get("user_")) != 0) {
-						throw new NotAuthorizedException("NOT_AUTHORIZED");
-					}
-				}
-				if (attrMap.get("password") != null) {
-					attrMap.put("lastpasswordupdate", new Timestamp(Calendar.getInstance().getTimeInMillis()));
-				}
-				updateResult = daoHelper.update(userDao, attrMap, keyMap);
-				updateResult.setMessage("SUCCESSFULLY_UPDATE");
+			userControl.checkUserPermission(keyMap);
+			if (attrMap.get("password") != null) {
+				attrMap.put("lastpasswordupdate", new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			}
-		} catch (BadSqlGrammarException e) {
-			log.error("unable to update a user. Request : {} {} ", keyMap, attrMap, e);
-			control.setErrorMessage(updateResult, "IDENTIFIER_BE_NUMERIC");
+			updateResult = daoHelper.update(userDao, attrMap, keyMap);
+			updateResult.setMessage("SUCCESSFULLY_UPDATE");
 		} catch (DuplicateKeyException e) {
 			log.error("unable to update a user. Request : {} {} ", keyMap, attrMap, e);
-			control.setErrorMessage(updateResult, "ROOM_TYPE_ALREADY_EXISTS");
-		} catch (RecordNotFoundException | EmptyRequestException | DataIntegrityViolationException
-				| NotAuthorizedException e) {
+			control.setErrorMessage(updateResult, "EMAIL_ALREADY_EXISTS");
+		} catch (RecordNotFoundException | EmptyRequestException | DataIntegrityViolationException | NotAuthorizedException e) {
 			log.error("unable to update a user. Request : {} {} ", keyMap, attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		}
 		return updateResult;
 	}
+	
+
 	/**
 	 * 
 	 * Puts a user_down_date on a user. If the user doesn't exists returns an error message
@@ -218,26 +205,22 @@ public class UserService implements IUserService {
 	}
 	/**
 	 * 
-<<<<<<< HEAD
+
 	 * Adds a new admin register on the user table.
 	 * 
 	 * @since 12/08/2022
-=======
+
 	 * Adds a new register on the user table.
 	 * 
 	 * @since 19/08/2022
->>>>>>> d5a72e6b7df8a25acf17fd58e8895ead53593786
 	 * @param The fields of the new register
 	 * @return The id of the new register and a message with the operation result
 	 * @exception InvalidEmailException when it introduces a email that it is invalid
 	 * @exception DuplicateKeyException when it introduces a email that it exists
 	 * @exception DataIntegrityViolationException when it doesn´t introduce a not null field 
 	 * @exception EmptyRequestException when it doesn´t introduce any field
-<<<<<<< HEAD
 	 * @exception NotAuthorizedException when it introduce a user not authorized
-=======
 	 * @exception InvalidEmailException when it 
->>>>>>> d5a72e6b7df8a25acf17fd58e8895ead53593786
 	 * @exception RecordNotFoundException when it doesn´t introduce a not null field
 	 */
 	@Override
@@ -246,7 +229,6 @@ public class UserService implements IUserService {
 	public EntityResult userAdminInsert(Map<String, Object> attrMap) throws OntimizeJEERuntimeException {
 		EntityResult insertResult = new EntityResultMapImpl();
 		try {
-			// Este if es para comprobar si esiste ese usuario dado de baja
 
 			dataValidator.checkIfMapIsEmpty(attrMap);
 			if (attrMap.get("email") != null) {
@@ -267,8 +249,7 @@ public class UserService implements IUserService {
 		} catch (DuplicateKeyException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, "EMAIL_ALREADY_EXISTS");
-		} catch (DataIntegrityViolationException | EmptyRequestException | InvalidEmailException | RecordNotFoundException
-				| NotAuthorizedException e) {
+		} catch (DataIntegrityViolationException | EmptyRequestException | InvalidEmailException | RecordNotFoundException | NotAuthorizedException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
 		}
@@ -320,10 +301,7 @@ public class UserService implements IUserService {
 		} catch (DuplicateKeyException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, "EMAIL_ALREADY_EXISTS");
-		} catch (DataIntegrityViolationException e) {
-			log.error("unable to insert a user. Request : {} ", attrMap, e);
-			control.setMessageFromException(insertResult, e.getMessage());
-		} catch (EmptyRequestException | RecordNotFoundException | AllFieldsRequiredException e) {
+		} catch (EmptyRequestException | RecordNotFoundException | AllFieldsRequiredException | DataIntegrityViolationException e) {
 			log.error("unable to insert a user. Request : {} {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
 		}
@@ -395,11 +373,11 @@ public class UserService implements IUserService {
 					columnsTuser_role.put("id_rolename", 2);
 					columnsTuser_role.put("user_", attrMap.get("user_"));
 					daoHelper.insert(userroleDao, columnsTuser_role);
-					columnsTuser_id.put("id_client",(int) attrMap.get("identifier"));
+					columnsTuser_id.put("id_client", attrMap.get("identifier"));
 					insertResult.addRecord(columnsTuser_id);
 					insertResult.setMessage("SUCCESSFULLY_INSERT");
 				} else {
-					columnsTuser_id.put("id_client",(int) attrMap.get("identifier"));
+					columnsTuser_id.put("id_client", attrMap.get("identifier"));
 					insertResult.addRecord(columnsTuser_id);
 					insertResult.setMessage("USER_EXISTING_UP_SUCCESSFULLY_UPDATE");
 				}
@@ -410,18 +388,10 @@ public class UserService implements IUserService {
 		} catch (DuplicateKeyException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setErrorMessage(insertResult, "EMAIL_ALREADY_EXISTS");
-		} catch (DataIntegrityViolationException e) {
-			log.error("unable to insert a user. Request : {} ", attrMap, e);
-			control.setMessageFromException(insertResult, e.getMessage());
-
-		} catch (EmptyRequestException | NotAuthorizedException  | RecordNotFoundException e) {
-
+		} catch (EmptyRequestException | NotAuthorizedException  | RecordNotFoundException |DataIntegrityViolationException e) {
 			log.error("unable to insert a user. Request : {} {} ", attrMap, e);
 			control.setErrorMessage(insertResult, e.getMessage());
-		}catch (ClassCastException e) {
-			log.error("unable to insert an user. Request : {} ", attrMap, e);
-			control.setErrorMessage(insertResult, "INVALID_PHONE");
-			}
+		}
 		return insertResult;
 	}
 	/**
@@ -469,7 +439,7 @@ public class UserService implements IUserService {
 				columnsTuser_role.put("user_", attrMap.get("user_"));
 				daoHelper.insert(userroleDao, columnsTuser_role);
 				Map<String, Object> columnsTuser_id = new HashMap<String, Object>();
-				columnsTuser_id.put("id_client",(int) insertClient.get("id_client"));
+				columnsTuser_id.put("id_client", insertClient.get("id_client"));
 				insertResult.addRecord(columnsTuser_id);
 				insertResult.setMessage("SUCCESSFULLY_INSERT");
 			}
@@ -479,11 +449,7 @@ public class UserService implements IUserService {
 		} catch (DataIntegrityViolationException  | RecordNotFoundException | EmptyRequestException | InvalidEmailException e) {
 			log.error("unable to insert a user. Request : {} ", attrMap, e);
 			control.setMessageFromException(insertResult, e.getMessage());
-		} catch (ClassCastException e) {
-
-			log.error("unable to insert an user. Request : {} ", attrMap, e);
-			control.setErrorMessage(insertResult, "INVALID_Type");
-			}
+		} 
 		return insertResult;
 	}
 	/**

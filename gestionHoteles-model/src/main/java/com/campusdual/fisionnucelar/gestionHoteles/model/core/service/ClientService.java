@@ -187,7 +187,7 @@ public class ClientService implements IClientService {
 			if(attrMap.containsKey("cl_country_code") || attrMap.containsKey("cl_phone")) {
 				if(!attrMap.containsKey("cl_country_code") && attrMap.containsKey("cl_phone")) throw new AllFieldsRequiredException("CL_COUNTRY_CODE_REQUIRED");
 				if(!attrMap.containsKey("cl_phone") && attrMap.containsKey("cl_country_code")) throw new AllFieldsRequiredException("CL_PHONE_REQUIRED");
-				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("htl_country_code"), (String)attrMap.get("htl_phone"))) {
+				if(!control.checkIfPhoneNumberIsValid((int) attrMap.get("cl_country_code"), (String)attrMap.get("cl_phone"))) {
 					throw new InvalidPhoneException("INVALID_PHONE");
 				}
 			}
@@ -195,7 +195,7 @@ public class ClientService implements IClientService {
 			updateResult = this.daoHelper.update(this.clientDao, attrMap, keyMap);
 			updateResult.setMessage("SUCCESSFUL_UPDATE");
 			
-		} catch (InvalidEmailException|NotAuthorizedException e) {
+		} catch (InvalidEmailException|NotAuthorizedException|AllFieldsRequiredException e) {
 			log.error("unable to update a client. Request : {} {} ",keyMap,attrMap, e);
 			control.setErrorMessage(updateResult, e.getMessage());
 		} catch (DuplicateKeyException e) {

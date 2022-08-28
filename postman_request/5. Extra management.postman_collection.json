@@ -1,0 +1,96 @@
+{
+	"info": {
+		"_postman_id": "89d47ac9-9d8a-4641-a710-8526f8b043e9",
+		"name": "5. Extra management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20964318"
+	},
+	"item": [
+		{
+			"name": "add extras to booking",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "abc123",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "masterchief",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_booking\" : 287\r\n },\r\n    \"data\": {\r\n        \"id_extras_hotel\":40,\r\n        \"quantity\":2\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_booking\": 4,\r\n        \"id_extras_hotel\": 4,\r\n        \"quantity\": 4\r\n    \r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookings/addbookingextra",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookings",
+						"addbookingextra"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "mark an extras as enjoyed",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "demo",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "demouser",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"filter\" :{\r\n  \"id_booking_extra\" : 84\r\n },\r\n    \"data\": {\r\n        \"quantity\":2\r\n    },\r\n     \"sqltypes\": {\r\n        \"id_booking_extra\": 4,\r\n        \"quantity\": 4\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:33333/bookingextra/markextraenjoyed",
+					"host": [
+						"localhost"
+					],
+					"port": "33333",
+					"path": [
+						"bookingextra",
+						"markextraenjoyed"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
